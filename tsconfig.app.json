@@ -18,7 +18,7 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
 
-    // ...keep any remaining lines below "moduleDetection" exactly as they were
+     
   },
   "include": ["src"]
 }
