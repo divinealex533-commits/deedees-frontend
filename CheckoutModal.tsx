@@ -1,0 +1,225 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Upload, Zap, Clock, Wallet, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import type { CartItem } from '@/types';
+
+interface CheckoutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  cart: CartItem[];
+  cartTotal: number;
+  walletBalance: number;
+  onStartInstantDeposit: (amount: number) => Promise<void>;
+  onSubmitManualDeposit: (amount: number, file: File) => Promise<unknown>;
+  onPurchase: (itemIds: string[]) => Promise<void>;
+}
+
+export function CheckoutModal({
+  isOpen,
+  onClose,
+  cart,
+  cartTotal,
+  walletBalance,
+  onStartInstantDeposit,
+  onSubmitManualDeposit,
+  onPurchase,
+}: CheckoutModalProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [manualFile, setManualFile] = useState<File | null>(null);
+  const [manualSubmitted, setManualSubmitted] = useState(false);
+
+  const shortfall = Math.max(0, cartTotal - walletBalance);
+  const canAfford = walletBalance >= cartTotal;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const handleCompletePurchase = async () => {
+    setIsProcessing(true);
+    try {
+      await onPurchase(cart.map((item) => item.product.id));
+      toast.success('Purchase complete! Check your dashboard for details.');
+    } catch (err) {
+      toast.error((err as Error).message || 'Purchase failed');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleInstantTopUp = async () => {
+    setIsProcessing(true);
+    try {
+      await onStartInstantDeposit(shortfall);
+      // This redirects the browser to Paystack — nothing more to do here.
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not start payment');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleManualTopUp = async () => {
+    if (!manualFile) {
+      toast.error('Please upload a payment screenshot');
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      await onSubmitManualDeposit(shortfall, manualFile);
+      setManualSubmitted(true);
+      toast.success('Screenshot submitted — pending review.');
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not submit payment proof');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setManualFile(file);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl bg-slate-950 border-blue-500/30 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-white text-xl">Checkout</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Order Summary */}
+          <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/20">
+            <h3 className="text-white font-semibold mb-3">Order Summary</h3>
+            <div className="space-y-2">
+              {cart.map((item) => (
+                <div key={item.product.id} className="flex justify-between text-sm">
+                  <span className="text-slate-400">{item.product.name}</span>
+                  <span className="text-white">{formatPrice(item.product.price)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-blue-500/20 mt-3 pt-3 flex justify-between">
+              <span className="text-white font-semibold">Total</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 font-bold">
+                {formatPrice(cartTotal)}
+              </span>
+            </div>
+          </div>
+
+          {/* Wallet Balance */}
+          <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Wallet className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm">Your Wallet Balance</p>
+                <p className="text-white font-semibold text-lg">{formatPrice(walletBalance)}</p>
+              </div>
+            </div>
+          </div>
+
+          {canAfford ? (
+            <Button
+              onClick={handleCompletePurchase}
+              disabled={isProcessing}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6"
+            >
+              {isProcessing ? 'Processing...' : `Pay ${formatPrice(cartTotal)} from wallet`}
+            </Button>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <p className="text-amber-400 text-sm">
+                  You need {formatPrice(shortfall)} more to complete this purchase. Top up your wallet below.
+                </p>
+              </div>
+
+              {!manualSubmitted && (
+                <>
+                  {/* Instant top-up */}
+                  <div className="p-4 rounded-xl border border-blue-500/20 bg-slate-900">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                        <Zap className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">Pay instantly</p>
+                        <p className="text-slate-400 text-sm">Card, bank, or USSD via Paystack — credited automatically</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleInstantTopUp}
+                      disabled={isProcessing}
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                    >
+                      Pay {formatPrice(shortfall)} now
+                    </Button>
+                  </div>
+
+                  {/* Manual top-up */}
+                  <div className="p-4 rounded-xl border border-cyan-500/20 bg-slate-900">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-cyan-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">Manual bank transfer</p>
+                        <p className="text-slate-400 text-sm">Send {formatPrice(shortfall)}, then upload proof — reviewed by admin</p>
+                      </div>
+                    </div>
+
+                    <div className="mb-3 space-y-1 text-sm">
+                      <Label className="text-slate-400">Upload payment screenshot</Label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="bg-slate-950 border-blue-500/30 text-white file:text-blue-400"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={handleManualTopUp}
+                      disabled={isProcessing || !manualFile}
+                      variant="outline"
+                      className="w-full border-cyan-500/30 text-white hover:bg-cyan-500/10"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Submit for review
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {manualSubmitted && (
+                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 text-center">
+                  <Check className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                  <p className="text-green-400 font-medium">Payment proof submitted</p>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Once approved, your balance updates — come back here or check your dashboard to complete the purchase.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
