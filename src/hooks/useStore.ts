@@ -28,6 +28,7 @@ function toProduct(item: any): Product {
     description: item.description || '',
     createdAt: item.createdAt,
     accessLink: item.accessLink,
+    quantity: item.quantity,
   };
 }
 
@@ -87,6 +88,7 @@ export function useStore() {
         categoryId: product.categoryId,
         inStock: product.inStock,
         accessLink: product.accessLink,
+        quantity: product.quantity,
       });
       await loadProducts();
     },
@@ -103,6 +105,7 @@ export function useStore() {
         categoryId: updates.categoryId,
         inStock: updates.inStock,
         accessLink: updates.accessLink,
+        quantity: updates.quantity,
       });
       await loadProducts();
     },
@@ -145,10 +148,19 @@ export function useStore() {
   }, []);
 
   // ---- Cart operations (this device only, until checkout) ----
+  // Adds one unit of a product to the cart. If it's already there, bumps
+  // its quantity by 1 — capped at how many units the product actually has
+  // in stock (when the product tracks a quantity).
   const addToCart = useCallback((product: Product) => {
     setCart((prev) => {
+      const maxQty = product.quantity != null ? product.quantity : Infinity;
       const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) return prev; // one-of-a-kind items — quantity is always 1
+      if (existing) {
+        if (existing.quantity >= maxQty) return prev; // already at the max available
+        return prev.map((item) =>
+          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
       return [...prev, { product, quantity: 1 }];
     });
   }, []);
@@ -157,11 +169,22 @@ export function useStore() {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
   }, []);
 
-  // Kept for compatibility with the cart UI; quantities beyond 1 don't apply
-  // to one-of-a-kind marketplace items, so this just removes at 0.
+  // Sets a cart item's quantity directly (used by the +/- buttons in the
+  // cart drawer). Removes the item if it drops to 0, and won't let it go
+  // above the product's available stock.
   const updateCartQuantity = useCallback(
     (productId: string, quantity: number) => {
-      if (quantity <= 0) removeFromCart(productId);
+      if (quantity <= 0) {
+        removeFromCart(productId);
+        return;
+      }
+      setCart((prev) =>
+        prev.map((item) => {
+          if (item.product.id !== productId) return item;
+          const maxQty = item.product.quantity != null ? item.product.quantity : Infinity;
+          return { ...item, quantity: Math.min(quantity, maxQty) };
+        })
+      );
     },
     [removeFromCart]
   );
@@ -173,10 +196,11 @@ export function useStore() {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Spends wallet balance to buy a single item (backend enforces balance check).
+  // Spends wallet balance to buy `quantity` units of a single item
+  // (backend enforces both the balance check and available stock).
   const purchaseItem = useCallback(
-    async (itemId: string) => {
-      await api.purchaseItem(itemId);
+    async (itemId: string, quantity: number = 1) => {
+      await api.purchaseItem(itemId, quantity);
       await loadProducts();
     },
     [loadProducts]
