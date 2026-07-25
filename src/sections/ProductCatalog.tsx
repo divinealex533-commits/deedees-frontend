@@ -123,7 +123,6 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                     hoveredProduct === product.id ? 'opacity-100' : 'opacity-0'
                   }`}></div>
                   
-                  
                   {/* Stock badge */}
                   <div className="absolute top-3 right-3">
                     <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
@@ -131,6 +130,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                       {product.quantity != null ? `${product.quantity} left` : 'In Stock'}
                     </Badge>
                   </div>
+                </div>
 
                 <CardContent className="p-5">
                   {/* Category Badge */}
