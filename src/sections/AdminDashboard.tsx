@@ -88,16 +88,6 @@ export function AdminDashboard({
     loadDeposits();
   }, [loadSales, loadDeposits]);
 
-  useEffect(() => {
-    if (!isAwaitingNewCategory) return;
-    const match = categories.find((c) => c.name === newCategoryName.trim());
-    if (match) {
-      setIsAwaitingNewCategory(false);
-      void finishSaveProduct(match.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories, isAwaitingNewCategory, newCategoryName]);
-
   const handleApproveDeposit = async (id: string) => {
     try {
       await api.approveDeposit(id);
@@ -186,31 +176,45 @@ export function AdminDashboard({
     setIsProductDialogOpen(true);
   };
 
-  const finishSaveProduct = async (categoryId: string) => {
-    const productData = {
-      name: productForm.name,
-      price: parseInt(productForm.price),
-      imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
-      categoryId,
-      description: productForm.description,
-      inStock: productForm.inStock,
-      accessLink: productForm.accessLink,
-    };
+  const finishSaveProduct = useCallback(
+    async (categoryId: string) => {
+      const productData = {
+        name: productForm.name,
+        price: parseInt(productForm.price),
+        imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
+        categoryId,
+        description: productForm.description,
+        inStock: productForm.inStock,
+        accessLink: productForm.accessLink,
+      };
 
-    try {
-      if (editingProduct) {
-        await onUpdateProduct(editingProduct.id, productData);
-        toast.success('Product updated successfully');
-      } else {
-        await onAddProduct(productData);
-        toast.success('Product added successfully');
+      try {
+        if (editingProduct) {
+          await onUpdateProduct(editingProduct.id, productData);
+          toast.success('Product updated successfully');
+        } else {
+          await onAddProduct(productData);
+          toast.success('Product added successfully');
+        }
+        setIsProductDialogOpen(false);
+        setNewCategoryName('');
+      } catch (err) {
+        toast.error((err as Error).message);
       }
-      setIsProductDialogOpen(false);
-      setNewCategoryName('');
-    } catch (err) {
-      toast.error((err as Error).message);
+    },
+    [productForm, editingProduct, onUpdateProduct, onAddProduct]
+  );
+
+  // Once the new category we just asked to create shows up in the
+  // categories list, finish saving the product against it.
+  useEffect(() => {
+    if (!isAwaitingNewCategory) return;
+    const match = categories.find((c) => c.name === newCategoryName.trim());
+    if (match) {
+      setIsAwaitingNewCategory(false);
+      void finishSaveProduct(match.id);
     }
-  };
+  }, [categories, isAwaitingNewCategory, newCategoryName, finishSaveProduct]);
 
   const handleSaveProduct = async () => {
     if (!productForm.name.trim() || !productForm.price || !productForm.categoryId) {
