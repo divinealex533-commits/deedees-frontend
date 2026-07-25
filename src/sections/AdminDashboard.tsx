@@ -88,6 +88,16 @@ export function AdminDashboard({
     loadDeposits();
   }, [loadSales, loadDeposits]);
 
+  useEffect(() => {
+    if (!isAwaitingNewCategory) return;
+    const match = categories.find((c) => c.name === newCategoryName.trim());
+    if (match) {
+      setIsAwaitingNewCategory(false);
+      void finishSaveProduct(match.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, isAwaitingNewCategory, newCategoryName]);
+
   const handleApproveDeposit = async (id: string) => {
     try {
       await api.approveDeposit(id);
@@ -129,6 +139,10 @@ export function AdminDashboard({
     icon: 'Shield',
   });
 
+  // "Other" category quick-add (used inside the product dialog)
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isAwaitingNewCategory, setIsAwaitingNewCategory] = useState(false);
+
   // Stats
   const totalProducts = products.length;
   const inStockProducts = products.filter((p) => p.inStock).length;
@@ -165,20 +179,16 @@ export function AdminDashboard({
         inStock: true,
       });
     }
+    setNewCategoryName('');
     setIsProductDialogOpen(true);
   };
 
-  const handleSaveProduct = async () => {
-    if (!productForm.name.trim() || !productForm.price || !productForm.categoryId) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
+  const finishSaveProduct = async (categoryId: string) => {
     const productData = {
       name: productForm.name,
       price: parseInt(productForm.price),
       imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
-      categoryId: productForm.categoryId,
+      categoryId,
       description: productForm.description,
       inStock: productForm.inStock,
     };
@@ -192,9 +202,29 @@ export function AdminDashboard({
         toast.success('Product added successfully');
       }
       setIsProductDialogOpen(false);
+      setNewCategoryName('');
     } catch (err) {
       toast.error((err as Error).message);
     }
+  };
+
+  const handleSaveProduct = async () => {
+    if (!productForm.name.trim() || !productForm.price || !productForm.categoryId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (productForm.categoryId === '__other__') {
+      if (!newCategoryName.trim()) {
+        toast.error('Please enter a name for the new category');
+        return;
+      }
+      onAddCategory({ name: newCategoryName.trim(), description: '', icon: 'Shield' });
+      setIsAwaitingNewCategory(true);
+      return;
+    }
+
+    await finishSaveProduct(productForm.categoryId);
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -600,7 +630,16 @@ export function AdminDashboard({
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
+                  <option value="__other__">Other (add new category)</option>
                 </select>
+                {productForm.categoryId === '__other__' && (
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Type new category name"
+                    className="mt-2 bg-slate-900 border-blue-500/30 text-white"
+                  />
+                )}
               </div>
               <div>
                 <Label className="text-slate-300">Image URL</Label>
