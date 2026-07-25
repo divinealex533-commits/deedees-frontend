@@ -24,13 +24,10 @@ async function request(path: string, options: RequestInit = {}) {
       ...(options.headers || {}),
     },
   });
-
   const data = await res.json().catch(() => ({}));
-
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`);
   }
-
   return data;
 }
 
@@ -64,6 +61,7 @@ export const api = {
     categoryId?: string;
     inStock?: boolean;
     accessLink?: string;
+    quantity?: number;
   }) =>
     request("/api/items", {
       method: "POST",
@@ -83,10 +81,10 @@ export const api = {
     request(`/api/items/${id}`, { method: "DELETE" }),
 
   // ---------- Purchase ----------
-  purchaseItem: (itemId: string) =>
+  purchaseItem: (itemId: string, quantity: number = 1) =>
     request("/api/purchase", {
       method: "POST",
-      body: JSON.stringify({ itemId }),
+      body: JSON.stringify({ itemId, quantity }),
     }),
 
   // ---------- Orders (customer's own purchases, includes accessLink) ----------
@@ -108,13 +106,11 @@ export const api = {
     const formData = new FormData();
     formData.append("amount", String(amount));
     formData.append("screenshot", file);
-
     const res = await fetch(`${API_URL}/api/wallet/deposit/manual`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     });
-
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Something went wrong");
     return data;
