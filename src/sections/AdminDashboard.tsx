@@ -119,6 +119,7 @@ export function AdminDashboard({
     description: '',
     inStock: true,
     accessLink: '',
+    quantity: '1',
   });
 
   // Category form state
@@ -159,6 +160,7 @@ export function AdminDashboard({
         description: product.description || '',
         inStock: product.inStock,
         accessLink: product.accessLink || '',
+        quantity: (product.quantity ?? 1).toString(),
       });
     } else {
       setEditingProduct(null);
@@ -170,6 +172,7 @@ export function AdminDashboard({
         description: '',
         inStock: true,
         accessLink: '',
+        quantity: '1',
       });
     }
     setNewCategoryName('');
@@ -178,14 +181,16 @@ export function AdminDashboard({
 
   const finishSaveProduct = useCallback(
     async (categoryId: string) => {
+      const qty = parseInt(productForm.quantity) || 0;
       const productData = {
         name: productForm.name,
         price: parseInt(productForm.price),
         imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
         categoryId,
         description: productForm.description,
-        inStock: productForm.inStock,
+        inStock: qty > 0,
         accessLink: productForm.accessLink,
+        quantity: qty,
       };
 
       try {
@@ -475,7 +480,11 @@ export function AdminDashboard({
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                     <div className="absolute top-2 right-2">
                       <Badge className={product.inStock ? 'bg-green-500' : 'bg-red-500'}>
-                        {product.inStock ? 'In Stock' : 'Out of Stock'}
+                        {product.inStock
+                          ? product.quantity != null
+                            ? `${product.quantity} in stock`
+                            : 'In Stock'
+                          : 'Out of Stock'}
                       </Badge>
                     </div>
                   </div>
@@ -661,9 +670,10 @@ export function AdminDashboard({
                 <Label className="text-slate-300">Access Link / Credentials (admin only — shown to buyer after purchase)</Label>
                 <Input value={productForm.accessLink} onChange={(e) => setProductForm({ ...productForm, accessLink: e.target.value })} placeholder="e.g. https://drive.google.com/... or login details" className="bg-slate-900 border-blue-500/30 text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="inStock" checked={productForm.inStock} onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })} className="rounded bg-slate-900 border-blue-500/30" />
-                <Label htmlFor="inStock" className="text-slate-300 cursor-pointer">In Stock</Label>
+              <div>
+                <Label className="text-slate-300">Quantity Available *</Label>
+                <Input type="number" min="0" value={productForm.quantity} onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })} placeholder="e.g., 200" className="bg-slate-900 border-blue-500/30 text-white" />
+                <p className="text-slate-500 text-xs mt-1">Decreases automatically as customers buy. Set to 0 to mark out of stock.</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setIsProductDialogOpen(false)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">Cancel</Button>
