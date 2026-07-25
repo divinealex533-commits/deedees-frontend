@@ -8,7 +8,8 @@ export interface Product {
      description?: string;
      createdAt: string;
      isDigital?: boolean;
-     fileUrl?: string;  
+     fileUrl?: string;
+     accessLink?: string;
 }
 
 export interface Category {
