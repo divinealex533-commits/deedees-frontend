@@ -22,7 +22,6 @@ import {
   LogOut,
   Shield,
   Wallet,
-  Link as LinkIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -655,19 +654,8 @@ export function AdminDashboard({
                 <textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Product description..." rows={3} className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 resize-none" />
               </div>
               <div>
-                <Label className="text-slate-300 flex items-center gap-1.5">
-                  <LinkIcon className="h-3.5 w-3.5" />
-                  Access Link
-                </Label>
-                <Input
-                  value={productForm.accessLink}
-                  onChange={(e) => setProductForm({ ...productForm, accessLink: e.target.value })}
-                  placeholder="e.g., ebook download link or login credentials"
-                  className="bg-slate-900 border-blue-500/30 text-white"
-                />
-                <p className="text-slate-500 text-xs mt-1">
-                  Only shown to the customer after they purchase this item.
-                </p>
+                <Label className="text-slate-300">Access Link / Credentials (admin only — shown to buyer after purchase)</Label>
+                <Input value={productForm.accessLink} onChange={(e) => setProductForm({ ...productForm, accessLink: e.target.value })} placeholder="e.g. https://drive.google.com/... or login details" className="bg-slate-900 border-blue-500/30 text-white" />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="inStock" checked={productForm.inStock} onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })} className="rounded bg-slate-900 border-blue-500/30" />
