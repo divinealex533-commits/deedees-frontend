@@ -22,11 +22,12 @@ function toProduct(item: any): Product {
     id: item.id,
     name: item.name,
     price: item.price,
-    imageUrl: item.image || 'https://via.placeholder.com/400x300?text=No+Image',
-    categoryId: item.category || 'Other',
+    imageUrl: item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
+    categoryId: item.categoryId || 'Other',
     inStock: item.inStock !== false && !item.sold,
     description: item.description || '',
     createdAt: item.createdAt,
+    accessLink: item.accessLink,
   };
 }
 
@@ -87,10 +88,12 @@ export function useStore() {
         inStock: product.inStock,
         accessLink: product.accessLink,
       });
+      await loadProducts();
+    },
     [loadProducts]
   );
 
- const updateProduct = useCallback(
+  const updateProduct = useCallback(
     async (id: string, updates: Partial<Product>) => {
       await api.updateItem(id, {
         name: updates.name,
@@ -105,7 +108,8 @@ export function useStore() {
     },
     [loadProducts]
   );
-const deleteProduct = useCallback(
+
+  const deleteProduct = useCallback(
     async (id: string) => {
       await api.deleteItem(id);
       await loadProducts();
@@ -120,6 +124,7 @@ const deleteProduct = useCallback(
     },
     [loadProducts]
   );
+
   // ---- Category operations (local/cosmetic only) ----
   const addCategory = useCallback((category: Omit<Category, 'id' | 'createdAt'>) => {
     const newCategory: Category = {
