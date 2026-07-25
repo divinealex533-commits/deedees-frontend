@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +16,10 @@ import {
   Clock,
   Upload,
   Check,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/lib/api';
 import type { Product } from '@/types';
 import type { User } from '@/hooks/useAuth';
 import type { Deposit } from '@/hooks/useWallet';
@@ -32,6 +34,13 @@ interface CustomerDashboardProps {
   onSubmitManualDeposit: (amount: number, file: File) => Promise<unknown>;
   onLogout: () => void;
   onUpdateProfile: (updates: Partial<User>) => void;
+}
+
+interface Order {
+  id: string;
+  purchasedAt: string;
+  price: number;
+  item: Product | null;
 }
 
 export function CustomerDashboard({
@@ -50,6 +59,27 @@ export function CustomerDashboard({
   const [editForm, setEditForm] = useState({ phone: user.phone });
   const [topUpAmount, setTopUpAmount] = useState('');
   const [manualFile, setManualFile] = useState<File | null>(null);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+
+  const loadOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    try {
+      const data = await api.getMyOrders();
+      setOrders(data.orders ?? []);
+    } catch (err) {
+      setOrdersError((err as Error).message);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const purchasedItems = products.filter((p) => purchasedItemIds.includes(p.id));
   const totalSpent = purchasedItems.reduce((sum, p) => sum + p.price, 0);
@@ -226,20 +256,53 @@ export function CustomerDashboard({
               <Card className="bg-slate-950 border-blue-500/20">
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-white mb-4">My Purchases</h3>
-                  {purchasedItems.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {purchasedItems.map((item) => (
-                        <div key={item.id} className="p-4 rounded-lg bg-slate-900/50 border border-blue-500/10">
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-32 object-cover rounded-md mb-3" />
-                          <p className="text-white font-medium">{item.name}</p>
-                          <p className="text-blue-400 font-semibold">{formatPrice(item.price)}</p>
-                        </div>
-                      ))}
+
+                  {ordersLoading && (
+                    <p className="text-slate-400 text-center py-8">Loading your orders…</p>
+                  )}
+
+                  {!ordersLoading && ordersError && (
+                    <div className="rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-sm px-4 py-3">
+                      {ordersError}
                     </div>
-                  ) : (
+                  )}
+
+                  {!ordersLoading && !ordersError && orders.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="h-16 w-16 text-slate-600 mx-auto mb-4" />
                       <p className="text-slate-400">You haven't purchased anything yet</p>
+                    </div>
+                  )}
+
+                  {!ordersLoading && !ordersError && orders.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {orders.map((order) => (
+                        <div key={order.id} className="p-4 rounded-lg bg-slate-900/50 border border-blue-500/10">
+                          {order.item?.imageUrl && (
+                            <img src={order.item.imageUrl} alt={order.item.name} className="w-full h-32 object-cover rounded-md mb-3" />
+                          )}
+                          <p className="text-white font-medium">{order.item?.name ?? 'Item unavailable'}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-blue-400 font-semibold">{formatPrice(order.price)}</p>
+                            <p className="text-slate-500 text-xs">
+                              {new Date(order.purchasedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          {order.item?.accessLink ? (
+                            <a
+                              href={order.item.accessLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-medium py-2 transition-all"
+                            >
+                              <LinkIcon className="h-4 w-4" />
+                              Access
+                            </a>
+                          ) : (
+                            <p className="mt-3 text-center text-slate-500 text-xs">No access link yet</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
