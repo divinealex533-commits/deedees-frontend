@@ -151,10 +151,10 @@ function App() {
             walletBalance={wallet.balance}
             onStartInstantDeposit={wallet.startInstantDeposit}
             onSubmitManualDeposit={wallet.submitManualDeposit}
-            onPurchase={async (itemIds) => {
-              for (const id of itemIds) {
+            onPurchase={async (items) => {
+              for (const item of items) {
                 // eslint-disable-next-line no-await-in-loop
-                await store.purchaseItem(id);
+                await store.purchaseItem(item.product.id, item.quantity);
               }
               await wallet.refresh();
               await auth.refresh();
