@@ -15,7 +15,7 @@ interface CheckoutModalProps {
   walletBalance: number;
   onStartInstantDeposit: (amount: number) => Promise<void>;
   onSubmitManualDeposit: (amount: number, file: File) => Promise<unknown>;
-  onPurchase: (itemIds: string[]) => Promise<void>;
+  onPurchase: (items: CartItem[]) => Promise<void>;
 }
 
 export function CheckoutModal({
@@ -46,7 +46,7 @@ export function CheckoutModal({
   const handleCompletePurchase = async () => {
     setIsProcessing(true);
     try {
-      await onPurchase(cart.map((item) => item.product.id));
+      await onPurchase(cart);
       toast.success('Purchase complete! Check your dashboard for details.');
     } catch (err) {
       toast.error((err as Error).message || 'Purchase failed');
@@ -108,8 +108,11 @@ export function CheckoutModal({
             <div className="space-y-2">
               {cart.map((item) => (
                 <div key={item.product.id} className="flex justify-between text-sm">
-                  <span className="text-slate-400">{item.product.name}</span>
-                  <span className="text-white">{formatPrice(item.product.price)}</span>
+                  <span className="text-slate-400">
+                    {item.product.name}
+                    {item.quantity > 1 ? ` × ${item.quantity}` : ''}
+                  </span>
+                  <span className="text-white">{formatPrice(item.product.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
