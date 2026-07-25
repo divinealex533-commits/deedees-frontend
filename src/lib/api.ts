@@ -24,10 +24,13 @@ async function request(path: string, options: RequestInit = {}) {
       ...(options.headers || {}),
     },
   });
+
   const data = await res.json().catch(() => ({}));
+
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`);
   }
+
   return data;
 }
 
@@ -86,6 +89,9 @@ export const api = {
       body: JSON.stringify({ itemId }),
     }),
 
+  // ---------- Orders (customer's own purchases, includes accessLink) ----------
+  getMyOrders: () => request("/api/my-orders"),
+
   // ---------- Wallet: instant (Paystack) ----------
   initializeInstantDeposit: (amount: number) =>
     request("/api/wallet/deposit/instant/initialize", {
@@ -102,11 +108,13 @@ export const api = {
     const formData = new FormData();
     formData.append("amount", String(amount));
     formData.append("screenshot", file);
+
     const res = await fetch(`${API_URL}/api/wallet/deposit/manual`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     });
+
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Something went wrong");
     return data;
