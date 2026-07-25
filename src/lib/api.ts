@@ -24,7 +24,6 @@ async function request(path: string, options: RequestInit = {}) {
       ...(options.headers || {}),
     },
   });
-
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`);
@@ -48,16 +47,20 @@ export const api = {
 
   me: () => request("/api/me"),
 
-  // ---------- Items ----------
+  // ---------- Items (public — no accessLink included) ----------
   getItems: () => request("/api/items"),
+
+  // ---------- Items (admin — full data, including accessLink) ----------
+  getAdminItems: () => request("/api/admin/items"),
 
   createItem: (item: {
     name: string;
     description?: string;
     price: number;
-    image?: string;
-    category?: string;
+    imageUrl?: string;
+    categoryId?: string;
     inStock?: boolean;
+    accessLink?: string;
   }) =>
     request("/api/items", {
       method: "POST",
@@ -69,6 +72,9 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(updates),
     }),
+
+  toggleItemStock: (id: string) =>
+    request(`/api/items/${id}/toggle-stock`, { method: "POST" }),
 
   deleteItem: (id: string) =>
     request(`/api/items/${id}`, { method: "DELETE" }),
@@ -96,7 +102,6 @@ export const api = {
     const formData = new FormData();
     formData.append("amount", String(amount));
     formData.append("screenshot", file);
-
     const res = await fetch(`${API_URL}/api/wallet/deposit/manual`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
