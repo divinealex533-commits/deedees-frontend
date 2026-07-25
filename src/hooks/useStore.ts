@@ -82,31 +82,30 @@ export function useStore() {
         name: product.name,
         description: product.description,
         price: product.price,
-        image: product.imageUrl,
-        category: product.categoryId,
+        imageUrl: product.imageUrl,
+        categoryId: product.categoryId,
         inStock: product.inStock,
+        accessLink: product.accessLink,
       });
-      await loadProducts();
-    },
     [loadProducts]
   );
 
-  const updateProduct = useCallback(
+ const updateProduct = useCallback(
     async (id: string, updates: Partial<Product>) => {
       await api.updateItem(id, {
         name: updates.name,
         description: updates.description,
         price: updates.price,
-        image: updates.imageUrl,
-        category: updates.categoryId,
+        imageUrl: updates.imageUrl,
+        categoryId: updates.categoryId,
         inStock: updates.inStock,
+        accessLink: updates.accessLink,
       });
       await loadProducts();
     },
     [loadProducts]
   );
-
-  const deleteProduct = useCallback(
+const deleteProduct = useCallback(
     async (id: string) => {
       await api.deleteItem(id);
       await loadProducts();
@@ -116,14 +115,11 @@ export function useStore() {
 
   const toggleStock = useCallback(
     async (id: string) => {
-      const product = products.find((p) => p.id === id);
-      if (!product) return;
-      await api.updateItem(id, { inStock: !product.inStock });
+      await api.toggleItemStock(id);
       await loadProducts();
     },
-    [products, loadProducts]
+    [loadProducts]
   );
-
   // ---- Category operations (local/cosmetic only) ----
   const addCategory = useCallback((category: Omit<Category, 'id' | 'createdAt'>) => {
     const newCategory: Category = {
