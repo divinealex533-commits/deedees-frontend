@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, User, Mail, Phone, Lock, Shield } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, Lock, Shield, Gift } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AuthModalProps {
@@ -11,9 +11,10 @@ interface AuthModalProps {
   onClose: () => void;
   onLogin: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   onSignup: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; message: string }>;
+  pendingReferralCode?: string | null;
 }
 
-export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, onLogin, onSignup, pendingReferralCode }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState('login');
   const [showPassword, setShowPassword] = useState(false);
   
@@ -90,6 +91,15 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup }: AuthModalProps
             </DialogTitle>
           </div>
         </DialogHeader>
+
+        {pendingReferralCode && activeTab === 'signup' && (
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+            <Gift className="h-5 w-5 text-green-400 flex-shrink-0" />
+            <p className="text-green-400 text-sm">
+              You were invited by a friend — sign up now to get <span className="font-semibold">5% off</span> your first order!
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-4 p-1 bg-slate-900 rounded-lg">
           <button
