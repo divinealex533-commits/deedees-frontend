@@ -50,10 +50,10 @@ export const api = {
 
   me: () => request("/api/me"),
 
-  // ---------- Items (public — no credential pool included) ----------
+  // ---------- Items (public — no accessLink included) ----------
   getItems: () => request("/api/items"),
 
-  // ---------- Items (admin — full data, including the credential pool) ----------
+  // ---------- Items (admin — full data, including accessLink) ----------
   getAdminItems: () => request("/api/admin/items"),
 
   createItem: (item: {
@@ -63,7 +63,8 @@ export const api = {
     imageUrl?: string;
     categoryId?: string;
     inStock?: boolean;
-    accessLinks?: string[];
+    accessLink?: string;
+    quantity?: number;
   }) =>
     request("/api/items", {
       method: "POST",
@@ -76,14 +77,6 @@ export const api = {
       body: JSON.stringify(updates),
     }),
 
-  // Tops up an item's credential pool WITHOUT replacing existing unused
-  // (or already-assigned) credentials — use this to restock.
-  addAccessLinks: (id: string, accessLinks: string[]) =>
-    request(`/api/items/${id}/access-links`, {
-      method: "POST",
-      body: JSON.stringify({ accessLinks }),
-    }),
-
   toggleItemStock: (id: string) =>
     request(`/api/items/${id}/toggle-stock`, { method: "POST" }),
 
@@ -91,13 +84,13 @@ export const api = {
     request(`/api/items/${id}`, { method: "DELETE" }),
 
   // ---------- Purchase ----------
-  purchaseItem: (itemId: string) =>
+  purchaseItem: (itemId: string, quantity: number = 1) =>
     request("/api/purchase", {
       method: "POST",
-      body: JSON.stringify({ itemId }),
+      body: JSON.stringify({ itemId, quantity }),
     }),
 
-  // ---------- Orders (customer's own purchases, includes their assigned credential) ----------
+  // ---------- Orders (customer's own purchases, includes accessLink) ----------
   getMyOrders: () => request("/api/my-orders"),
 
   // ---------- Wallet: instant (Paystack) ----------
