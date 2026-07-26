@@ -18,6 +18,10 @@ export interface User {
 // admin and won't follow the customer to another device.
 const PHONE_KEY = 'deedee_local_phone';
 
+// If someone arrives via a referral link (?ref=CODE), we remember the code
+// here until they sign up, so it can travel with them across pages.
+const REFERRAL_KEY = 'deedee_pending_referral';
+
 function getLocalPhone(email: string): string {
   if (typeof window === 'undefined') return '';
   try {
@@ -55,9 +59,23 @@ function toUser(apiUser: any): User {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [pendingReferralCode, setPendingReferralCode] = useState<string | null>(null);
 
-  // On mount, if we have a saved token, ask the backend who we are.
+  // On mount: check for a saved login token, AND check the URL for a
+  // referral code (?ref=CODE) to remember until the person signs up.
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const refFromUrl = params.get('ref');
+      if (refFromUrl) {
+        localStorage.setItem(REFERRAL_KEY, refFromUrl.toUpperCase());
+        // Clean the URL so refreshing/sharing doesn't keep re-triggering this
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+      const stored = localStorage.getItem(REFERRAL_KEY);
+      if (stored) setPendingReferralCode(stored);
+    }
+
     (async () => {
       const token = getToken();
       if (!token) {
@@ -93,10 +111,16 @@ export function useAuth() {
       password: string
     ): Promise<{ success: boolean; message: string }> => {
       try {
-        const data = await api.signup(name, email, password);
+        const referralCode =
+          typeof window !== 'undefined' ? localStorage.getItem(REFERRAL_KEY) || undefined : undefined;
+        const data = await api.signup(name, email, password, referralCode);
         setToken(data.token);
         setLocalPhone(email, phone);
         setUser(toUser(data.user));
+        // The code has done its job — clear it so it doesn't linger for
+        // a future, unrelated signup on this device.
+        if (typeof window !== 'undefined') localStorage.removeItem(REFERRAL_KEY);
+        setPendingReferralCode(null);
         return { success: true, message: 'Account created successfully!' };
       } catch (err) {
         return { success: false, message: (err as Error).message };
@@ -145,6 +169,7 @@ export function useAuth() {
     user,
     isLoaded,
     isAuthenticated: !!user,
+    pendingReferralCode,
     signup,
     login,
     logout,
