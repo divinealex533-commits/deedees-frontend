@@ -209,6 +209,7 @@ function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLogin={auth.login}
         onSignup={auth.signup}
+        pendingReferralCode={auth.pendingReferralCode}
       />
 
       <AdminLoginModal
