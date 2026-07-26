@@ -40,6 +40,7 @@ interface Order {
   id: string;
   purchasedAt: string;
   price: number;
+  accessLink: string | null; // THIS buyer's own credential — never shared
   item: Product | null;
 }
 
@@ -288,9 +289,9 @@ export function CustomerDashboard({
                               {new Date(order.purchasedAt).toLocaleDateString()}
                             </p>
                           </div>
-                          {order.item?.accessLink ? (
+                          {order.accessLink ? (
                             <a
-                              href={order.item.accessLink}
+                              href={order.accessLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="mt-3 flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-medium py-2 transition-all"
@@ -299,7 +300,7 @@ export function CustomerDashboard({
                               Access
                             </a>
                           ) : (
-                            <p className="mt-3 text-center text-slate-500 text-xs">No access link yet</p>
+                            <p className="mt-3 text-center text-slate-500 text-xs">No access details for this order</p>
                           )}
                         </div>
                       ))}
