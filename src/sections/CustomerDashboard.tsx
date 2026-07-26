@@ -289,31 +289,15 @@ export function CustomerDashboard({
                             </p>
                           </div>
                           {order.item?.accessLink ? (
-                            /^https?:\/\//i.test(order.item.accessLink) ? (
-                              <a
-                                href={order.item.accessLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-3 flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-medium py-2 transition-all"
-                              >
-                                <LinkIcon className="h-4 w-4" />
-                                Access
-                              </a>
-                            ) : (
-                              <div className="mt-3 rounded-lg bg-slate-800 border border-blue-500/20 p-3">
-                                <p className="text-slate-400 text-xs mb-1">Login details</p>
-                                <p className="text-white text-sm break-all whitespace-pre-wrap">{order.item.accessLink}</p>
-                                <button
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(order.item!.accessLink!);
-                                    toast.success('Copied to clipboard');
-                                  }}
-                                  className="mt-2 text-cyan-400 text-xs underline"
-                                >
-                                  Copy
-                                </button>
-                              </div>
-                            )
+                            <a
+                              href={order.item.accessLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-3 flex items-center justify-center gap-2 w-full rounded-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-medium py-2 transition-all"
+                            >
+                              <LinkIcon className="h-4 w-4" />
+                              Access
+                            </a>
                           ) : (
                             <p className="mt-3 text-center text-slate-500 text-xs">No access link yet</p>
                           )}
