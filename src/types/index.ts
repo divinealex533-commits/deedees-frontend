@@ -12,6 +12,7 @@ export interface Product {
      accessLink?: string;
      quantity?: number;
 }
+
 export interface Category {
   id: string;
   name: string;
