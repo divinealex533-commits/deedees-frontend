@@ -9,11 +9,10 @@ export interface Product {
      createdAt: string;
      isDigital?: boolean;
      fileUrl?: string;
-     accessLinks?: string[];
-     stockCount?: number;
-     assignedCredentials?: string[];
+     accessLink?: string;
+     quantity?: number;
 }
-     
+
 export interface Category {
   id: string;
   name: string;
