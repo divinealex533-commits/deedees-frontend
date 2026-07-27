@@ -47,10 +47,10 @@ export const api = {
 
   me: () => request("/api/me"),
 
-  // ---------- Items (public — no accessLink included) ----------
+  // ---------- Items (public — credentials stripped, stockCount included) ----------
   getItems: () => request("/api/items"),
 
-  // ---------- Items (admin — full data, including accessLink) ----------
+  // ---------- Items (admin — full data, including the credential pool) ----------
   getAdminItems: () => request("/api/admin/items"),
 
   createItem: (item: {
@@ -60,8 +60,7 @@ export const api = {
     imageUrl?: string;
     categoryId?: string;
     inStock?: boolean;
-    accessLink?: string;
-    quantity?: number;
+    accessLinks?: string[];
   }) =>
     request("/api/items", {
       method: "POST",
@@ -72,6 +71,14 @@ export const api = {
     request(`/api/items/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
+    }),
+
+  // Tops up an item's credential pool without disturbing anything
+  // already assigned to past buyers or already waiting in the pool.
+  addAccessLinks: (id: string, credentials: string[]) =>
+    request(`/api/items/${id}/add-access-links`, {
+      method: "POST",
+      body: JSON.stringify({ credentials }),
     }),
 
   toggleItemStock: (id: string) =>
@@ -87,7 +94,7 @@ export const api = {
       body: JSON.stringify({ itemId, quantity }),
     }),
 
-  // ---------- Orders (customer's own purchases, includes accessLink) ----------
+  // ---------- Orders (customer's own purchases, includes assignedCredentials) ----------
   getMyOrders: () => request("/api/my-orders"),
 
   // ---------- Referrals ----------
