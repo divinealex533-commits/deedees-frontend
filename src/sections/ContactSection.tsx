@@ -1,10 +1,25 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageCircle, Phone, Clock, Shield, Headphones, Zap } from 'lucide-react';
+import { MessageCircle, Phone, Clock, Shield, Headphones, Star } from 'lucide-react';
 
 export function ContactSection() {
   const whatsappNumbers = ['07046019436', '09035206681'];
   const supportNumbers = ['09035206681', '09139382082'];
+
+  const testimonials = [
+    {
+      name: 'Chidinma A.',
+      quote: 'Grew my page way faster than I expected. Support actually replies too.',
+    },
+    {
+      name: 'Emeka O.',
+      quote: 'Bought an account and it was exactly as described. No wahala at all.',
+    },
+    {
+      name: 'Blessing U.',
+      quote: 'Reliable and secure — my go-to for social media growth in Nigeria now.',
+    },
+  ];
 
   return (
     <section id="contact" className="py-20 bg-slate-950 relative overflow-hidden">
@@ -119,22 +134,22 @@ export function ContactSection() {
             <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-500/30">
               <CardContent className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Zap className="h-5 w-5 text-cyan-400" />
-                  <h4 className="text-lg font-semibold text-white">Why Choose DeeDee's Marketplace?</h4>
+                  <Star className="h-5 w-5 text-cyan-400" />
+                  <h4 className="text-lg font-semibold text-white">What Customers Are Saying</h4>
                 </div>
-                <ul className="space-y-3 text-slate-300">
-                  {[
-                    'Hand-picked clothes, bags, and books',
-                    'Secure wallet-based checkout',
-                    'Direct communication, no middlemen',
-                    'Free educational videos on business & TikTok ads',
-                  ].map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-3">
-                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-cyan-400"></span>
-                      {item}
-                    </li>
+                <div className="space-y-4">
+                  {testimonials.map((t, idx) => (
+                    <div key={idx} className="border-l-2 border-cyan-500/40 pl-4">
+                      <div className="flex items-center gap-0.5 mb-1">
+                        {[...Array(5)].map((_, starIdx) => (
+                          <Star key={starIdx} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                        ))}
+                      </div>
+                      <p className="text-slate-300 text-sm italic">"{t.quote}"</p>
+                      <p className="text-slate-500 text-xs mt-1">— {t.name}</p>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </CardContent>
             </Card>
           </div>
