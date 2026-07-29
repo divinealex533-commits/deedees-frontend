@@ -1,25 +1,33 @@
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MessageCircle, Phone, Clock, Shield, Headphones, Star } from 'lucide-react';
+
+const ALL_TESTIMONIALS = [
+  { name: 'Chidinma A.', quote: 'Grew my page way faster than I expected. Support actually replies too.' },
+  { name: 'Emeka O.', quote: 'Bought an account and it was exactly as described. No wahala at all.' },
+  { name: 'Blessing U.', quote: 'Reliable and secure — my go-to for social media growth in Nigeria now.' },
+  { name: 'Tunde F.', quote: 'Engagement felt real, not bot activity. My followers actually interact now.' },
+  { name: 'Amaka N.', quote: 'Fast delivery and the credentials worked immediately. Very smooth process.' },
+  { name: 'Ibrahim S.', quote: 'Been using them for months for my brand page. Consistent results every time.' },
+  { name: 'Ngozi C.', quote: 'Customer service on Telegram was quick and actually helpful, not just automated replies.' },
+  { name: 'Segun A.', quote: 'Wallet checkout made everything easy. No stress moving money around.' },
+  { name: 'Funke L.', quote: 'My TikTok views jumped within days. Would recommend to any Nigerian creator.' },
+  { name: 'David K.', quote: 'Genuinely trustworthy. I was skeptical at first but they delivered exactly what was promised.' },
+];
+
+// Picks n random, non-repeating items from the pool.
+function pickRandom<T>(arr: T[], n: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
 
 export function ContactSection() {
   const whatsappNumbers = ['07046019436', '09035206681'];
   const supportNumbers = ['09035206681', '09139382082'];
 
-  const testimonials = [
-    {
-      name: 'Chidinma A.',
-      quote: 'Grew my page way faster than I expected. Support actually replies too.',
-    },
-    {
-      name: 'Emeka O.',
-      quote: 'Bought an account and it was exactly as described. No wahala at all.',
-    },
-    {
-      name: 'Blessing U.',
-      quote: 'Reliable and secure — my go-to for social media growth in Nigeria now.',
-    },
-  ];
+  // Randomized once per page load, then stays put while the user browses.
+  const testimonials = useMemo(() => pickRandom(ALL_TESTIMONIALS, 3), []);
 
   return (
     <section id="contact" className="py-20 bg-slate-950 relative overflow-hidden">
