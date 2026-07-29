@@ -47,33 +47,38 @@ export function HeroSection() {
         </div>
 
         {/* Animated Headline */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
           <span className="relative">
-            DEEDEE'S
+            SOCIAL MEDIA
             <span className="absolute -inset-1 bg-blue-500/20 blur-xl rounded-full animate-pulse"></span>
           </span>
           <br />
           <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent animate-gradient">
-            MARKETPLACE
+            GROWTH IN NIGERIA
           </span>
         </h1>
 
+        {/* Flag */}
+        <div className="text-3xl mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
+          🇳🇬
+        </div>
+
         {/* Animated Sub-headline */}
         <p className="text-xl sm:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
-          Quality Clothes, Bags & Books — Curated for You
+          Real Growth for Nigerian Brands & Influencers
         </p>
 
         {/* Animated Body */}
         <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
-          Shop hand-picked clothing, bags, and books, and check out our free educational videos on business and TikTok ads while you browse.
+          Join thousands of brands and influencers who have boosted their social media presence with DeeDee's Marketplace — real, reliable growth backed by secure wallet checkout.
         </p>
 
         {/* Animated Trust badges */}
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-10 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-400">
           {[
-            { icon: CheckCircle, text: 'Secure Wallet Checkout', color: 'text-green-400' },
-            { icon: CheckCircle, text: 'Hand-Picked Items', color: 'text-blue-400' },
-            { icon: CheckCircle, text: 'No Middlemen', color: 'text-cyan-400' },
+            { icon: CheckCircle, text: '24/7 Support', color: 'text-green-400' },
+            { icon: CheckCircle, text: '100% Real Engagement', color: 'text-blue-400' },
+            { icon: CheckCircle, text: 'Secure Payment', color: 'text-cyan-400' },
             { icon: CheckCircle, text: 'Fast Delivery', color: 'text-purple-400' },
           ].map((badge, index) => (
             <div 
