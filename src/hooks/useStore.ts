@@ -8,9 +8,8 @@ const CART_KEY = 'deedee_cart';
 // on this device only (not synced to the backend) — add/edit/remove them
 // here as needed for your shop.
 const defaultCategories: Category[] = [
-  { id: 'Clothes', name: 'Clothes', description: 'Shirts, dresses, jackets and more', icon: 'Shield', createdAt: new Date().toISOString() },
-  { id: 'Bags', name: 'Bags', description: 'Handbags, backpacks and totes', icon: 'Shield', createdAt: new Date().toISOString() },
-  { id: 'Books', name: 'Books', description: 'Books and reading material', icon: 'Shield', createdAt: new Date().toISOString() },
+  { id: 'Social Media Growth', name: 'Social Media Growth', description: 'Followers, likes, views and engagement boosts', icon: 'Shield', createdAt: new Date().toISOString() },
+  { id: 'Buy Account', name: 'Buy Account', description: 'Verified, ready-to-use social media accounts', icon: 'Shield', createdAt: new Date().toISOString() },
   { id: 'Other', name: 'Other', description: 'Everything else', icon: 'Shield', createdAt: new Date().toISOString() },
 ];
 
