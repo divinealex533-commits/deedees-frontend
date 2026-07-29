@@ -22,7 +22,6 @@ import {
   LogOut,
   Shield,
   Wallet,
-  KeyRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -47,15 +46,6 @@ interface AdminDashboardProps {
   onUpdateCategory: (id: string, updates: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
   onLogout: () => void;
-}
-
-// Splits a textarea's raw text into a clean list of credentials —
-// one per line, blank lines and stray whitespace removed.
-function parseCredentialLines(text: string): string[] {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
 }
 
 export function AdminDashboard({
@@ -98,16 +88,6 @@ export function AdminDashboard({
     loadDeposits();
   }, [loadSales, loadDeposits]);
 
-  useEffect(() => {
-    if (!isAwaitingNewCategory) return;
-    const match = categories.find((c) => c.name === newCategoryName.trim());
-    if (match) {
-      setIsAwaitingNewCategory(false);
-      void finishSaveProduct(match.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories, isAwaitingNewCategory, newCategoryName]);
-
   const handleApproveDeposit = async (id: string) => {
     try {
       await api.approveDeposit(id);
@@ -138,11 +118,9 @@ export function AdminDashboard({
     categoryId: '',
     description: '',
     inStock: true,
+    accessLink: '',
+    quantity: '1',
   });
-  // Raw textarea text — one credential per line. Only used when ADDING a
-  // brand-new product (its initial stock) or topping up an existing one.
-  const [stockText, setStockText] = useState('');
-  const [isAddingStock, setIsAddingStock] = useState(false);
 
   // Category form state
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
@@ -181,6 +159,8 @@ export function AdminDashboard({
         categoryId: product.categoryId,
         description: product.description || '',
         inStock: product.inStock,
+        accessLink: product.accessLink || '',
+        quantity: (product.quantity ?? 1).toString(),
       });
     } else {
       setEditingProduct(null);
@@ -191,47 +171,55 @@ export function AdminDashboard({
         categoryId: categories[0]?.id || '',
         description: '',
         inStock: true,
+        accessLink: '',
+        quantity: '1',
       });
     }
-    setStockText('');
-    setIsAddingStock(false);
     setNewCategoryName('');
     setIsProductDialogOpen(true);
   };
 
-  const finishSaveProduct = async (categoryId: string) => {
-    const productData: Record<string, unknown> = {
-      name: productForm.name,
-      price: parseInt(productForm.price),
-      imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
-      categoryId,
-      description: productForm.description,
-      inStock: productForm.inStock,
-    };
+  const finishSaveProduct = useCallback(
+    async (categoryId: string) => {
+      const qty = parseInt(productForm.quantity) || 0;
+      const productData = {
+        name: productForm.name,
+        price: parseInt(productForm.price),
+        imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
+        categoryId,
+        description: productForm.description,
+        inStock: qty > 0,
+        accessLink: productForm.accessLink,
+        quantity: qty,
+      };
 
-    // Only send accessLinks when creating a NEW product — this seeds its
-    // initial stock. Editing an existing product never touches the pool
-    // here; use "Add Stock" below instead so past buyers' credentials
-    // (and any already-waiting stock) are never wiped out.
-    if (!editingProduct) {
-      productData.accessLinks = parseCredentialLines(stockText);
-    }
-
-    try {
-      if (editingProduct) {
-        await onUpdateProduct(editingProduct.id, productData);
-        toast.success('Product updated successfully');
-      } else {
-        await onAddProduct(productData as Omit<Product, 'id' | 'createdAt'>);
-        toast.success('Product added successfully');
+      try {
+        if (editingProduct) {
+          await onUpdateProduct(editingProduct.id, productData);
+          toast.success('Product updated successfully');
+        } else {
+          await onAddProduct(productData);
+          toast.success('Product added successfully');
+        }
+        setIsProductDialogOpen(false);
+        setNewCategoryName('');
+      } catch (err) {
+        toast.error((err as Error).message);
       }
-      setIsProductDialogOpen(false);
-      setNewCategoryName('');
-      setStockText('');
-    } catch (err) {
-      toast.error((err as Error).message);
+    },
+    [productForm, editingProduct, onUpdateProduct, onAddProduct]
+  );
+
+  // Once the new category we just asked to create shows up in the
+  // categories list, finish saving the product against it.
+  useEffect(() => {
+    if (!isAwaitingNewCategory) return;
+    const match = categories.find((c) => c.name === newCategoryName.trim());
+    if (match) {
+      setIsAwaitingNewCategory(false);
+      void finishSaveProduct(match.id);
     }
-  };
+  }, [categories, isAwaitingNewCategory, newCategoryName, finishSaveProduct]);
 
   const handleSaveProduct = async () => {
     if (!productForm.name.trim() || !productForm.price || !productForm.categoryId) {
@@ -250,26 +238,6 @@ export function AdminDashboard({
     }
 
     await finishSaveProduct(productForm.categoryId);
-  };
-
-  const handleAddStock = async () => {
-    if (!editingProduct) return;
-    const credentials = parseCredentialLines(stockText);
-    if (credentials.length === 0) {
-      toast.error('Enter at least one credential (one per line)');
-      return;
-    }
-    try {
-      setIsAddingStock(true);
-      const result = await api.addAccessLinks(editingProduct.id, credentials);
-      toast.success(result.message || `Added ${credentials.length} credential(s)`);
-      setStockText('');
-      setIsProductDialogOpen(false);
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setIsAddingStock(false);
-    }
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -328,10 +296,6 @@ export function AdminDashboard({
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const editingStockCount = editingProduct
-    ? editingProduct.accessLinks?.length ?? editingProduct.stockCount ?? 0
-    : 0;
 
   return (
     <div className="min-h-screen bg-black pt-20 pb-10 relative overflow-hidden">
@@ -510,41 +474,38 @@ export function AdminDashboard({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProducts.map((product) => {
-                const stockCount = product.accessLinks?.length ?? product.stockCount ?? 0;
-                return (
-                  <Card key={product.id} className="bg-slate-950 border-blue-500/20">
-                    <div className="aspect-video relative overflow-hidden">
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-                        <Badge className={product.inStock && stockCount > 0 ? 'bg-green-500' : 'bg-red-500'}>
-                          {product.inStock && stockCount > 0 ? 'In Stock' : 'Out of Stock'}
-                        </Badge>
-                        <Badge className="bg-slate-800/90 text-slate-300 flex items-center gap-1">
-                          <KeyRound className="h-3 w-3" />
-                          {stockCount} left
-                        </Badge>
-                      </div>
+              {filteredProducts.map((product) => (
+                <Card key={product.id} className="bg-slate-950 border-blue-500/20">
+                  <div className="aspect-video relative overflow-hidden">
+                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 right-2">
+                      <Badge className={product.inStock ? 'bg-green-500' : 'bg-red-500'}>
+                        {product.inStock
+                          ? product.quantity != null
+                            ? `${product.quantity} in stock`
+                            : 'In Stock'
+                          : 'Out of Stock'}
+                      </Badge>
                     </div>
-                    <CardContent className="p-4">
-                      <h3 className="text-white font-semibold line-clamp-1">{product.name}</h3>
-                      <p className="text-blue-400 font-bold">{formatPrice(product.price)}</p>
-                      <div className="flex items-center gap-2 mt-3">
-                        <Button variant="outline" size="sm" onClick={() => handleOpenProductDialog(product)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">
-                          <Edit2 className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => onToggleStock(product.id)} className={`border-blue-500/30 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}>
-                          {product.inStock ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="text-white font-semibold line-clamp-1">{product.name}</h3>
+                    <p className="text-blue-400 font-bold">{formatPrice(product.price)}</p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <Button variant="outline" size="sm" onClick={() => handleOpenProductDialog(product)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">
+                        <Edit2 className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => onToggleStock(product.id)} className={`border-blue-500/30 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}>
+                        {product.inStock ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         )}
@@ -667,7 +628,7 @@ export function AdminDashboard({
 
         {/* Product Dialog */}
         <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-          <DialogContent className="max-w-lg bg-slate-950 border-blue-500/30 max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-lg bg-slate-950 border-blue-500/30">
             <DialogHeader>
               <DialogTitle className="text-white">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
@@ -705,59 +666,14 @@ export function AdminDashboard({
                 <Label className="text-slate-300">Description</Label>
                 <textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="Product description..." rows={3} className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 resize-none" />
               </div>
-
-              {/* Stock / credentials */}
-              {!editingProduct ? (
-                <div>
-                  <Label className="text-slate-300 flex items-center gap-1.5">
-                    <KeyRound className="h-3.5 w-3.5" />
-                    Stock — one credential per line
-                  </Label>
-                  <textarea
-                    value={stockText}
-                    onChange={(e) => setStockText(e.target.value)}
-                    placeholder={'ebooklink.com/abc123\nuser1@example.com : pass123\nuser2@example.com : pass456'}
-                    rows={4}
-                    className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 font-mono text-sm resize-none"
-                  />
-                  <p className="text-slate-500 text-xs mt-1">
-                    Each line becomes one unit of stock — each buyer gets a different line, removed from the pool once assigned. Leave blank if this item has no digital access to hand out.
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-blue-500/20 bg-slate-900/50 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-slate-300 flex items-center gap-1.5">
-                      <KeyRound className="h-3.5 w-3.5" />
-                      Stock remaining
-                    </Label>
-                    <Badge className="bg-blue-500/20 text-blue-400">{editingStockCount} unused</Badge>
-                  </div>
-                  <p className="text-slate-500 text-xs">
-                    Add more credentials below to top up stock. This won't affect credentials already assigned to past buyers or already waiting in the pool.
-                  </p>
-                  <textarea
-                    value={stockText}
-                    onChange={(e) => setStockText(e.target.value)}
-                    placeholder={'newlink.com/xyz789\nuser3@example.com : pass789'}
-                    rows={3}
-                    className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 font-mono text-sm resize-none"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddStock}
-                    disabled={isAddingStock}
-                    className="w-full border-blue-500/30 text-white hover:bg-blue-500/10"
-                  >
-                    {isAddingStock ? 'Adding…' : 'Add Stock'}
-                  </Button>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="inStock" checked={productForm.inStock} onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })} className="rounded bg-slate-900 border-blue-500/30" />
-                <Label htmlFor="inStock" className="text-slate-300 cursor-pointer">In Stock (manual override)</Label>
+              <div>
+                <Label className="text-slate-300">Access Link / Credentials (admin only — shown to buyer after purchase)</Label>
+                <Input value={productForm.accessLink} onChange={(e) => setProductForm({ ...productForm, accessLink: e.target.value })} placeholder="e.g. https://drive.google.com/... or login details" className="bg-slate-900 border-blue-500/30 text-white" />
+              </div>
+              <div>
+                <Label className="text-slate-300">Quantity Available *</Label>
+                <Input type="number" min="0" value={productForm.quantity} onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })} placeholder="e.g., 200" className="bg-slate-900 border-blue-500/30 text-white" />
+                <p className="text-slate-500 text-xs mt-1">Decreases automatically as customers buy. Set to 0 to mark out of stock.</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setIsProductDialogOpen(false)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">Cancel</Button>
