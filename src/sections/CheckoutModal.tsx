@@ -18,6 +18,16 @@ interface CheckoutModalProps {
   onPurchase: (items: CartItem[]) => Promise<void>;
 }
 
+// Telegram's brand mark isn't in lucide-react, so it's inlined here as a
+// small SVG that inherits the surrounding text color.
+function TelegramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M21.94 4.6c.24-1.03-.75-1.9-1.72-1.53L2.4 10.13c-1.01.4-1 1.87.02 2.24l4.28 1.57 1.65 5.3c.2.63 1 .8 1.45.32l2.4-2.55 4.46 3.35c.83.62 2 .17 2.24-.85L21.94 4.6zM8.3 13.1l9.3-6.02c.3-.2.6.2.34.44l-7.5 6.9-.3 3.13-1.5-4.02z" />
+    </svg>
+  );
+}
+
 export function CheckoutModal({
   isOpen,
   onClose,
@@ -102,6 +112,17 @@ export function CheckoutModal({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Support link */}
+          <a
+            href="https://t.me/deedeesmarketsupport"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+          >
+            <TelegramIcon className="h-4 w-4" />
+            Need help with your order? Chat with us on Telegram
+          </a>
+
           {/* Order Summary */}
           <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/20">
             <h3 className="text-white font-semibold mb-3">Order Summary</h3>
