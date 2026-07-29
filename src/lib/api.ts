@@ -65,10 +65,19 @@ export const api = {
     inStock?: boolean;
     accessLink?: string;
     quantity?: number;
+    accessLinks?: string[];
   }) =>
     request("/api/items", {
       method: "POST",
       body: JSON.stringify(item),
+    }),
+
+  // Tops up a product's credential pool — each line becomes one unit of
+  // stock, and each buyer gets a different line, consumed on purchase.
+  addCredentials: (id: string, credentials: string[]) =>
+    request(`/api/items/${id}/add-access-links`, {
+      method: "POST",
+      body: JSON.stringify({ credentials }),
     }),
 
   updateItem: (id: string, updates: Record<string, unknown>) =>
