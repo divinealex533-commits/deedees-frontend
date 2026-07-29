@@ -51,7 +51,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
             Available <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Accounts</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Browse our selection of clothes, bags, and books
+            Browse our social media growth services and accounts
           </p>
         </div>
 
