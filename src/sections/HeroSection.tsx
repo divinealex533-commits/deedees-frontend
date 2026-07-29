@@ -49,22 +49,20 @@ export function HeroSection() {
         {/* Animated Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100">
           <span className="relative">
-            SOCIAL MEDIA
+            DEEDEE'S
             <span className="absolute -inset-1 bg-blue-500/20 blur-xl rounded-full animate-pulse"></span>
           </span>
           <br />
           <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent animate-gradient">
-            GROWTH IN NIGERIA
+            MARKETPLACE
           </span>
         </h1>
 
-        {/* Flag */}
-        <div className="text-3xl mb-6 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-150">
-          🇳🇬
-        </div>
-
         {/* Animated Sub-headline */}
-        <p className="text-xl sm:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
+        <p className="text-xl sm:text-2xl text-slate-300 mb-2 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
+          Social Media Growth in Nigeria 🇳🇬
+        </p>
+        <p className="text-lg text-slate-400 mb-8 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
           Real Growth for Nigerian Brands & Influencers
         </p>
 
