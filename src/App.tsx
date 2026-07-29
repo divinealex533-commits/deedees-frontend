@@ -207,7 +207,13 @@ function App() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onLogin={auth.login}
+        onLogin={async (email, password) => {
+          const result = await auth.login(email, password);
+          if (result.success && result.user?.isAdmin) {
+            setView('admin');
+          }
+          return result;
+        }}
         onSignup={auth.signup}
         pendingReferralCode={auth.pendingReferralCode}
       />
