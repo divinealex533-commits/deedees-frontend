@@ -24,19 +24,22 @@ async function request(path: string, options: RequestInit = {}) {
       ...(options.headers || {}),
     },
   });
+
   const data = await res.json().catch(() => ({}));
+
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`);
   }
+
   return data;
 }
 
 // ---------- Auth ----------
 export const api = {
-  signup: (name: string, email: string, password: string, referralCode?: string) =>
+  signup: (name: string, email: string, password: string) =>
     request("/api/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, referralCode }),
+      body: JSON.stringify({ name, email, password }),
     }),
 
   login: (email: string, password: string) =>
@@ -47,10 +50,10 @@ export const api = {
 
   me: () => request("/api/me"),
 
-  // ---------- Items (public — credentials stripped, stockCount included) ----------
+  // ---------- Items (public — no accessLink included) ----------
   getItems: () => request("/api/items"),
 
-  // ---------- Items (admin — full data, including the credential pool) ----------
+  // ---------- Items (admin — full data, including accessLink) ----------
   getAdminItems: () => request("/api/admin/items"),
 
   createItem: (item: {
@@ -60,7 +63,8 @@ export const api = {
     imageUrl?: string;
     categoryId?: string;
     inStock?: boolean;
-    accessLinks?: string[];
+    accessLink?: string;
+    quantity?: number;
   }) =>
     request("/api/items", {
       method: "POST",
@@ -71,14 +75,6 @@ export const api = {
     request(`/api/items/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
-    }),
-
-  // Tops up an item's credential pool without disturbing anything
-  // already assigned to past buyers or already waiting in the pool.
-  addAccessLinks: (id: string, credentials: string[]) =>
-    request(`/api/items/${id}/add-access-links`, {
-      method: "POST",
-      body: JSON.stringify({ credentials }),
     }),
 
   toggleItemStock: (id: string) =>
@@ -94,11 +90,8 @@ export const api = {
       body: JSON.stringify({ itemId, quantity }),
     }),
 
-  // ---------- Orders (customer's own purchases, includes assignedCredentials) ----------
+  // ---------- Orders (customer's own purchases, includes accessLink) ----------
   getMyOrders: () => request("/api/my-orders"),
-
-  // ---------- Referrals ----------
-  getMyReferrals: () => request("/api/my-referrals"),
 
   // ---------- Wallet: instant (Paystack) ----------
   initializeInstantDeposit: (amount: number) =>
@@ -116,11 +109,13 @@ export const api = {
     const formData = new FormData();
     formData.append("amount", String(amount));
     formData.append("screenshot", file);
+
     const res = await fetch(`${API_URL}/api/wallet/deposit/manual`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
     });
+
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Something went wrong");
     return data;
