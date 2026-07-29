@@ -34,7 +34,7 @@ export function Footer() {
               </div>
             </div>
             <p className="text-slate-400 mb-4 max-w-md">
-              Quality clothes, bags, and books — plus free educational videos on business and TikTok ads.
+              Real, reliable social media growth for Nigerian brands and influencers — secure wallet checkout, no middlemen.
             </p>
             <div className="flex items-center gap-4">
               <a 
@@ -92,7 +92,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-blue-500/20 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 text-sm">
-            © {currentYear} DeeDee's Marketplace. All rights reserved.
+            ©️ {currentYear} DeeDee's Marketplace. All rights reserved.
           </p>
           <div className="flex items-center gap-2 text-slate-500 text-sm">
             <Shield className="h-4 w-4 text-blue-400" />
