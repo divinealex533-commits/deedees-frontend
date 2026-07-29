@@ -596,7 +596,7 @@ export function AdminDashboard({
                         </div>
                         <p className="text-slate-500 text-xs">{new Date(d.createdAt).toLocaleString()}</p>
                         {d.screenshotUrl && (
-                          <a href={`${API_URL}${d.screenshotUrl}`} target="_blank" rel="noreferrer" className="text-blue-400 text-sm underline">
+                          <a href={d.screenshotUrl.startsWith('http') ? d.screenshotUrl : `${API_URL}${d.screenshotUrl}`} target="_blank" rel="noreferrer" className="text-blue-400 text-sm underline">
                             View payment screenshot
                           </a>
                         )}
