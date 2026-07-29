@@ -22,6 +22,7 @@ import {
   LogOut,
   Shield,
   Wallet,
+  KeyRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -32,6 +33,24 @@ import type { Deposit } from '@/hooks/useWallet';
 interface Sale extends Product {
   buyerName: string;
   buyerEmail: string;
+}
+
+// Raw admin-only item shape from /api/admin/items — includes the full
+// credential pool, which the public product list never exposes.
+interface AdminItem {
+  id: string;
+  accessLinks?: string[];
+  accessLink?: string;
+  quantity?: number;
+}
+
+// Splits a textarea's raw text into a clean list of credentials —
+// one per line, blank lines and stray whitespace removed.
+function parseCredentialLines(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 interface AdminDashboardProps {
@@ -66,6 +85,7 @@ export function AdminDashboard({
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [adminItems, setAdminItems] = useState<AdminItem[]>([]);
 
   const loadSales = useCallback(async () => {
     try {
@@ -83,10 +103,22 @@ export function AdminDashboard({
     }
   }, []);
 
+  // Raw item data (including the credential pool) — used to show
+  // accurate remaining stock counts in the product dialog, since the
+  // public product list never includes credentials.
+  const loadAdminItems = useCallback(async () => {
+    try {
+      setAdminItems(await api.getAdminItems());
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     loadSales();
     loadDeposits();
-  }, [loadSales, loadDeposits]);
+    loadAdminItems();
+  }, [loadSales, loadDeposits, loadAdminItems]);
 
   const handleApproveDeposit = async (id: string) => {
     try {
@@ -121,6 +153,13 @@ export function AdminDashboard({
     accessLink: '',
     quantity: '1',
   });
+  // Multi-credential pool text — used to seed stock for a NEW product
+  // (one credential per line, each buyer gets a different line).
+  const [stockText, setStockText] = useState('');
+  // Separate textarea + button for topping up an EXISTING product's pool
+  // without disturbing anything already assigned or waiting.
+  const [addStockText, setAddStockText] = useState('');
+  const [isAddingStock, setIsAddingStock] = useState(false);
 
   // Category form state
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
@@ -175,6 +214,8 @@ export function AdminDashboard({
         quantity: '1',
       });
     }
+    setStockText('');
+    setAddStockText('');
     setNewCategoryName('');
     setIsProductDialogOpen(true);
   };
@@ -182,7 +223,7 @@ export function AdminDashboard({
   const finishSaveProduct = useCallback(
     async (categoryId: string) => {
       const qty = parseInt(productForm.quantity) || 0;
-      const productData = {
+      const productData: Record<string, unknown> = {
         name: productForm.name,
         price: parseInt(productForm.price),
         imageUrl: productForm.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
@@ -193,21 +234,34 @@ export function AdminDashboard({
         quantity: qty,
       };
 
+      // Only when creating a brand-new product: seed its credential pool
+      // from the multi-line textarea. Editing never touches the pool here
+      // — use "Add More Credentials" below instead, so nothing already
+      // assigned or waiting gets wiped out.
+      if (!editingProduct) {
+        const credentials = parseCredentialLines(stockText);
+        if (credentials.length > 0) {
+          productData.accessLinks = credentials;
+        }
+      }
+
       try {
         if (editingProduct) {
           await onUpdateProduct(editingProduct.id, productData);
           toast.success('Product updated successfully');
         } else {
-          await onAddProduct(productData);
+          await onAddProduct(productData as Omit<Product, 'id' | 'createdAt'>);
           toast.success('Product added successfully');
         }
         setIsProductDialogOpen(false);
         setNewCategoryName('');
+        setStockText('');
+        await loadAdminItems();
       } catch (err) {
         toast.error((err as Error).message);
       }
     },
-    [productForm, editingProduct, onUpdateProduct, onAddProduct]
+    [productForm, editingProduct, onUpdateProduct, onAddProduct, stockText, loadAdminItems]
   );
 
   // Once the new category we just asked to create shows up in the
@@ -240,11 +294,32 @@ export function AdminDashboard({
     await finishSaveProduct(productForm.categoryId);
   };
 
+  const handleAddCredentials = async () => {
+    if (!editingProduct) return;
+    const credentials = parseCredentialLines(addStockText);
+    if (credentials.length === 0) {
+      toast.error('Enter at least one credential (one per line)');
+      return;
+    }
+    try {
+      setIsAddingStock(true);
+      const result = await api.addCredentials(editingProduct.id, credentials);
+      toast.success(result.message || `Added ${credentials.length} credential(s)`);
+      setAddStockText('');
+      await loadAdminItems();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsAddingStock(false);
+    }
+  };
+
   const handleDeleteProduct = async (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
       try {
         await onDeleteProduct(id);
         toast.success('Product deleted successfully');
+        await loadAdminItems();
       } catch (err) {
         toast.error((err as Error).message);
       }
@@ -290,6 +365,9 @@ export function AdminDashboard({
     onDeleteCategory(id);
     toast.success('Category deleted successfully');
   };
+
+  const editingAdminItem = editingProduct ? adminItems.find((i) => i.id === editingProduct.id) : undefined;
+  const editingPoolCount = editingAdminItem?.accessLinks?.length ?? 0;
 
   const filteredProducts = products.filter(
     (p) =>
@@ -474,15 +552,19 @@ export function AdminDashboard({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product) => {
+                const adminItem = adminItems.find((i) => i.id === product.id);
+                const poolCount = adminItem?.accessLinks?.length;
+                const displayCount = poolCount && poolCount > 0 ? poolCount : product.quantity;
+                return (
                 <Card key={product.id} className="bg-slate-950 border-blue-500/20">
                   <div className="aspect-video relative overflow-hidden">
                     <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                     <div className="absolute top-2 right-2">
                       <Badge className={product.inStock ? 'bg-green-500' : 'bg-red-500'}>
                         {product.inStock
-                          ? product.quantity != null
-                            ? `${product.quantity} in stock`
+                          ? displayCount != null
+                            ? `${displayCount} in stock`
                             : 'In Stock'
                           : 'Out of Stock'}
                       </Badge>
@@ -505,7 +587,8 @@ export function AdminDashboard({
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -628,7 +711,7 @@ export function AdminDashboard({
 
         {/* Product Dialog */}
         <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-          <DialogContent className="max-w-lg bg-slate-950 border-blue-500/30">
+          <DialogContent className="max-w-lg bg-slate-950 border-blue-500/30 max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-white">{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
             </DialogHeader>
@@ -669,12 +752,65 @@ export function AdminDashboard({
               <div>
                 <Label className="text-slate-300">Access Link / Credentials (admin only — shown to buyer after purchase)</Label>
                 <Input value={productForm.accessLink} onChange={(e) => setProductForm({ ...productForm, accessLink: e.target.value })} placeholder="e.g. https://drive.google.com/... or login details" className="bg-slate-900 border-blue-500/30 text-white" />
+                <p className="text-slate-500 text-xs mt-1">
+                  Used when every buyer gets the SAME credential. If you add multiple credentials below instead, each buyer gets a different one and this field is ignored.
+                </p>
               </div>
               <div>
                 <Label className="text-slate-300">Quantity Available *</Label>
                 <Input type="number" min="0" value={productForm.quantity} onChange={(e) => setProductForm({ ...productForm, quantity: e.target.value })} placeholder="e.g., 200" className="bg-slate-900 border-blue-500/30 text-white" />
                 <p className="text-slate-500 text-xs mt-1">Decreases automatically as customers buy. Set to 0 to mark out of stock.</p>
               </div>
+
+              {/* Multiple credentials — a different one per buyer */}
+              {!editingProduct ? (
+                <div>
+                  <Label className="text-slate-300 flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    Multiple Credentials (optional)
+                  </Label>
+                  <textarea
+                    value={stockText}
+                    onChange={(e) => setStockText(e.target.value)}
+                    placeholder={'user1@example.com : pass123\nuser2@example.com : pass456\nhttps://link-for-buyer-3.com'}
+                    rows={4}
+                    className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 font-mono text-sm resize-none"
+                  />
+                  <p className="text-slate-500 text-xs mt-1">
+                    One credential per line. Each buyer gets a different line, removed from the pool once assigned — so the next customer never sees a login someone else already has. Leave blank to use the single Access Link above for every buyer instead.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-blue-500/20 bg-slate-900/50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-slate-300 flex items-center gap-1.5">
+                      <KeyRound className="h-3.5 w-3.5" />
+                      Credential Pool
+                    </Label>
+                    <Badge className="bg-blue-500/20 text-blue-400">{editingPoolCount} unused</Badge>
+                  </div>
+                  <p className="text-slate-500 text-xs">
+                    Add more credentials below to top up stock — each becomes available to the next buyer. This won't affect credentials already assigned to past buyers or already waiting in the pool.
+                  </p>
+                  <textarea
+                    value={addStockText}
+                    onChange={(e) => setAddStockText(e.target.value)}
+                    placeholder={'user3@example.com : pass789\nhttps://link-for-next-buyer.com'}
+                    rows={3}
+                    className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 font-mono text-sm resize-none"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddCredentials}
+                    disabled={isAddingStock}
+                    className="w-full border-blue-500/30 text-white hover:bg-blue-500/10"
+                  >
+                    {isAddingStock ? 'Adding…' : 'Add More Credentials'}
+                  </Button>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setIsProductDialogOpen(false)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">Cancel</Button>
                 <Button onClick={handleSaveProduct} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white">
