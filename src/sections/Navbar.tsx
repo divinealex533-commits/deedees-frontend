@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Store, Menu, X, User as UserIcon, LogOut, Shield } from 'lucide-react';
+import { ShoppingCart, Store, Menu, X, User as UserIcon, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { User } from '@/hooks/useAuth';
@@ -25,7 +25,7 @@ export function Navbar({
   user: _user,
   onLogout,
   onOpenAuth,
-  onAdminClick
+  onAdminClick: _onAdminClick
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -127,16 +127,6 @@ export function Navbar({
                     Login
                   </Button>
                 )}
-
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={onAdminClick}
-                  className="text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300 hidden sm:flex border border-blue-500/20 hover:border-cyan-500/50"
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin
-                </Button>
               </>
             )}
 
@@ -215,17 +205,6 @@ export function Navbar({
                   Login / Sign Up
                 </button>
               )}
-              
-              <button 
-                onClick={() => {
-                  onAdminClick();
-                  setIsMobileMenuOpen(false);
-                }} 
-                className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-all duration-300 text-sm py-2 px-4 rounded-lg text-left flex items-center border border-cyan-500/20"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Admin Dashboard
-              </button>
             </div>
           </div>
         )}
