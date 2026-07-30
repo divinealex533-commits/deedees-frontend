@@ -1,14 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
 
-export function HeroSection() {
-  const scrollToCatalog = () => {
-    const element = document.getElementById('catalog');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+interface HeroSectionProps {
+  onGetStarted: () => void;
+}
 
+export function HeroSection({ onGetStarted }: HeroSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Animated Background */}
@@ -17,10 +14,10 @@ export function HeroSection() {
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }}></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/5 rounded-full blur-[120px]"></div>
-        
+
         {/* Animated grid */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.03)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
-        
+
         {/* Floating particles */}
         <div className="absolute inset-0 overflow-hidden">
           {[...Array(20)].map((_, i) => (
@@ -79,7 +76,7 @@ export function HeroSection() {
             { icon: CheckCircle, text: 'Secure Payment', color: 'text-cyan-400' },
             { icon: CheckCircle, text: 'Fast Delivery', color: 'text-purple-400' },
           ].map((badge, index) => (
-            <div 
+            <div
               key={index}
               className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors duration-300 group"
             >
@@ -91,23 +88,23 @@ export function HeroSection() {
 
         {/* Animated CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-500">
-          <Button 
+          <Button
             size="lg"
-            onClick={scrollToCatalog}
+            onClick={onGetStarted}
             className="relative bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-6 text-lg rounded-xl overflow-hidden group transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105"
           >
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
             <span className="relative flex items-center">
-              Browse Accounts
+              Get Started
               <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </span>
           </Button>
-          <a 
+          <a
             href="https://wa.me/07046019436"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Button 
+            <Button
               variant="outline"
               size="lg"
               className="border-blue-500/30 text-white hover:bg-blue-500/10 hover:border-blue-500/50 px-8 py-6 text-lg rounded-xl transition-all duration-300 hover:scale-105"
@@ -120,7 +117,7 @@ export function HeroSection() {
 
       {/* Bottom gradient fade */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent"></div>
-      
+
       {/* Animated corner accents */}
       <div className="absolute top-20 left-10 w-20 h-20 border-l-2 border-t-2 border-blue-500/20 rounded-tl-3xl animate-pulse"></div>
       <div className="absolute bottom-20 right-10 w-20 h-20 border-r-2 border-b-2 border-cyan-500/20 rounded-br-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
