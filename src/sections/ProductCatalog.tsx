@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Check, ImageOff, Zap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ShoppingCart, Check, ImageOff, Zap, Search } from 'lucide-react';
 import type { Product, Category } from '@/types';
 
 interface ProductCatalogProps {
@@ -13,12 +14,21 @@ interface ProductCatalogProps {
 
 export function ProductCatalog({ products, categories, onAddToCart }: ProductCatalogProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products.filter(p => p.inStock)
-    : products.filter(p => p.categoryId === selectedCategory && p.inStock);
+  const filteredProducts = products
+    .filter(p => p.inStock)
+    .filter(p => selectedCategory === 'all' || p.categoryId === selectedCategory)
+    .filter(p => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        (p.description ? p.description.toLowerCase().includes(q) : false)
+      );
+    });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -55,6 +65,20 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="max-w-xl mx-auto mb-8">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search accounts..."
+              className="pl-11 h-12 bg-slate-900/50 border-blue-500/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50 rounded-full"
+            />
+          </div>
+        </div>
+
         {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-10">
           <button
@@ -88,14 +112,20 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
             <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
               <ImageOff className="h-10 w-10 text-slate-600" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">No accounts available</h3>
-            <p className="text-slate-400">Check back later or contact us for custom orders</p>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {searchQuery.trim() ? 'No accounts match your search' : 'No accounts available'}
+            </h3>
+            <p className="text-slate-400">
+              {searchQuery.trim()
+                ? 'Try a different search term or category'
+                : 'Check back later or contact us for custom orders'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product, index) => (
-              <Card 
-                key={product.id} 
+              <Card
+                key={product.id}
                 className="bg-slate-950 border-blue-500/20 overflow-hidden group hover:border-cyan-500/50 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10"
                 style={{ animationDelay: `${index * 100}ms` }}
                 onMouseEnter={() => setHoveredProduct(product.id)}
@@ -104,8 +134,8 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                 {/* Product Image */}
                 <div className="aspect-video relative overflow-hidden bg-slate-900">
                   {!imageErrors[product.id] ? (
-                    <img 
-                      src={product.imageUrl} 
+                    <img
+                      src={product.imageUrl}
                       alt={product.name}
                       className={`w-full h-full object-cover transition-transform duration-700 ${
                         hoveredProduct === product.id ? 'scale-110' : 'scale-100'
@@ -117,12 +147,12 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                       <ImageOff className="h-12 w-12 text-slate-600" />
                     </div>
                   )}
-                  
+
                   {/* Overlay gradient */}
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 ${
                     hoveredProduct === product.id ? 'opacity-100' : 'opacity-0'
                   }`}></div>
-                  
+
                   {/* Stock badge */}
                   <div className="absolute top-3 right-3">
                     <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
@@ -134,8 +164,8 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
 
                 <CardContent className="p-5">
                   {/* Category Badge */}
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className="mb-3 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-xs"
                   >
                     {categories.find(c => c.id === product.categoryId)?.name}
@@ -158,7 +188,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                     <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
                       {formatPrice(product.price)}
                     </div>
-                    <Button 
+                    <Button
                       size="sm"
                       onClick={() => onAddToCart(product)}
                       className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
