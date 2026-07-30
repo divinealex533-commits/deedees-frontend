@@ -26,6 +26,9 @@ function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  // Tracks whether the auth modal was opened because someone clicked
+  // "Get Started" — so we know to scroll to the catalog after they log in.
+  const [pendingCatalogScroll, setPendingCatalogScroll] = useState(false);
 
   const store = useStore();
   const auth = useAuth();
@@ -54,6 +57,22 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated]);
+
+  const scrollToCatalog = () => {
+    const element = document.getElementById('catalog');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleGetStarted = () => {
+    if (auth.isAuthenticated) {
+      scrollToCatalog();
+    } else {
+      setPendingCatalogScroll(true);
+      setIsAuthModalOpen(true);
+    }
+  };
 
   const handleAddToCart = (product: typeof store.products[0]) => {
     if (!product.inStock) {
@@ -121,7 +140,7 @@ function App() {
 
       {view === 'store' && (
         <>
-          <HeroSection />
+          <HeroSection onGetStarted={handleGetStarted} />
           <ServicesSection categories={store.categories} />
           <ProductCatalog
             products={store.products}
@@ -206,12 +225,21 @@ function App() {
 
       <AuthModal
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingCatalogScroll(false);
+        }}
         onLogin={async (email, password) => {
           const result = await auth.login(email, password);
-          if (result.success && result.user?.isAdmin) {
-            setView('admin');
+          if (result.success) {
+            if (result.user?.isAdmin) {
+              setView('admin');
+            } else if (pendingCatalogScroll) {
+              // Give the modal a moment to close before scrolling
+              setTimeout(scrollToCatalog, 300);
+            }
           }
+          setPendingCatalogScroll(false);
           return result;
         }}
         onSignup={auth.signup}
