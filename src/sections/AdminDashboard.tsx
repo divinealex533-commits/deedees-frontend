@@ -61,9 +61,9 @@ interface AdminDashboardProps {
   onUpdateProduct: (id: string, updates: Partial<Product>) => Promise<void>;
   onDeleteProduct: (id: string) => Promise<void>;
   onToggleStock: (id: string) => Promise<void>;
-  onAddCategory: (category: Omit<Category, 'id' | 'createdAt'>) => void;
-  onUpdateCategory: (id: string, updates: Partial<Category>) => void;
-  onDeleteCategory: (id: string) => void;
+  onAddCategory: (category: Omit<Category, 'id' | 'createdAt'>) => Promise<void>;
+  onUpdateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
+  onDeleteCategory: (id: string) => Promise<void>;
   onLogout: () => void;
 }
 
@@ -286,8 +286,12 @@ export function AdminDashboard({
         toast.error('Please enter a name for the new category');
         return;
       }
-      onAddCategory({ name: newCategoryName.trim(), description: '', icon: 'Shield' });
-      setIsAwaitingNewCategory(true);
+      try {
+        await onAddCategory({ name: newCategoryName.trim(), description: '', icon: 'Shield' });
+        setIsAwaitingNewCategory(true);
+      } catch (err) {
+        toast.error((err as Error).message || 'Could not create category');
+      }
       return;
     }
 
@@ -326,7 +330,7 @@ export function AdminDashboard({
     }
   };
 
-  // Category handlers (local/cosmetic only)
+  // Category handlers
   const handleOpenCategoryDialog = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
@@ -342,28 +346,42 @@ export function AdminDashboard({
     setIsCategoryDialogOpen(true);
   };
 
-  const handleSaveCategory = () => {
+  // FIX: this used to fire onAddCategory/onUpdateCategory without awaiting
+  // them, then immediately show a success toast and close the dialog —
+  // regardless of whether the backend save actually succeeded. Now it
+  // awaits the real result and only reports success (and closes the
+  // dialog) once the save has actually gone through, and surfaces the
+  // real error if it hasn't.
+  const handleSaveCategory = async () => {
     if (!categoryForm.name.trim()) {
       toast.error('Please enter a category name');
       return;
     }
-    if (editingCategory) {
-      onUpdateCategory(editingCategory.id, categoryForm);
-      toast.success('Category updated successfully');
-    } else {
-      onAddCategory(categoryForm);
-      toast.success('Category added successfully');
+    try {
+      if (editingCategory) {
+        await onUpdateCategory(editingCategory.id, categoryForm);
+        toast.success('Category updated successfully');
+      } else {
+        await onAddCategory(categoryForm);
+        toast.success('Category added successfully');
+      }
+      setIsCategoryDialogOpen(false);
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not save category');
     }
-    setIsCategoryDialogOpen(false);
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     const productsInCategory = products.filter((p) => p.categoryId === id).length;
     if (productsInCategory > 0) {
       if (!confirm(`This category contains ${productsInCategory} products. Delete anyway?`)) return;
     }
-    onDeleteCategory(id);
-    toast.success('Category deleted successfully');
+    try {
+      await onDeleteCategory(id);
+      toast.success('Category deleted successfully');
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not delete category');
+    }
   };
 
   const editingAdminItem = editingProduct ? adminItems.find((i) => i.id === editingProduct.id) : undefined;
