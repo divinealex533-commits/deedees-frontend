@@ -143,4 +143,22 @@ export const api = {
     request(`/api/admin/deposits/${id}/reject`, { method: "POST" }),
 
   getSales: () => request("/api/admin/sales"),
+
+  // ---------- Categories (shared across all visitors) ----------
+  getCategories: () => request("/api/categories"),
+
+  createCategory: (category: { name: string; description?: string; icon?: string }) =>
+    request("/api/categories", {
+      method: "POST",
+      body: JSON.stringify(category),
+    }),
+
+  updateCategory: (id: string, updates: Record<string, unknown>) =>
+    request(`/api/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    }),
+
+  deleteCategory: (id: string) =>
+    request(`/api/categories/${id}`, { method: "DELETE" }),
 };
