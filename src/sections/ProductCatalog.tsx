@@ -43,7 +43,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
   };
 
   return (
-    <section id="catalog" className="py-20 bg-black relative overflow-hidden">
+    <section id="catalog" className="py-16 bg-black relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]"></div>
@@ -52,38 +52,38 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 mb-6">
-            <Zap className="h-4 w-4 text-cyan-400" />
-            <span className="text-sm text-blue-300">Premium Quality</span>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 mb-4">
+            <Zap className="h-3.5 w-3.5 text-cyan-400" />
+            <span className="text-xs text-blue-300">Premium Quality</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">
             Available <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Accounts</span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          <p className="text-slate-400 text-base max-w-2xl mx-auto">
             Browse our social media growth services and accounts
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-8">
+        <div className="max-w-xl mx-auto mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search accounts..."
-              className="pl-11 h-12 bg-slate-900/50 border-blue-500/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50 rounded-full"
+              className="pl-10 h-10 text-sm bg-slate-900/50 border-blue-500/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50 rounded-full"
             />
           </div>
         </div>
 
         {/* Category Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
               selectedCategory === 'all'
                 ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/25'
                 : 'bg-slate-900/50 text-slate-400 border border-blue-500/20 hover:border-blue-500/50 hover:text-white'
@@ -95,7 +95,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                 selectedCategory === category.id
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/25'
                   : 'bg-slate-900/50 text-slate-400 border border-blue-500/20 hover:border-blue-500/50 hover:text-white'
@@ -109,20 +109,20 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-20 h-20 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-              <ImageOff className="h-10 w-10 text-slate-600" />
+            <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
+              <ImageOff className="h-8 w-8 text-slate-600" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-lg font-semibold text-white mb-2">
               {searchQuery.trim() ? 'No accounts match your search' : 'No accounts available'}
             </h3>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-sm">
               {searchQuery.trim()
                 ? 'Try a different search term or category'
                 : 'Check back later or contact us for custom orders'}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredProducts.map((product, index) => (
               <Card
                 key={product.id}
@@ -144,7 +144,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <ImageOff className="h-12 w-12 text-slate-600" />
+                      <ImageOff className="h-8 w-8 text-slate-600" />
                     </div>
                   )}
 
@@ -154,46 +154,46 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                   }`}></div>
 
                   {/* Stock badge */}
-                  <div className="absolute top-3 right-3">
-                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
-                      <Check className="h-3 w-3 mr-1" />
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg text-[10px] px-2 py-0.5">
+                      <Check className="h-2.5 w-2.5 mr-1" />
                       {product.quantity != null ? `${product.quantity} left` : 'In Stock'}
                     </Badge>
                   </div>
                 </div>
 
-                <CardContent className="p-5">
+                <CardContent className="p-3">
                   {/* Category Badge */}
                   <Badge
                     variant="secondary"
-                    className="mb-3 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-xs"
+                    className="mb-2 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-[10px] px-2 py-0.5"
                   >
                     {categories.find(c => c.id === product.categoryId)?.name}
                   </Badge>
 
                   {/* Product Name */}
-                  <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-blue-300 transition-colors">
+                  <h3 className="text-sm font-semibold text-white mb-1 line-clamp-2 group-hover:text-blue-300 transition-colors">
                     {product.name}
                   </h3>
 
                   {/* Description */}
                   {product.description && (
-                    <p className="text-slate-400 text-sm mb-3 line-clamp-2">
+                    <p className="text-slate-400 text-xs mb-2 line-clamp-2">
                       {product.description}
                     </p>
                   )}
 
                   {/* Price and CTA */}
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
                       {formatPrice(product.price)}
                     </div>
                     <Button
                       size="sm"
                       onClick={() => onAddToCart(product)}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 h-8 text-xs px-3"
                     >
-                      <ShoppingCart className="h-4 w-4 mr-1" />
+                      <ShoppingCart className="h-3.5 w-3.5 mr-1" />
                       Add
                     </Button>
                   </div>
