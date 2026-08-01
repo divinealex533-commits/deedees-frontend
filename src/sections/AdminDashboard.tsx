@@ -23,6 +23,8 @@ import {
   Shield,
   Wallet,
   KeyRound,
+  ImageOff,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -569,45 +571,73 @@ export function AdminDashboard({
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredProducts.map((product) => {
-                const adminItem = adminItems.find((i) => i.id === product.id);
-                const poolCount = adminItem?.accessLinks?.length;
-                const displayCount = poolCount && poolCount > 0 ? poolCount : product.quantity;
-                return (
-                <Card key={product.id} className="bg-slate-950 border-blue-500/20">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2">
-                      <Badge className={product.inStock ? 'bg-green-500' : 'bg-red-500'}>
+            {/* Compact list — one row per product, tap to open full details */}
+            <Card className="bg-slate-950 border-blue-500/20 overflow-hidden">
+              <div className="divide-y divide-blue-500/10">
+                {filteredProducts.map((product) => {
+                  const adminItem = adminItems.find((i) => i.id === product.id);
+                  const poolCount = adminItem?.accessLinks?.length;
+                  const displayCount = poolCount && poolCount > 0 ? poolCount : product.quantity;
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => handleOpenProductDialog(product)}
+                      className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-9 h-9 rounded-md overflow-hidden bg-slate-900 flex-shrink-0">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageOff className="h-4 w-4 text-slate-600" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Name + price */}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white text-sm font-medium truncate">{product.name}</p>
+                        <p className="text-blue-400 text-xs font-semibold">{formatPrice(product.price)}</p>
+                      </div>
+
+                      {/* Stock badge */}
+                      <Badge className={`text-[10px] px-2 py-0.5 flex-shrink-0 ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}>
                         {product.inStock
                           ? displayCount != null
                             ? `${displayCount} in stock`
                             : 'In Stock'
                           : 'Out of Stock'}
                       </Badge>
+
+                      {/* Quick actions */}
+                      <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onToggleStock(product.id)}
+                          className={`h-7 w-7 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}
+                        >
+                          {product.inStock ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="h-7 w-7 text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <ChevronRight className="h-4 w-4 text-slate-600" />
+                      </div>
                     </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="text-white font-semibold line-clamp-1">{product.name}</h3>
-                    <p className="text-blue-400 font-bold">{formatPrice(product.price)}</p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <Button variant="outline" size="sm" onClick={() => handleOpenProductDialog(product)} className="flex-1 border-blue-500/30 text-white hover:bg-blue-500/10">
-                        <Edit2 className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => onToggleStock(product.id)} className={`border-blue-500/30 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}>
-                        {product.inStock ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteProduct(product.id)} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                );
-              })}
-            </div>
+                  );
+                })}
+                {filteredProducts.length === 0 && (
+                  <p className="text-slate-400 text-center py-8 text-sm">No products found</p>
+                )}
+              </div>
+            </Card>
           </div>
         )}
 
