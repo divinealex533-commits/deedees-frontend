@@ -12,20 +12,18 @@ export interface Product {
      accessLink?: string;
      quantity?: number;
 }
-
 export interface Category {
   id: string;
   name: string;
   description?: string;
   icon?: string;
+  imageUrl?: string;
   createdAt: string;
 }
-
 export interface CartItem {
   product: Product;
   quantity: number;
 }
-
 export interface Order {
   id: string;
   items: CartItem[];
@@ -39,7 +37,6 @@ export interface Order {
   createdAt: string;
   notes?: string;
 }
-
 export interface PaymentDetails {
   instant: {
     pocketApp: {
@@ -58,7 +55,6 @@ export interface PaymentDetails {
     };
   };
 }
-
 export interface SupportContact {
   whatsapp: string[];
   phone: string[];
