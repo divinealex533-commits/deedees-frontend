@@ -16,6 +16,7 @@ import { Footer } from '@/sections/Footer';
 import { Navbar } from '@/sections/Navbar';
 import { AuthModal } from '@/sections/AuthModal';
 import { AdminLoginModal } from '@/sections/AdminLoginModal';
+import { AccountDrawer } from '@/sections/AccountDrawer';
 import { Toaster, toast } from 'sonner';
 
 type ViewType = 'store' | 'admin' | 'dashboard';
@@ -26,6 +27,7 @@ function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   // Tracks whether the auth modal was opened because someone clicked
   // "Get Started" — so we know to scroll to the catalog after they log in.
   const [pendingCatalogScroll, setPendingCatalogScroll] = useState(false);
@@ -58,12 +60,14 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.isAuthenticated]);
 
-  const scrollToCatalog = () => {
-    const element = document.getElementById('catalog');
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const scrollToCatalog = () => scrollToSection('catalog');
 
   const handleGetStarted = () => {
     if (auth.isAuthenticated) {
@@ -106,6 +110,31 @@ function App() {
     }
   };
 
+  // Account drawer navigation — these switch view first (when needed),
+  // then scroll to the relevant section once the store view has rendered.
+  const handleDrawerGoHome = () => {
+    setView('store');
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+  };
+
+  const handleDrawerGoProduct = () => {
+    setView('store');
+    setTimeout(scrollToCatalog, 100);
+  };
+
+  const handleDrawerGoContact = () => {
+    setView('store');
+    setTimeout(() => scrollToSection('contact'), 100);
+  };
+
+  const handleDrawerGoDeposit = () => {
+    setView('dashboard');
+  };
+
+  const handleDrawerGoHistory = () => {
+    setView('dashboard');
+  };
+
   if (!store.isLoaded || !auth.isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-black">
@@ -136,6 +165,26 @@ function App() {
         }}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onAdminClick={handleAdminAccess}
+        onOpenAccountMenu={() => setIsAccountDrawerOpen(true)}
+      />
+
+      <AccountDrawer
+        isOpen={isAccountDrawerOpen}
+        onClose={() => setIsAccountDrawerOpen(false)}
+        isAuthenticated={auth.isAuthenticated}
+        user={auth.user}
+        balance={wallet.balance}
+        onGoHome={handleDrawerGoHome}
+        onGoProduct={handleDrawerGoProduct}
+        onGoDeposit={handleDrawerGoDeposit}
+        onGoHistory={handleDrawerGoHistory}
+        onGoContact={handleDrawerGoContact}
+        onLogout={() => {
+          auth.logout();
+          setView('store');
+          toast.success('Logged out successfully');
+        }}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
       />
 
       {view === 'store' && (
