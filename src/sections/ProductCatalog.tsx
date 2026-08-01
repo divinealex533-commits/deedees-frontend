@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input';
 import { ShoppingCart, Check, ImageOff, Zap, Search, ChevronRight, ArrowLeft, Layers } from 'lucide-react';
 import type { Product, Category } from '@/types';
 
+// Local safeguard: extends Category with imageUrl regardless of whether
+// the shared @/types file has been updated yet, so this component always
+// builds. Once you've confirmed (via `git diff` or GitHub) that your real
+// Category type includes `imageUrl?: string` and it's actually deployed,
+// you can delete this block and change `category` below back to
+// `(category) =>`.
+type CategoryWithImage = Category & { imageUrl?: string };
+
 interface ProductCatalogProps {
   products: Product[];
   categories: Category[];
@@ -170,7 +178,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                 <p className="text-slate-400 text-sm">Try a different search term</p>
               </div>
             ) : (
-              filteredCategories.map((category) => (
+              filteredCategories.map((category: CategoryWithImage) => (
                 <button
                   key={category.id}
                   onClick={() => handleSelectCategory(category.id)}
