@@ -20,6 +20,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [categoryImageErrors, setCategoryImageErrors] = useState<Record<string, boolean>>({});
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
   const inStockProducts = useMemo(() => products.filter(p => p.inStock), [products]);
@@ -82,6 +83,10 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
 
   const handleImageError = (productId: string) => {
     setImageErrors(prev => ({ ...prev, [productId]: true }));
+  };
+
+  const handleCategoryImageError = (categoryId: string) => {
+    setCategoryImageErrors(prev => ({ ...prev, [categoryId]: true }));
   };
 
   const handleSelectCategory = (categoryId: string) => {
@@ -172,8 +177,17 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                   className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-xl bg-slate-950 border border-blue-500/20 text-white hover:border-cyan-500/50 hover:bg-slate-900 transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-blue-500/30 flex items-center justify-center shrink-0 text-xs font-bold text-cyan-400">
-                      {category.name.trim().charAt(0).toUpperCase()}
+                    <div className="w-8 h-8 rounded-full bg-slate-800 border border-blue-500/30 flex items-center justify-center shrink-0 overflow-hidden text-xs font-bold text-cyan-400">
+                      {category.imageUrl && !categoryImageErrors[category.id] ? (
+                        <img
+                          src={category.imageUrl}
+                          alt={category.name}
+                          className="w-full h-full object-cover"
+                          onError={() => handleCategoryImageError(category.id)}
+                        />
+                      ) : (
+                        category.name.trim().charAt(0).toUpperCase()
+                      )}
                     </div>
                     <span className="font-semibold text-sm truncate group-hover:text-cyan-300 transition-colors">
                       {category.name}
@@ -244,7 +258,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <ImageOff className="h-8 w-8 text-slate-600" />
+                          <ImageOff className="h-5 w-5 text-slate-600 shrink-0" />
                         </div>
                       )}
 
