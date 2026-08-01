@@ -4,17 +4,6 @@ import type { Product, Category, CartItem } from '@/types';
 
 const CART_KEY = 'deedee_cart';
 
-// Categories are just for organizing/filtering products in the UI. They live
-// on this device only (not synced to the backend) — add/edit/remove them
-// here as needed for your shop.
-const defaultCategories: Category[] = [
-  { id: 'Social Media Growth', name: 'Social Media Growth', description: 'Followers, likes, views and engagement boosts', icon: 'Shield', createdAt: new Date().toISOString() },
-  { id: 'Buy Account', name: 'Buy Account', description: 'Verified, ready-to-use social media accounts', icon: 'Shield', createdAt: new Date().toISOString() },
-  { id: 'Other', name: 'Other', description: 'Everything else', icon: 'Shield', createdAt: new Date().toISOString() },
-];
-
-const CATEGORIES_KEY = 'deedee_categories';
-
 // Converts a backend item into the shape the rest of the UI expects.
 function toProduct(item: any): Product {
   return {
@@ -33,7 +22,7 @@ function toProduct(item: any): Product {
 
 export function useStore() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -46,35 +35,38 @@ export function useStore() {
     }
   }, []);
 
-  // Load products from the backend + cart/categories from this device
+  // Categories are shared across every visitor — stored in the database,
+  // not per-device — so a category (and any product filed under it) shows
+  // up for everyone, not just the admin who added it.
+  const loadCategories = useCallback(async () => {
+    try {
+      setCategories(await api.getCategories());
+    } catch (err) {
+      console.error('Could not load categories:', err);
+    }
+  }, []);
+
+  // Load products + categories from the backend, cart from this device
   useEffect(() => {
     (async () => {
-      await loadProducts();
+      await Promise.all([loadProducts(), loadCategories()]);
       if (typeof window !== 'undefined') {
         try {
           const savedCart = localStorage.getItem(CART_KEY);
-          const savedCategories = localStorage.getItem(CATEGORIES_KEY);
           if (savedCart) setCart(JSON.parse(savedCart));
-          if (savedCategories) setCategories(JSON.parse(savedCategories));
         } catch (error) {
           console.error('Error loading local data:', error);
         }
       }
       setIsLoaded(true);
     })();
-  }, [loadProducts]);
+  }, [loadProducts, loadCategories]);
 
   useEffect(() => {
     if (isLoaded && typeof window !== 'undefined') {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     }
   }, [cart, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined') {
-      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-    }
-  }, [categories, isLoaded]);
 
   // ---- Product operations (admin) — these write to the real backend ----
   const addProduct = useCallback(
@@ -127,24 +119,31 @@ export function useStore() {
     [loadProducts]
   );
 
-  // ---- Category operations (local/cosmetic only) ----
-  const addCategory = useCallback((category: Omit<Category, 'id' | 'createdAt'>) => {
-    const newCategory: Category = {
-      ...category,
-      id: category.name,
-      createdAt: new Date().toISOString(),
-    };
-    setCategories((prev) => [...prev, newCategory]);
-    return newCategory;
-  }, []);
+  // ---- Category operations (admin) — now backend-synced, visible to everyone ----
+  const addCategory = useCallback(
+    async (category: Omit<Category, 'id' | 'createdAt'>) => {
+      const newCategory = await api.createCategory(category);
+      await loadCategories();
+      return newCategory;
+    },
+    [loadCategories]
+  );
 
-  const updateCategory = useCallback((id: string, updates: Partial<Category>) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
-  }, []);
+  const updateCategory = useCallback(
+    async (id: string, updates: Partial<Category>) => {
+      await api.updateCategory(id, updates);
+      await loadCategories();
+    },
+    [loadCategories]
+  );
 
-  const deleteCategory = useCallback((id: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const deleteCategory = useCallback(
+    async (id: string) => {
+      await api.deleteCategory(id);
+      await loadCategories();
+    },
+    [loadCategories]
+  );
 
   // ---- Cart operations (this device only, until checkout) ----
   // Adds one unit of a product to the cart. If it's already there, bumps
