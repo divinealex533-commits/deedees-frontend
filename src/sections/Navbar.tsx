@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Store, Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { ShoppingCart, Store, Menu, X, User as UserIcon, LogOut, AlignLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { User } from '@/hooks/useAuth';
@@ -14,6 +14,7 @@ interface NavbarProps {
   onLogout: () => void;
   onOpenAuth: () => void;
   onAdminClick: () => void;
+  onOpenAccountMenu: () => void;
 }
 
 export function Navbar({ 
@@ -25,7 +26,8 @@ export function Navbar({
   user: _user,
   onLogout,
   onOpenAuth,
-  onAdminClick: _onAdminClick
+  onAdminClick: _onAdminClick,
+  onOpenAccountMenu,
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -44,20 +46,33 @@ export function Navbar({
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div 
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => onViewChange('store')}
-          >
-            <div className="relative w-10 h-10">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
-              <div className="absolute inset-0.5 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold text-sm">DM</span>
+          {/* Account drawer trigger + Logo */}
+          <div className="flex items-center gap-2">
+            {view === 'store' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onOpenAccountMenu}
+                className="text-slate-400 hover:text-white hover:bg-blue-500/10 transition-all duration-300"
+                aria-label="Open menu"
+              >
+                <AlignLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <div 
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => onViewChange('store')}
+            >
+              <div className="relative w-10 h-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg animate-pulse opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0.5 bg-black rounded-lg flex items-center justify-center">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold text-sm">DM</span>
+                </div>
               </div>
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-white font-bold text-lg tracking-wide">DEEDEE'S</span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 font-bold text-lg"> MARKET</span>
+              <div className="hidden sm:block">
+                <span className="text-white font-bold text-lg tracking-wide">DEEDEE'S</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 font-bold text-lg"> MARKET</span>
+              </div>
             </div>
           </div>
 
