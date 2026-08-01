@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   X,
   Home,
@@ -13,8 +12,9 @@ import {
   MessageCircle,
   User as UserRoundIcon,
   ChevronRight,
-  LucideIcon,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+ 
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
