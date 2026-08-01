@@ -25,6 +25,7 @@ import {
   KeyRound,
   ImageOff,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -84,6 +85,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
 
   const [sales, setSales] = useState<Sale[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
@@ -571,65 +573,98 @@ export function AdminDashboard({
               </Button>
             </div>
 
-            {/* Compact list — one row per product, tap to open full details */}
+            {/* Category accordion — one line per category, tap to drop down its products */}
             <Card className="bg-slate-950 border-blue-500/20 overflow-hidden">
               <div className="divide-y divide-blue-500/10">
-                {filteredProducts.map((product) => {
-                  const adminItem = adminItems.find((i) => i.id === product.id);
-                  const poolCount = adminItem?.accessLinks?.length;
-                  const displayCount = poolCount && poolCount > 0 ? poolCount : product.quantity;
+                {categories.map((category) => {
+                  const categoryProducts = filteredProducts.filter((p) => p.categoryId === category.id);
+                  if (categoryProducts.length === 0) return null;
+                  const isExpanded = expandedCategoryId === category.id;
+
                   return (
-                    <div
-                      key={product.id}
-                      onClick={() => handleOpenProductDialog(product)}
-                      className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-900/60 transition-colors"
-                    >
-                      {/* Thumbnail */}
-                      <div className="w-9 h-9 rounded-md overflow-hidden bg-slate-900 flex-shrink-0">
-                        {product.imageUrl ? (
-                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                    <div key={category.id}>
+                      {/* Category row */}
+                      <button
+                        onClick={() => setExpandedCategoryId(isExpanded ? null : category.id)}
+                        className="w-full flex items-center gap-3 px-3 py-3 hover:bg-slate-900/60 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-400 font-bold text-xs">{category.name.charAt(0)}</span>
+                        </div>
+                        <span className="text-white text-sm font-semibold flex-1 text-left">{category.name}</span>
+                        <Badge className="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5">
+                          {categoryProducts.length}
+                        </Badge>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-slate-500" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ImageOff className="h-4 w-4 text-slate-600" />
-                          </div>
+                          <ChevronRight className="h-4 w-4 text-slate-500" />
                         )}
-                      </div>
+                      </button>
 
-                      {/* Name + price */}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-white text-sm font-medium truncate">{product.name}</p>
-                        <p className="text-blue-400 text-xs font-semibold">{formatPrice(product.price)}</p>
-                      </div>
+                      {/* Dropdown — products in this category */}
+                      {isExpanded && (
+                        <div className="bg-black/40 divide-y divide-blue-500/5">
+                          {categoryProducts.map((product) => {
+                            const adminItem = adminItems.find((i) => i.id === product.id);
+                            const poolCount = adminItem?.accessLinks?.length;
+                            const displayCount = poolCount && poolCount > 0 ? poolCount : product.quantity;
+                            return (
+                              <div
+                                key={product.id}
+                                onClick={() => handleOpenProductDialog(product)}
+                                className="flex items-center gap-3 pl-10 pr-3 py-2 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                              >
+                                {/* Thumbnail */}
+                                <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-900 flex-shrink-0">
+                                  {product.imageUrl ? (
+                                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <ImageOff className="h-3.5 w-3.5 text-slate-600" />
+                                    </div>
+                                  )}
+                                </div>
 
-                      {/* Stock badge */}
-                      <Badge className={`text-[10px] px-2 py-0.5 flex-shrink-0 ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}>
-                        {product.inStock
-                          ? displayCount != null
-                            ? `${displayCount} in stock`
-                            : 'In Stock'
-                          : 'Out of Stock'}
-                      </Badge>
+                                {/* Name + price */}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-white text-sm font-medium truncate">{product.name}</p>
+                                  <p className="text-blue-400 text-xs font-semibold">{formatPrice(product.price)}</p>
+                                </div>
 
-                      {/* Quick actions */}
-                      <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onToggleStock(product.id)}
-                          className={`h-7 w-7 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}
-                        >
-                          {product.inStock ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="h-7 w-7 text-red-400 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <ChevronRight className="h-4 w-4 text-slate-600" />
-                      </div>
+                                {/* Stock badge */}
+                                <Badge className={`text-[10px] px-2 py-0.5 flex-shrink-0 ${product.inStock ? 'bg-green-500' : 'bg-red-500'}`}>
+                                  {product.inStock
+                                    ? displayCount != null
+                                      ? `${displayCount} in stock`
+                                      : 'In Stock'
+                                    : 'Out of Stock'}
+                                </Badge>
+
+                                {/* Quick actions */}
+                                <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => onToggleStock(product.id)}
+                                    className={`h-6 w-6 ${product.inStock ? 'text-green-400' : 'text-red-400'} hover:bg-blue-500/10`}
+                                  >
+                                    {product.inStock ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteProduct(product.id)}
+                                    className="h-6 w-6 text-red-400 hover:bg-red-500/10"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
