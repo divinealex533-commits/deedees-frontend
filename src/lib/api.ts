@@ -102,6 +102,9 @@ export const api = {
   // ---------- Orders (customer's own purchases, includes accessLink) ----------
   getMyOrders: () => request("/api/my-orders"),
 
+  // ---------- Referrals / Affiliate program ----------
+  getMyReferrals: () => request("/api/my-referrals"),
+
   // ---------- Wallet: instant (Paystack) ----------
   initializeInstantDeposit: (amount: number) =>
     request("/api/wallet/deposit/instant/initialize", {
