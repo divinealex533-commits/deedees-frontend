@@ -47,6 +47,12 @@ interface AdminItem {
   quantity?: number;
 }
 
+// Local safeguard: extends Category with imageUrl regardless of whether
+// the shared @/types file has been updated yet, so this component always
+// builds. Once your real Category type includes `imageUrl?: string` and
+// it's confirmed deployed, this cast is harmless to keep or remove.
+type CategoryWithImage = Category & { imageUrl?: string };
+
 // Splits a textarea's raw text into a clean list of credentials —
 // one per line, blank lines and stray whitespace removed.
 function parseCredentialLines(text: string): string[] {
@@ -90,6 +96,7 @@ export function AdminDashboard({
   const [sales, setSales] = useState<Sale[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [adminItems, setAdminItems] = useState<AdminItem[]>([]);
+  const [categoryImageErrors, setCategoryImageErrors] = useState<Record<string, boolean>>({});
 
   const loadSales = useCallback(async () => {
     try {
@@ -172,6 +179,7 @@ export function AdminDashboard({
     name: '',
     description: '',
     icon: 'Shield',
+    imageUrl: '',
   });
 
   // "Other" category quick-add (used inside the product dialog)
@@ -342,12 +350,17 @@ export function AdminDashboard({
         name: category.name,
         description: category.description || '',
         icon: category.icon || 'Shield',
+        imageUrl: (category as CategoryWithImage).imageUrl || '',
       });
     } else {
       setEditingCategory(null);
-      setCategoryForm({ name: '', description: '', icon: 'Shield' });
+      setCategoryForm({ name: '', description: '', icon: 'Shield', imageUrl: '' });
     }
     setIsCategoryDialogOpen(true);
+  };
+
+  const handleCategoryImageError = (categoryId: string) => {
+    setCategoryImageErrors((prev) => ({ ...prev, [categoryId]: true }));
   };
 
   // FIX: this used to fire onAddCategory/onUpdateCategory without awaiting
@@ -687,14 +700,23 @@ export function AdminDashboard({
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map((category) => {
+              {categories.map((category: CategoryWithImage) => {
                 const productCount = products.filter((p) => p.categoryId === category.id).length;
                 return (
                   <Card key={category.id} className="bg-slate-950 border-blue-500/20">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                          <span className="text-blue-400 font-bold text-lg">{category.name.charAt(0)}</span>
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center overflow-hidden">
+                          {category.imageUrl && !categoryImageErrors[category.id] ? (
+                            <img
+                              src={category.imageUrl}
+                              alt={category.name}
+                              className="w-full h-full object-cover"
+                              onError={() => handleCategoryImageError(category.id)}
+                            />
+                          ) : (
+                            <span className="text-blue-400 font-bold text-lg">{category.name.charAt(0)}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="ghost" size="icon" onClick={() => handleOpenCategoryDialog(category)} className="h-8 w-8 text-slate-400 hover:text-white">
@@ -914,6 +936,11 @@ export function AdminDashboard({
               <div>
                 <Label className="text-slate-300">Category Name *</Label>
                 <Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} placeholder="e.g., Clothes" className="bg-slate-900 border-blue-500/30 text-white" />
+              </div>
+              <div>
+                <Label className="text-slate-300">Image URL</Label>
+                <Input value={categoryForm.imageUrl} onChange={(e) => setCategoryForm({ ...categoryForm, imageUrl: e.target.value })} placeholder="https://example.com/image.jpg" className="bg-slate-900 border-blue-500/30 text-white" />
+                <p className="text-slate-500 text-xs mt-1">Shown as the category's icon in the catalog. Leave blank to use a plain letter icon instead.</p>
               </div>
               <div>
                 <Label className="text-slate-300">Description</Label>
