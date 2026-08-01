@@ -226,7 +226,7 @@ export function AccountDrawer({
 
             <div className="border-t border-blue-500/20 mt-2 p-5 space-y-4">
               <a
-                href="https://t.me"
+                href="https://t.me/deedeesmarketsupport"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors"
