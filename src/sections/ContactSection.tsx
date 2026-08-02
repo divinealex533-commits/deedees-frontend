@@ -1,7 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MessageCircle, Phone, Clock, Shield, Headphones, Star } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { MessageCircle, Phone, Clock, Shield, Headphones, Star, LifeBuoy } from 'lucide-react';
+import { api } from '@/lib/api';
+import { toast } from 'sonner';
 
 const ALL_TESTIMONIALS = [
   { name: 'Chidinma A.', quote: 'Grew my page way faster than I expected. Support actually replies too.' },
@@ -28,6 +32,27 @@ export function ContactSection() {
 
   // Randomized once per page load, then stays put while the user browses.
   const testimonials = useMemo(() => pickRandom(ALL_TESTIMONIALS, 3), []);
+
+  // Support ticket form state
+  const [ticketForm, setTicketForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+
+  const handleSubmitTicket = async () => {
+    if (!ticketForm.name.trim() || !ticketForm.email.trim() || !ticketForm.subject.trim() || !ticketForm.message.trim()) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    try {
+      setIsSubmittingTicket(true);
+      await api.createTicket(ticketForm.name.trim(), ticketForm.email.trim(), ticketForm.subject.trim(), ticketForm.message.trim());
+      toast.success("Ticket submitted — we'll get back to you soon");
+      setTicketForm({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not submit ticket');
+    } finally {
+      setIsSubmittingTicket(false);
+    }
+  };
 
   return (
     <section id="contact" className="py-20 bg-slate-950 relative overflow-hidden">
@@ -106,6 +131,68 @@ export function ContactSection() {
                   </a>
                 ))}
               </div>
+            </div>
+
+            {/* Support Ticket Form */}
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
+                <LifeBuoy className="h-5 w-5 text-cyan-400" />
+                Open a Support Ticket
+              </h3>
+              <Card className="bg-slate-950 border-blue-500/20">
+                <CardContent className="p-6 space-y-4">
+                  <p className="text-slate-400 text-sm">
+                    Have an issue with an order or payment? Send us a message and we'll get back to you — this creates a written record we can track.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-slate-300">Your Name</Label>
+                      <Input
+                        value={ticketForm.name}
+                        onChange={(e) => setTicketForm({ ...ticketForm, name: e.target.value })}
+                        placeholder="e.g., Amaka Nwosu"
+                        className="bg-slate-900 border-blue-500/30 text-white"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-slate-300">Your Email</Label>
+                      <Input
+                        type="email"
+                        value={ticketForm.email}
+                        onChange={(e) => setTicketForm({ ...ticketForm, email: e.target.value })}
+                        placeholder="you@example.com"
+                        className="bg-slate-900 border-blue-500/30 text-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Subject</Label>
+                    <Input
+                      value={ticketForm.subject}
+                      onChange={(e) => setTicketForm({ ...ticketForm, subject: e.target.value })}
+                      placeholder="e.g., Payment not reflecting in wallet"
+                      className="bg-slate-900 border-blue-500/30 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-slate-300">Message</Label>
+                    <textarea
+                      value={ticketForm.message}
+                      onChange={(e) => setTicketForm({ ...ticketForm, message: e.target.value })}
+                      placeholder="Describe what's going on..."
+                      rows={4}
+                      className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 resize-none"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleSubmitTicket}
+                    disabled={isSubmittingTicket}
+                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  >
+                    {isSubmittingTicket ? 'Submitting...' : 'Submit Ticket'}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
