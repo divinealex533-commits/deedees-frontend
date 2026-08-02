@@ -26,6 +26,8 @@ import {
   ImageOff,
   ChevronRight,
   ChevronDown,
+  LifeBuoy,
+  Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, API_URL } from '@/lib/api';
@@ -45,6 +47,23 @@ interface AdminItem {
   accessLinks?: string[];
   accessLink?: string;
   quantity?: number;
+}
+
+// A support ticket, as returned by /api/admin/support/tickets.
+interface TicketReply {
+  message: string;
+  createdAt: string;
+}
+
+interface Ticket {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'resolved';
+  replies: TicketReply[];
+  createdAt: string;
 }
 
 // Local safeguard: extends Category with imageUrl regardless of whether
@@ -98,6 +117,11 @@ export function AdminDashboard({
   const [adminItems, setAdminItems] = useState<AdminItem[]>([]);
   const [categoryImageErrors, setCategoryImageErrors] = useState<Record<string, boolean>>({});
 
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [isSendingReply, setIsSendingReply] = useState<string | null>(null);
+
   const loadSales = useCallback(async () => {
     try {
       setSales(await api.getSales());
@@ -125,11 +149,20 @@ export function AdminDashboard({
     }
   }, []);
 
+  const loadTickets = useCallback(async () => {
+    try {
+      setTickets(await api.getAdminTickets());
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     loadSales();
     loadDeposits();
     loadAdminItems();
-  }, [loadSales, loadDeposits, loadAdminItems]);
+    loadTickets();
+  }, [loadSales, loadDeposits, loadAdminItems, loadTickets]);
 
   const handleApproveDeposit = async (id: string) => {
     try {
@@ -146,6 +179,36 @@ export function AdminDashboard({
       await api.rejectDeposit(id);
       toast.success('Deposit rejected');
       await loadDeposits();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const handleSendReply = async (ticketId: string) => {
+    const message = (replyDrafts[ticketId] || '').trim();
+    if (!message) {
+      toast.error('Write a reply first');
+      return;
+    }
+    try {
+      setIsSendingReply(ticketId);
+      await api.replyToTicket(ticketId, message);
+      toast.success('Reply sent');
+      setReplyDrafts((prev) => ({ ...prev, [ticketId]: '' }));
+      await loadTickets();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setIsSendingReply(null);
+    }
+  };
+
+  const handleToggleTicketStatus = async (ticket: Ticket) => {
+    const nextStatus = ticket.status === 'open' ? 'resolved' : 'open';
+    try {
+      await api.updateTicketStatus(ticket.id, nextStatus);
+      toast.success(nextStatus === 'resolved' ? 'Ticket marked resolved' : 'Ticket reopened');
+      await loadTickets();
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -191,6 +254,7 @@ export function AdminDashboard({
   const inStockProducts = products.filter((p) => p.inStock).length;
   const totalRevenue = sales.reduce((sum, s) => sum + s.price, 0);
   const pendingDeposits = deposits.filter((d) => d.status === 'pending');
+  const openTickets = tickets.filter((t) => t.status === 'open');
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {
@@ -198,6 +262,8 @@ export function AdminDashboard({
       currency: 'NGN',
       minimumFractionDigits: 0,
     }).format(price);
+
+  const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
   // Product handlers
   const handleOpenProductDialog = (product?: Product) => {
@@ -435,7 +501,7 @@ export function AdminDashboard({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
           <Card className="bg-slate-950 border-blue-500/20">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
@@ -491,6 +557,17 @@ export function AdminDashboard({
               </div>
             </CardContent>
           </Card>
+          <Card className="bg-slate-950 border-blue-500/20">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
+                <LifeBuoy className="h-5 w-5 text-rose-400" />
+              </div>
+              <div>
+                <p className="text-slate-400 text-xs">Open Tickets</p>
+                <p className="text-xl font-bold text-white">{openTickets.length}</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
@@ -501,6 +578,7 @@ export function AdminDashboard({
             { id: 'categories', label: 'Categories', icon: FolderOpen },
             { id: 'sales', label: 'Sales', icon: ShoppingCart },
             { id: 'deposits', label: 'Deposits', icon: Wallet },
+            { id: 'support', label: 'Support', icon: LifeBuoy },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -513,6 +591,9 @@ export function AdminDashboard({
             >
               <tab.icon className="h-4 w-4" />
               {tab.label}
+              {tab.id === 'support' && openTickets.length > 0 && (
+                <Badge className="bg-rose-500 text-white text-[10px] px-1.5 py-0">{openTickets.length}</Badge>
+              )}
             </button>
           ))}
         </div>
@@ -809,6 +890,98 @@ export function AdminDashboard({
                 ))
               ) : (
                 <p className="text-slate-400 text-center py-8">No deposits yet</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Support Tickets */}
+        {activeTab === 'support' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-white font-semibold">Support Tickets</h3>
+              <Button onClick={() => loadTickets()} variant="outline" className="border-blue-500/30 text-white hover:bg-blue-500/10">
+                Refresh
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {tickets.length > 0 ? (
+                tickets.map((ticket) => {
+                  const isExpanded = expandedTicketId === ticket.id;
+                  return (
+                    <Card key={ticket.id} className="bg-slate-950 border-blue-500/20">
+                      <CardContent className="p-4">
+                        <button
+                          onClick={() => setExpandedTicketId(isExpanded ? null : ticket.id)}
+                          className="w-full flex flex-col lg:flex-row lg:items-center justify-between gap-2 text-left"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-white font-semibold">{ticket.subject}</p>
+                              <Badge className={ticket.status === 'open' ? 'bg-amber-500/20 text-amber-400' : 'bg-green-500/20 text-green-400'}>
+                                {ticket.status === 'open' ? 'Open' : 'Resolved'}
+                              </Badge>
+                            </div>
+                            <p className="text-slate-400 text-sm">{ticket.name} • {ticket.email}</p>
+                            <p className="text-slate-500 text-xs">{formatDateTime(ticket.createdAt)}</p>
+                          </div>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="mt-4 space-y-3 border-t border-blue-500/10 pt-4">
+                            <div className="rounded-lg bg-slate-900/50 border border-blue-500/10 p-3">
+                              <p className="text-slate-300 text-sm whitespace-pre-wrap">{ticket.message}</p>
+                            </div>
+
+                            {ticket.replies && ticket.replies.length > 0 && (
+                              <div className="space-y-2">
+                                {ticket.replies.map((reply, idx) => (
+                                  <div key={idx} className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3">
+                                    <p className="text-blue-300 text-xs mb-1">You replied • {formatDateTime(reply.createdAt)}</p>
+                                    <p className="text-slate-200 text-sm whitespace-pre-wrap">{reply.message}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Input
+                                value={replyDrafts[ticket.id] || ''}
+                                onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
+                                placeholder="Type a reply..."
+                                className="bg-slate-900 border-blue-500/30 text-white flex-1"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleSendReply(ticket.id)}
+                                  disabled={isSendingReply === ticket.id}
+                                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                                >
+                                  <Send className="h-4 w-4 mr-1" />
+                                  {isSendingReply === ticket.id ? 'Sending...' : 'Reply'}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => handleToggleTicketStatus(ticket)}
+                                  className="border-blue-500/30 text-white hover:bg-blue-500/10"
+                                >
+                                  {ticket.status === 'open' ? 'Mark Resolved' : 'Reopen'}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              ) : (
+                <p className="text-slate-400 text-center py-8">No support tickets yet</p>
               )}
             </div>
           </div>
