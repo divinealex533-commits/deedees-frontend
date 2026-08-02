@@ -164,4 +164,25 @@ export const api = {
 
   deleteCategory: (id: string) =>
     request(`/api/categories/${id}`, { method: "DELETE" }),
+
+  // ---------- Support Tickets ----------
+  createTicket: (name: string, email: string, subject: string, message: string) =>
+    request("/api/support/tickets", {
+      method: "POST",
+      body: JSON.stringify({ name, email, subject, message }),
+    }),
+
+  getAdminTickets: () => request("/api/admin/support/tickets"),
+
+  replyToTicket: (id: string, message: string) =>
+    request(`/api/admin/support/tickets/${id}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }),
+
+  updateTicketStatus: (id: string, status: "open" | "resolved") =>
+    request(`/api/admin/support/tickets/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    }),
 };
