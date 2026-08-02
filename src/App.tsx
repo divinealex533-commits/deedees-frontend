@@ -17,6 +17,7 @@ import { Navbar } from '@/sections/Navbar';
 import { AuthModal } from '@/sections/AuthModal';
 import { AdminLoginModal } from '@/sections/AdminLoginModal';
 import { AccountDrawer } from '@/sections/AccountDrawer';
+import { FloatingContactButtons } from '@/components/FloatingContactButtons';
 import { Toaster, toast } from 'sonner';
 
 type ViewType = 'store' | 'admin' | 'dashboard';
@@ -149,6 +150,7 @@ function App() {
   return (
     <div className="min-h-screen bg-black">
       <Toaster position="top-right" richColors />
+      <FloatingContactButtons />
 
       {/* Navigation */}
       <Navbar
