@@ -17,6 +17,8 @@ import {
   Upload,
   Check,
   Link as LinkIcon,
+  Landmark,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -42,6 +44,13 @@ interface Order {
   price: number;
   item: Product | null;
 }
+
+// Manual bank transfer destination. Update these if the account ever changes.
+const MANUAL_BANK_ACCOUNT = {
+  accountName: 'Oghenakhogie Ugabi Divine',
+  accountNumber: '1101478217',
+  bankName: '9 Payment Service Bank',
+};
 
 export function CustomerDashboard({
   user,
@@ -137,6 +146,11 @@ export function CustomerDashboard({
     } catch (err) {
       toast.error((err as Error).message);
     }
+  };
+
+  const handleCopyAccountNumber = () => {
+    navigator.clipboard.writeText(MANUAL_BANK_ACCOUNT.accountNumber);
+    toast.success('Account number copied');
   };
 
   return (
@@ -360,6 +374,38 @@ export function CustomerDashboard({
                           <Clock className="h-5 w-5 text-cyan-400" />
                           <p className="text-white font-medium">Manual transfer</p>
                         </div>
+
+                        {/* Bank account details */}
+                        <div className="mb-3 p-3 rounded-lg bg-slate-950 border border-cyan-500/20 space-y-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Landmark className="h-4 w-4 text-cyan-400" />
+                            <p className="text-cyan-400 text-xs font-medium uppercase tracking-wide">Transfer to</p>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-slate-400 text-xs">Account Number</p>
+                              <p className="text-white font-mono text-base font-semibold">{MANUAL_BANK_ACCOUNT.accountNumber}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={handleCopyAccountNumber}
+                              className="h-8 w-8 text-cyan-400 hover:bg-cyan-500/10"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div>
+                            <p className="text-slate-400 text-xs">Account Name</p>
+                            <p className="text-white text-sm">{MANUAL_BANK_ACCOUNT.accountName}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400 text-xs">Bank</p>
+                            <p className="text-white text-sm">{MANUAL_BANK_ACCOUNT.bankName}</p>
+                          </div>
+                        </div>
+
                         <Input
                           type="file"
                           accept="image/*"
