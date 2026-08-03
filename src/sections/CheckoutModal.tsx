@@ -265,7 +265,7 @@ export function CheckoutModal({
                       onClick={handleManualTopUp}
                       disabled={isProcessing || !manualFile}
                       variant="outline"
-                      className="w-full border-cyan-500/30 text-white hover:bg-cyan-500/10"
+                      className="w-full bg-slate-950 border-cyan-500/30 text-white hover:bg-cyan-500/10 disabled:bg-slate-900 disabled:text-slate-500 disabled:border-slate-700 disabled:opacity-100"
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Submit for review
