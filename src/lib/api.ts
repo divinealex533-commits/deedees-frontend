@@ -1,5 +1,5 @@
 // Talks to your deployed backend. Change this to your real Render URL.
-export const API_URL = "https://deedees-backend.onrender.com";
+export const API_URL = "https://deedees-backend-1.onrender.com";
 
 const TOKEN_KEY = "deedee_token";
 
