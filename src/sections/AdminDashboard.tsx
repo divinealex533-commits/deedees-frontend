@@ -1172,6 +1172,7 @@ export function AdminDashboard({
 
             <CredentialPool
               products={products}
+              categories={categories}
               adminItems={adminItems}
               onUploaded={loadAdminItems}
             />
