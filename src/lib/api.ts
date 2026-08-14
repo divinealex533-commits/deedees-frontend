@@ -10,17 +10,27 @@ export function getToken(): string | null {
 
 export function setToken(token: string | null) {
   if (typeof window === "undefined") return;
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
+
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
 }
 
-async function request(path: string, options: RequestInit = {}) {
+async function request(
+  path: string,
+  options: RequestInit = {}
+) {
   const token = getToken();
+
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token
+        ? { Authorization: `Bearer ${token}` }
+        : {}),
       ...(options.headers || {}),
     },
   });
@@ -28,56 +38,91 @@ async function request(path: string, options: RequestInit = {}) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    throw new Error(
+      data.error || `Request failed (${res.status})`
+    );
   }
 
   return data;
 }
 
-// ---------- Auth ----------
+// ============================================================
+// API
+// ============================================================
+
 export const api = {
-  signup: (name: string, email: string, password: string, referralCode?: string) =>
+  // ---------- Auth ----------
+
+  signup: (
+    name: string,
+    email: string,
+    password: string,
+    referralCode?: string
+  ) =>
     request("/api/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, referralCode }),
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        referralCode,
+      }),
     }),
 
-  login: (email: string, password: string) =>
+  login: (
+    email: string,
+    password: string
+  ) =>
     request("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     }),
-login: (email: string, password: string) =>
-  request("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  }),
 
-forgotPassword: (email: string) =>
-  request("/api/auth/forgot-password", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  }),
+  forgotPassword: (email: string) =>
+    request("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+      }),
+    }),
 
-resendPasswordReset: (email: string) =>
-  request("/api/auth/resend-password-reset", {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  }),
+  resendPasswordReset: (email: string) =>
+    request("/api/auth/resend-password-reset", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+      }),
+    }),
 
-resetPassword: (token: string, password: string) =>
-  request("/api/auth/reset-password", {
-    method: "POST",
-    body: JSON.stringify({ token, password }),
-  }),
-  
-  me: () => request("/api/me"),
+  resetPassword: (
+    token: string,
+    password: string
+  ) =>
+    request("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({
+        token,
+        password,
+      }),
+    }),
 
-  // ---------- Items (public — no accessLink included) ----------
-  getItems: () => request("/api/items"),
+  me: () =>
+    request("/api/me"),
 
-  // ---------- Items (admin — full data, including accessLink) ----------
-  getAdminItems: () => request("/api/admin/items"),
+  // ==========================================================
+  // Items
+  // ==========================================================
+
+  // Public items — backend hides credentials/access links.
+  getItems: () =>
+    request("/api/items"),
+
+  // Admin items — full item data.
+  getAdminItems: () =>
+    request("/api/admin/items"),
 
   createItem: (item: {
     name: string;
@@ -95,117 +140,276 @@ resetPassword: (token: string, password: string) =>
       body: JSON.stringify(item),
     }),
 
-  // Tops up a product's credential pool — each line becomes one unit of
-  // stock, and each buyer gets a different line, consumed on purchase.
-  addCredentials: (id: string, credentials: string[]) =>
-    request(`/api/items/${id}/add-access-links`, {
-      method: "POST",
-      body: JSON.stringify({ credentials }),
-    }),
+  // ----------------------------------------------------------
+  // Credential Pool
+  // ----------------------------------------------------------
+  // Each credential becomes one unit of stock.
+  // When a customer buys, the backend consumes credentials
+  // from the pool and assigns them to that purchase.
 
-  updateItem: (id: string, updates: Record<string, unknown>) =>
+  addCredentials: (
+    id: string,
+    credentials: string[]
+  ) =>
+    request(
+      `/api/items/${id}/add-access-links`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          credentials,
+        }),
+      }
+    ),
+
+  updateItem: (
+    id: string,
+    updates: Record<string, unknown>
+  ) =>
     request(`/api/items/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     }),
 
   toggleItemStock: (id: string) =>
-    request(`/api/items/${id}/toggle-stock`, { method: "POST" }),
+    request(
+      `/api/items/${id}/toggle-stock`,
+      {
+        method: "POST",
+      }
+    ),
 
   deleteItem: (id: string) =>
-    request(`/api/items/${id}`, { method: "DELETE" }),
+    request(`/api/items/${id}`, {
+      method: "DELETE",
+    }),
 
-  // ---------- Purchase ----------
-  purchaseItem: (itemId: string, quantity: number = 1) =>
+  // ==========================================================
+  // Purchase
+  // ==========================================================
+
+  purchaseItem: (
+    itemId: string,
+    quantity: number = 1
+  ) =>
     request("/api/purchase", {
       method: "POST",
-      body: JSON.stringify({ itemId, quantity }),
+      body: JSON.stringify({
+        itemId,
+        quantity,
+      }),
     }),
 
-  // ---------- Orders (customer's own purchases, includes accessLink) ----------
-  getMyOrders: () => request("/api/my-orders"),
+  // ==========================================================
+  // Orders
+  // ==========================================================
 
-  // ---------- Referrals / Affiliate program ----------
-  getMyReferrals: () => request("/api/my-referrals"),
+  // Customer's own purchases.
+  // Assigned credentials are included by the backend.
+  getMyOrders: () =>
+    request("/api/my-orders"),
 
-  // ---------- Wallet: instant (Paystack) ----------
-  initializeInstantDeposit: (amount: number) =>
-    request("/api/wallet/deposit/instant/initialize", {
-      method: "POST",
-      body: JSON.stringify({ amount }),
-    }),
+  // ==========================================================
+  // Referrals / Affiliate
+  // ==========================================================
 
-  verifyInstantDeposit: (reference: string) =>
-    request(`/api/wallet/deposit/instant/verify/${reference}`),
+  getMyReferrals: () =>
+    request("/api/my-referrals"),
 
-  // ---------- Wallet: manual (screenshot) ----------
-  submitManualDeposit: async (amount: number, file: File) => {
+  // ==========================================================
+  // Wallet — Instant Paystack
+  // ==========================================================
+
+  initializeInstantDeposit: (
+    amount: number
+  ) =>
+    request(
+      "/api/wallet/deposit/instant/initialize",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          amount,
+        }),
+      }
+    ),
+
+  verifyInstantDeposit: (
+    reference: string
+  ) =>
+    request(
+      `/api/wallet/deposit/instant/verify/${reference}`
+    ),
+
+  // ==========================================================
+  // Wallet — Manual Deposit
+  // ==========================================================
+
+  submitManualDeposit: async (
+    amount: number,
+    file: File
+  ) => {
     const token = getToken();
+
     const formData = new FormData();
-    formData.append("amount", String(amount));
-    formData.append("screenshot", file);
 
-    const res = await fetch(`${API_URL}/api/wallet/deposit/manual`, {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
+    formData.append(
+      "amount",
+      String(amount)
+    );
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "Something went wrong");
+    formData.append(
+      "screenshot",
+      file
+    );
+
+    const res = await fetch(
+      `${API_URL}/api/wallet/deposit/manual`,
+      {
+        method: "POST",
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {},
+        body: formData,
+      }
+    );
+
+    const data = await res
+      .json()
+      .catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(
+        data.error ||
+          "Something went wrong"
+      );
+    }
+
     return data;
   },
 
-  getMyDeposits: () => request("/api/wallet/deposits"),
+  getMyDeposits: () =>
+    request("/api/wallet/deposits"),
 
-  // ---------- Admin ----------
-  getAdminDeposits: (status?: string) =>
-    request(`/api/admin/deposits${status ? `?status=${status}` : ""}`),
+  // ==========================================================
+  // Admin Deposits
+  // ==========================================================
+
+  getAdminDeposits: (
+    status?: string
+  ) =>
+    request(
+      `/api/admin/deposits${
+        status
+          ? `?status=${status}`
+          : ""
+      }`
+    ),
 
   approveDeposit: (id: string) =>
-    request(`/api/admin/deposits/${id}/approve`, { method: "POST" }),
+    request(
+      `/api/admin/deposits/${id}/approve`,
+      {
+        method: "POST",
+      }
+    ),
 
   rejectDeposit: (id: string) =>
-    request(`/api/admin/deposits/${id}/reject`, { method: "POST" }),
+    request(
+      `/api/admin/deposits/${id}/reject`,
+      {
+        method: "POST",
+      }
+    ),
 
-  getSales: () => request("/api/admin/sales"),
+  // ==========================================================
+  // Admin Sales
+  // ==========================================================
 
-  // ---------- Categories (shared across all visitors) ----------
-  getCategories: () => request("/api/categories"),
+  getSales: () =>
+    request("/api/admin/sales"),
 
-  createCategory: (category: { name: string; description?: string; icon?: string }) =>
+  // ==========================================================
+  // Categories
+  // ==========================================================
+
+  getCategories: () =>
+    request("/api/categories"),
+
+  createCategory: (category: {
+    name: string;
+    description?: string;
+    icon?: string;
+  }) =>
     request("/api/categories", {
       method: "POST",
       body: JSON.stringify(category),
     }),
 
-  updateCategory: (id: string, updates: Record<string, unknown>) =>
+  updateCategory: (
+    id: string,
+    updates: Record<string, unknown>
+  ) =>
     request(`/api/categories/${id}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     }),
 
   deleteCategory: (id: string) =>
-    request(`/api/categories/${id}`, { method: "DELETE" }),
+    request(`/api/categories/${id}`, {
+      method: "DELETE",
+    }),
 
-  // ---------- Support Tickets ----------
-  createTicket: (name: string, email: string, subject: string, message: string) =>
+  // ==========================================================
+  // Support Tickets
+  // ==========================================================
+
+  createTicket: (
+    name: string,
+    email: string,
+    subject: string,
+    message: string
+  ) =>
     request("/api/support/tickets", {
       method: "POST",
-      body: JSON.stringify({ name, email, subject, message }),
+      body: JSON.stringify({
+        name,
+        email,
+        subject,
+        message,
+      }),
     }),
 
-  getAdminTickets: () => request("/api/admin/support/tickets"),
+  getAdminTickets: () =>
+    request(
+      "/api/admin/support/tickets"
+    ),
 
-  replyToTicket: (id: string, message: string) =>
-    request(`/api/admin/support/tickets/${id}/reply`, {
-      method: "POST",
-      body: JSON.stringify({ message }),
-    }),
+  replyToTicket: (
+    id: string,
+    message: string
+  ) =>
+    request(
+      `/api/admin/support/tickets/${id}/reply`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          message,
+        }),
+      }
+    ),
 
-  updateTicketStatus: (id: string, status: "open" | "resolved") =>
-    request(`/api/admin/support/tickets/${id}/status`, {
-      method: "POST",
-      body: JSON.stringify({ status }),
-    }),
+  updateTicketStatus: (
+    id: string,
+    status: "open" | "resolved"
+  ) =>
+    request(
+      `/api/admin/support/tickets/${id}/status`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          status,
+        }),
+      }
+    ),
 };
