@@ -1156,6 +1156,28 @@ export function AdminDashboard({
           </div>
         )}
 
+                {/* Credential Pool */}
+        {activeTab === 'credentials' && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-white font-semibold">
+                Credential Pool
+              </h3>
+
+              <p className="text-slate-400 text-sm mt-1">
+                Upload multiple credentials or items into a product's
+                available stock.
+              </p>
+            </div>
+
+            <CredentialPool
+              products={products}
+              adminItems={adminItems}
+              onUploaded={loadAdminItems}
+            />
+          </div>
+        )}
+        
         {/* Categories */}
         {activeTab === 'categories' && (
           <div className="space-y-4">
