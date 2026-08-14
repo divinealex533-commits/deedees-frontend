@@ -30,6 +30,7 @@ import {
   Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { CredentialPool } from '@/components/CredentialPool';
 import { api, API_URL } from '@/lib/api';
 import type { Product, Category } from '@/types';
 import type { User } from '@/hooks/useAuth';
@@ -821,17 +822,21 @@ export function AdminDashboard({
               id: 'overview',
               label: 'Overview',
               icon: TrendingUp,
-            },
-            {
-              id: 'products',
-              label: 'Products',
-              icon: Package,
-            },
-            {
-              id: 'categories',
-              label: 'Categories',
-              icon: FolderOpen,
-            },
+            },{
+  id: 'products',
+  label: 'Products',
+  icon: Package,
+},
+{
+  id: 'credentials',
+  label: 'Credential Pool',
+  icon: KeyRound,
+},
+{
+  id: 'categories',
+  label: 'Categories',
+  icon: FolderOpen,
+},
             {
               id: 'sales',
               label: 'Sales',
