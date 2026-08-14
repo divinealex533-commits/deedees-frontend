@@ -1,16 +1,17 @@
 export interface Product {
-     id: string;
-     name: string;
-     price: number;
-     imageUrl: string;
-     categoryId: string;
-     inStock: boolean;
-     description?: string;
-     createdAt: string;
-     isDigital?: boolean;
-     fileUrl?: string;
-     accessLink?: string;
-     quantity?: number;
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  categoryId: string;
+  inStock: boolean;
+  stockCount?: number;
+  description?: string;
+  createdAt: string;
+  isDigital?: boolean;
+  fileUrl?: string;
+  accessLink?: string;
+  quantity?: number;
 }
 export interface Category {
   id: string;
