@@ -10,8 +10,22 @@ import { api } from '@/lib/api';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  onSignup: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; message: string }>;
+  onLogin: (
+    email: string,
+    password: string
+  ) => Promise<{
+    success: boolean;
+    message: string;
+    user?: {
+      name: string;
+    };
+  }>;
+  onSignup: (
+    name: string,
+    email: string,
+    phone: string,
+    password: string
+  ) => Promise<{ success: boolean; message: string }>;
   pendingReferralCode?: string | null;
 }
 
@@ -46,15 +60,24 @@ export function AuthModal({
       return;
     }
 
-    const result = await onLogin(loginEmail, loginPassword);
+    try {
+      const result = await onLogin(loginEmail, loginPassword);
 
-    if (result.success) {
-      toast.success(result.message);
-      onClose();
-      setLoginEmail('');
-      setLoginPassword('');
-    } else {
-      toast.error(result.message);
+      if (result.success) {
+        const name = result.user?.name || 'Customer';
+
+        toast.success(`Welcome Back, ${name}!`);
+
+        onClose();
+        setLoginEmail('');
+        setLoginPassword('');
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to login'
+      );
     }
   };
 
@@ -106,23 +129,30 @@ export function AuthModal({
       return;
     }
 
-    const result = await onSignup(
-      signupName,
-      signupEmail,
-      signupPhone,
-      signupPassword
-    );
+    try {
+      const result = await onSignup(
+        signupName,
+        signupEmail,
+        signupPhone,
+        signupPassword
+      );
 
-    if (result.success) {
-      toast.success(result.message);
-      onClose();
-      setSignupName('');
-      setSignupEmail('');
-      setSignupPhone('');
-      setSignupPassword('');
-      setSignupConfirmPassword('');
-    } else {
-      toast.error(result.message);
+      if (result.success) {
+        toast.success(result.message);
+        onClose();
+
+        setSignupName('');
+        setSignupEmail('');
+        setSignupPhone('');
+        setSignupPassword('');
+        setSignupConfirmPassword('');
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to create account'
+      );
     }
   };
 
@@ -381,7 +411,7 @@ export function AuthModal({
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6"
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 to-cyan-600 text-white py-6"
             >
               Create Account
             </Button>
