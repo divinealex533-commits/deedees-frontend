@@ -279,7 +279,7 @@ export function ProductCatalog({ products, categories, onAddToCart }: ProductCat
                       <div className="absolute top-2 right-2">
                         <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg text-[10px] px-2 py-0.5">
                           <Check className="h-2.5 w-2.5 mr-1" />
-                          {product.stockCount != null ? `${product.stockCount} left` : 'In Stock'}
+                          {product.quantity != null ? `${product.quantity} left` : 'In Stock'}
                         </Badge>
                       </div>
                     </div>
