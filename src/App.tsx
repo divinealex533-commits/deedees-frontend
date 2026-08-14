@@ -29,37 +29,57 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
-  // Tracks whether the auth modal was opened because someone clicked
-  // "Get Started" — so we know to scroll to the catalog after they log in.
   const [pendingCatalogScroll, setPendingCatalogScroll] = useState(false);
 
   const store = useStore();
   const auth = useAuth();
   const wallet = useWallet(auth.user?.id || null);
 
-  // If Paystack just redirected the customer back here with ?reference=...,
-  // confirm the payment and refresh their balance.
+  // Paystack return handling
   useEffect(() => {
+    if (!auth.isLoaded) return;
+
     const params = new URLSearchParams(window.location.search);
     const reference = params.get('reference');
-    if (reference && auth.isAuthenticated) {
-      wallet
-        .confirmInstantDeposit(reference)
-        .then((result) => {
-          if (result.paymentStatus === 'success') {
-            toast.success('Payment received! Your balance has been updated.');
-          } else {
-            toast.info('Payment not confirmed yet — it may still be processing.');
-          }
-          // Clean the URL so refreshing doesn't re-trigger this
-          window.history.replaceState({}, '', window.location.pathname);
-        })
-        .catch(() => {
-          // ignore — user can check their dashboard for status
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated]);
+
+    if (!reference || !auth.isAuthenticated) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const result = await wallet.confirmInstantDeposit(reference);
+
+        if (cancelled) return;
+
+        if (result.paymentStatus === 'success') {
+          toast.success('Payment received! Your balance has been updated.');
+        } else {
+          toast.info(
+            'Payment not confirmed yet — it may still be processing.'
+          );
+        }
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Could not verify Paystack payment:', error);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    auth.isLoaded,
+    auth.isAuthenticated,
+    wallet.confirmInstantDeposit,
+  ]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -84,6 +104,7 @@ function App() {
       toast.error('This product is out of stock');
       return;
     }
+
     store.addToCart(product);
     toast.success(`${product.name} added to cart`);
   };
@@ -93,12 +114,14 @@ function App() {
       toast.error('Your cart is empty');
       return;
     }
+
     if (!auth.isAuthenticated) {
       setIsCartOpen(false);
       setIsAuthModalOpen(true);
       toast.info('Please login to complete your order');
       return;
     }
+
     setIsCartOpen(false);
     setIsCheckoutOpen(true);
   };
@@ -111,11 +134,12 @@ function App() {
     }
   };
 
-  // Account drawer navigation — these switch view first (when needed),
-  // then scroll to the relevant section once the store view has rendered.
   const handleDrawerGoHome = () => {
     setView('store');
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+    setTimeout(
+      () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+      50
+    );
   };
 
   const handleDrawerGoProduct = () => {
@@ -141,7 +165,11 @@ function App() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-slate-900 to-black">
         <div className="relative">
           <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 w-16 h-16 border-4 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+
+          <div
+            className="absolute inset-0 w-16 h-16 border-4 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"
+            style={{ animationDuration: '1.5s' }}
+          ></div>
         </div>
       </div>
     );
@@ -150,9 +178,9 @@ function App() {
   return (
     <div className="min-h-screen bg-black">
       <Toaster position="top-right" richColors />
+
       <FloatingContactButtons />
 
-      {/* Navigation */}
       <Navbar
         cartCount={store.cartCount}
         onCartClick={() => setIsCartOpen(true)}
@@ -192,12 +220,15 @@ function App() {
       {view === 'store' && (
         <>
           <HeroSection onGetStarted={handleGetStarted} />
+
           <ServicesSection categories={store.categories} />
+
           <ProductCatalog
             products={store.products}
             categories={store.categories}
             onAddToCart={handleAddToCart}
           />
+
           <SecuritySection />
           <PolicySection />
           <ContactSection />
@@ -223,11 +254,15 @@ function App() {
             onSubmitManualDeposit={wallet.submitManualDeposit}
             onPurchase={async (items) => {
               for (const item of items) {
-                // eslint-disable-next-line no-await-in-loop
-                await store.purchaseItem(item.product.id, item.quantity);
+                await store.purchaseItem(
+                  item.product.id,
+                  item.quantity
+                );
               }
+
               await wallet.refresh();
               await auth.refresh();
+
               store.clearCart();
               setIsCheckoutOpen(false);
               setView('dashboard');
@@ -282,14 +317,15 @@ function App() {
         }}
         onLogin={async (email, password) => {
           const result = await auth.login(email, password);
+
           if (result.success) {
             if (result.user?.isAdmin) {
               setView('admin');
             } else if (pendingCatalogScroll) {
-              // Give the modal a moment to close before scrolling
               setTimeout(scrollToCatalog, 300);
             }
           }
+
           setPendingCatalogScroll(false);
           return result;
         }}
@@ -302,13 +338,24 @@ function App() {
         onClose={() => setIsAdminLoginOpen(false)}
         onLogin={async (email, password) => {
           const result = await auth.login(email, password);
+
           if (!result.success) return result;
+
           if (!result.user?.isAdmin) {
             auth.logout();
-            return { success: false, message: 'This account does not have admin access' };
+
+            return {
+              success: false,
+              message: 'This account does not have admin access',
+            };
           }
+
           setView('admin');
-          return { success: true, message: 'Welcome back!' };
+
+          return {
+            success: true,
+            message: 'Welcome back!',
+          };
         }}
       />
     </div>
