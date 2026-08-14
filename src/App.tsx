@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ResetPassword } from '@/sections/ResetPassword';
 import { useStore } from '@/hooks/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
@@ -30,7 +31,12 @@ function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [pendingCatalogScroll, setPendingCatalogScroll] = useState(false);
+  const resetToken =
+  new URLSearchParams(window.location.search).get('token');
 
+const isResetPasswordPage =
+  window.location.pathname === '/reset-password' &&
+  !!resetToken;
   const store = useStore();
   const auth = useAuth();
   const wallet = useWallet(auth.user?.id || null);
@@ -80,7 +86,26 @@ function App() {
     auth.isAuthenticated,
     wallet.confirmInstantDeposit,
   ]);
+  if (isResetPasswordPage && resetToken) {
+  return (
+    <>
+      <Toaster position="top-right" richColors />
 
+      <ResetPassword
+        token={resetToken}
+        onBackToLogin={() => {
+          window.history.replaceState(
+            {},
+            document.title,
+            '/'
+          );
+
+          window.location.href = '/';
+        }}
+      />
+    </>
+  );
+}
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
