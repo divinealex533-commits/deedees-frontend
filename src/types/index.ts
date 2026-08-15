@@ -12,7 +12,17 @@ export interface Product {
   fileUrl?: string;
   accessLink?: string;
   quantity?: number;
+
+  // Tonyix integration
+  tonyixProductId?: number | null;
+  tonyixOrderId?: string | null;
+  assignedCredentials?: Array<{
+    productName?: string | null;
+    details?: string | null;
+    url?: string | null;
+  }>;
 }
+
 export interface Category {
   id: string;
   name: string;
@@ -21,10 +31,12 @@ export interface Category {
   imageUrl?: string;
   createdAt: string;
 }
+
 export interface CartItem {
   product: Product;
   quantity: number;
 }
+
 export interface Order {
   id: string;
   items: CartItem[];
@@ -38,6 +50,7 @@ export interface Order {
   createdAt: string;
   notes?: string;
 }
+
 export interface PaymentDetails {
   instant: {
     pocketApp: {
@@ -56,6 +69,7 @@ export interface PaymentDetails {
     };
   };
 }
+
 export interface SupportContact {
   whatsapp: string[];
   phone: string[];
