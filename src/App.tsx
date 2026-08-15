@@ -290,26 +290,31 @@ const handleBuyNow = (product: typeof store.products[0]) => {
           />
 
           <CheckoutModal
-  isOpen={isCheckoutOpen}
-  onClose={() => {
-    setIsCheckoutOpen(false);
-    setSelectedProduct(null);
-  }}
-  product={selectedProduct}
-  walletBalance={wallet.balance}
-  onStartInstantDeposit={wallet.startInstantDeposit}
-  onSubmitManualDeposit={wallet.submitManualDeposit}
-  onPurchase={async (product, quantity) => {
-    await store.purchaseItem(product.id, quantity);
+            isOpen={isCheckoutOpen}
+            onClose={() => setIsCheckoutOpen(false)}
+            cart={store.cart}
+            cartTotal={store.cartTotal}
+            walletBalance={wallet.balance}
+            onStartInstantDeposit={wallet.startInstantDeposit}
+            onSubmitManualDeposit={wallet.submitManualDeposit}
+            onPurchase={async (items) => {
+              for (const item of items) {
+                await store.purchaseItem(
+                  item.product.id,
+                  item.quantity
+                );
+              }
 
-    await wallet.refresh();
-    await auth.refresh();
+              await wallet.refresh();
+              await auth.refresh();
 
-    setIsCheckoutOpen(false);
-    setSelectedProduct(null);
-    setView('dashboard');
-  }}
-/>
+              store.clearCart();
+              setIsCheckoutOpen(false);
+              setView('dashboard');
+            }}
+          />
+        </>
+      )}
 
       {view === 'admin' && auth.user?.isAdmin && (
         <AdminDashboard
