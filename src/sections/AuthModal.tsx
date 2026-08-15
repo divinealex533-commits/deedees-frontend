@@ -1,9 +1,24 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, User, Mail, Phone, Lock, Shield, Gift } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Shield,
+  Gift,
+  Loader2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
@@ -41,6 +56,7 @@ export function AuthModal({
 
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -55,22 +71,27 @@ export function AuthModal({
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (loggingIn) return;
+
     if (!loginEmail || !loginPassword) {
       toast.error('Please fill in all fields');
       return;
     }
 
     try {
+      setLoggingIn(true);
+
       const result = await onLogin(loginEmail, loginPassword);
 
       if (result.success) {
         const name = result.user?.name || 'Customer';
 
-        toast.success(`Welcome Back, ${name}!`);
+        toast.success(`Welcome back, ${name}!`);
 
-        onClose();
         setLoginEmail('');
         setLoginPassword('');
+
+        onClose();
       } else {
         toast.error(result.message);
       }
@@ -78,6 +99,8 @@ export function AuthModal({
       toast.error(
         error instanceof Error ? error.message : 'Unable to login'
       );
+    } finally {
+      setLoggingIn(false);
     }
   };
 
@@ -174,6 +197,7 @@ export function AuthModal({
         {pendingReferralCode && activeTab === 'signup' && (
           <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
             <Gift className="h-5 w-5 text-green-400 flex-shrink-0" />
+
             <p className="text-green-400 text-sm">
               You were invited by a friend — sign up now to get{' '}
               <span className="font-semibold">5% off</span> your first order!
@@ -184,7 +208,9 @@ export function AuthModal({
         {!forgotPassword && (
           <div className="flex gap-2 mt-4 p-1 bg-slate-900 rounded-lg">
             <button
+              type="button"
               onClick={() => setActiveTab('login')}
+              disabled={loggingIn}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
                 activeTab === 'login'
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
@@ -195,7 +221,9 @@ export function AuthModal({
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('signup')}
+              disabled={loggingIn}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
                 activeTab === 'signup'
                   ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
@@ -264,6 +292,7 @@ export function AuthModal({
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   placeholder="Enter your email"
+                  disabled={loggingIn}
                   className="pl-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
                 />
               </div>
@@ -280,12 +309,14 @@ export function AuthModal({
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   placeholder="Enter your password"
+                  disabled={loggingIn}
                   className="pl-10 pr-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
                 />
 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loggingIn}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-blue-400"
                 >
                   {showPassword ? (
@@ -300,6 +331,7 @@ export function AuthModal({
             <div className="text-right">
               <button
                 type="button"
+                disabled={loggingIn}
                 onClick={() => {
                   setForgotEmail(loginEmail);
                   setForgotPassword(true);
@@ -312,9 +344,17 @@ export function AuthModal({
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6"
+              disabled={loggingIn}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6 disabled:opacity-70"
             >
-              Login
+              {loggingIn ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Logging in...
+                </span>
+              ) : (
+                'Login'
+              )}
             </Button>
           </form>
         ) : (
