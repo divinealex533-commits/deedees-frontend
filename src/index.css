@@ -2,83 +2,296 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   DEEDEE'S MARKETPLACE — CLEAN LIGHT / WHITE THEME
+   ========================================================= */
+
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 222 47% 11%;
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 32% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 214 32% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
     --radius: 0.625rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 214 32% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
   }
-}
 
-@layer base {
+  /* Keep the application light even if a dark class is present. */
+  .dark {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 32% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 214 32% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 32% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
   * {
     @apply border-border;
   }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
+    background: #ffffff;
+    color: #0f172a;
   }
 }
 
-/* Custom Animations */
+/* =========================================================
+   FORCE OLD DARK SECTIONS TO WHITE
+   ========================================================= */
+
+.bg-black,
+.bg-slate-950,
+.bg-slate-900,
+.bg-slate-800 {
+  background-color: #ffffff !important;
+}
+
+/* Dark blue gradient panels become clean white cards. */
+[class*="from-blue-900"],
+[class*="to-blue-900"],
+[class*="from-cyan-900"],
+[class*="to-cyan-900"] {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+/* =========================================================
+   TEXT — DARK ON WHITE
+   ========================================================= */
+
+.text-white {
+  color: #0f172a !important;
+}
+
+.text-slate-300 {
+  color: #334155 !important;
+}
+
+.text-slate-400 {
+  color: #475569 !important;
+}
+
+.text-slate-500 {
+  color: #64748b !important;
+}
+
+.text-slate-600 {
+  color: #475569 !important;
+}
+
+/* Keep white text on coloured buttons. */
+.text-white[class*="bg-blue-"],
+.text-white[class*="bg-cyan-"],
+.text-white[class*="bg-green-"],
+.text-white[class*="bg-emerald-"],
+.text-white[class*="bg-purple-"],
+.text-white[class*="bg-indigo-"],
+.text-white[class*="bg-gradient"] {
+  color: #ffffff !important;
+}
+
+/* Keep white text inside coloured gradient buttons. */
+[class*="bg-gradient-to-r"] .text-white,
+[class*="bg-gradient-to-br"] .text-white {
+  color: #ffffff !important;
+}
+
+/* =========================================================
+   INPUTS / FORMS
+   ========================================================= */
+
+input,
+textarea,
+select {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.bg-slate-950.border-blue-500\/20,
+.bg-slate-900.border-blue-500\/20,
+.bg-slate-950.border-blue-500\/30 {
+  background-color: #ffffff !important;
+  border-color: #dbeafe !important;
+}
+
+/* =========================================================
+   HERO / BACKGROUND EFFECTS
+   ========================================================= */
+
+section {
+  color: #0f172a;
+}
+
+.bg-black .text-blue-300,
+.bg-slate-950 .text-blue-300 {
+  color: #2563eb !important;
+}
+
+/* Keep the blue/cyan branding. */
+.text-blue-400 {
+  color: #2563eb !important;
+}
+
+.text-cyan-400 {
+  color: #0891b2 !important;
+}
+
+.text-blue-300 {
+  color: #2563eb !important;
+}
+
+.text-cyan-300 {
+  color: #0891b2 !important;
+}
+
+/* =========================================================
+   BORDERS
+   ========================================================= */
+
+.border-blue-500\/20 {
+  border-color: #dbeafe !important;
+}
+
+.border-blue-500\/30 {
+  border-color: #bfdbfe !important;
+}
+
+.border-cyan-500\/20 {
+  border-color: #cffafe !important;
+}
+
+.border-cyan-500\/30 {
+  border-color: #a5f3fc !important;
+}
+
+/* =========================================================
+   LOADING SCREEN
+   ========================================================= */
+
+.bg-black.min-h-screen {
+  background-color: #ffffff !important;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6, #06b6d4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb, #0891b2);
+}
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: #0f172a;
+}
+
+/* =========================================================
+   CUSTOM ANIMATIONS
+   ========================================================= */
+
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
@@ -88,20 +301,24 @@
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
   }
+
   50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
   }
 }
 
@@ -109,6 +326,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -129,29 +347,4 @@
 
 .animate-shimmer {
   animation: shimmer 2s infinite;
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #06b6d4);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2563eb, #0891b2);
-}
-
-/* Selection Styling */
-::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
 }
