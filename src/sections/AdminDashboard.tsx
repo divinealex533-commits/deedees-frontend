@@ -1043,13 +1043,21 @@ export function AdminDashboard({
                               (i) => i.id === product.id
                             );
 
-                            const poolCount =
-                              adminItem?.accessLinks?.length;
+                         const hasCredentialPool = Array.isArray(
+  adminItem?.accessLinks
+);
 
-                            const displayCount =
-                              poolCount && poolCount > 0
-                                ? poolCount
-                                : product.quantity;
+const poolCount = hasCredentialPool
+  ? adminItem!.accessLinks!.length
+  : 0;
+
+const displayCount = hasCredentialPool
+  ? poolCount
+  : product.quantity ?? 0;
+
+const isActuallyInStock = hasCredentialPool
+  ? poolCount > 0
+  : product.inStock && (product.quantity ?? 0) > 0;
 
                             return (
                               <div
@@ -1086,18 +1094,16 @@ export function AdminDashboard({
                                 </div>
 
                                 <Badge
-                                  className={`text-[10px] px-2 py-0.5 flex-shrink-0 ${
-                                    product.inStock
-                                      ? 'bg-green-500'
-                                      : 'bg-red-500'
-                                  }`}
-                                >
-                                  {product.inStock
-                                    ? displayCount != null
-                                      ? `${displayCount} in stock`
-                                      : 'In Stock'
-                                    : 'Out of Stock'}
-                                </Badge>
+  className={`text-[10px] px-2 py-0.5 flex-shrink-0 ${
+    isActuallyInStock
+      ? 'bg-green-500'
+      : 'bg-red-500'
+  }`}
+>
+  {isActuallyInStock
+    ? `${displayCount} in stock`
+    : 'Out of Stock'}
+</Badge>
 
                                 <div
                                   className="flex items-center gap-1 flex-shrink-0"
