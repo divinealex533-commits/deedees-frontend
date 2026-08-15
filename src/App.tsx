@@ -26,21 +26,26 @@ type ViewType = 'store' | 'admin' | 'dashboard';
 function App() {
   const [view, setView] = useState<ViewType>('store');
   const [isCartOpen, setIsCartOpen] = useState(false);
+
   const [selectedProduct, setSelectedProduct] =
-  useState<typeof store.products[0] | null>(null);
-const [pendingBuyProduct, setPendingBuyProduct] =
-  useState<typeof store.products[0] | null>(null);
+    useState<typeof store.products[0] | null>(null);
+
+  const [pendingBuyProduct, setPendingBuyProduct] =
+    useState<typeof store.products[0] | null>(null);
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
   const [pendingCatalogScroll, setPendingCatalogScroll] = useState(false);
-  const resetToken =
-  new URLSearchParams(window.location.search).get('token');
 
-const isResetPasswordPage =
-  window.location.pathname === '/reset-password' &&
-  !!resetToken;
+  const resetToken =
+    new URLSearchParams(window.location.search).get('token');
+
+  const isResetPasswordPage =
+    window.location.pathname === '/reset-password' &&
+    !!resetToken;
+
   const store = useStore();
   const auth = useAuth();
   const wallet = useWallet(auth.user?.id || null);
@@ -58,12 +63,15 @@ const isResetPasswordPage =
 
     (async () => {
       try {
-        const result = await wallet.confirmInstantDeposit(reference);
+        const result =
+          await wallet.confirmInstantDeposit(reference);
 
         if (cancelled) return;
 
         if (result.paymentStatus === 'success') {
-          toast.success('Payment received! Your balance has been updated.');
+          toast.success(
+            'Payment received! Your balance has been updated.'
+          );
         } else {
           toast.info(
             'Payment not confirmed yet — it may still be processing.'
@@ -77,7 +85,10 @@ const isResetPasswordPage =
         );
       } catch (error) {
         if (!cancelled) {
-          console.error('Could not verify Paystack payment:', error);
+          console.error(
+            'Could not verify Paystack payment:',
+            error
+          );
         }
       }
     })();
@@ -90,34 +101,38 @@ const isResetPasswordPage =
     auth.isAuthenticated,
     wallet.confirmInstantDeposit,
   ]);
+
   if (isResetPasswordPage && resetToken) {
-  return (
-    <>
-      <Toaster position="top-right" richColors />
+    return (
+      <>
+        <Toaster position="top-right" richColors />
 
-      <ResetPassword
-        token={resetToken}
-        onBackToLogin={() => {
-          window.history.replaceState(
-            {},
-            document.title,
-            '/'
-          );
+        <ResetPassword
+          token={resetToken}
+          onBackToLogin={() => {
+            window.history.replaceState(
+              {},
+              document.title,
+              '/'
+            );
 
-          window.location.href = '/';
-        }}
-      />
-    </>
-  );
-}
+            window.location.href = '/';
+          }}
+        />
+      </>
+    );
+  }
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
+
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const scrollToCatalog = () => scrollToSection('catalog');
+  const scrollToCatalog = () =>
+    scrollToSection('catalog');
 
   const handleGetStarted = () => {
     if (auth.isAuthenticated) {
@@ -128,31 +143,43 @@ const isResetPasswordPage =
     }
   };
 
-  const handleAddToCart = (product: typeof store.products[0]) => {
+  const handleAddToCart = (
+    product: typeof store.products[0]
+  ) => {
     if (!product.inStock) {
       toast.error('This product is out of stock');
       return;
     }
 
     store.addToCart(product);
-    toast.success(`${product.name} added to cart`);
+
+    toast.success(
+      `${product.name} added to cart`
+    );
   };
-const handleBuyNow = (product: typeof store.products[0]) => {
-  if (!product.inStock) {
-    toast.error('This product is out of stock');
-    return;
-  }
 
-  if (!auth.isAuthenticated) {
-    setPendingBuyProduct(product);
-    setIsAuthModalOpen(true);
-    toast.info('Please login to continue');
-    return;
-  }
+  // BUY NOW
+  const handleBuyNow = (
+    product: typeof store.products[0]
+  ) => {
+    if (!product.inStock) {
+      toast.error('This product is out of stock');
+      return;
+    }
 
-  setSelectedProduct(product);
-  setIsCheckoutOpen(true);
-};
+    if (!auth.isAuthenticated) {
+      setPendingBuyProduct(product);
+      setIsAuthModalOpen(true);
+      toast.info('Please login to continue');
+      return;
+    }
+
+    setSelectedProduct(product);
+    setIsCheckoutOpen(true);
+  };
+
+  // Cart checkout is kept separate.
+  // Buy Now uses the product-based checkout above.
   const handleCheckout = () => {
     if (store.cart.length === 0) {
       toast.error('Your cart is empty');
@@ -162,11 +189,26 @@ const handleBuyNow = (product: typeof store.products[0]) => {
     if (!auth.isAuthenticated) {
       setIsCartOpen(false);
       setIsAuthModalOpen(true);
-      toast.info('Please login to complete your order');
+      toast.info(
+        'Please login to complete your order'
+      );
+      return;
+    }
+
+    /*
+     * CheckoutModal is currently product-based.
+     * Use the first cart product for this checkout
+     * until the cart checkout is redesigned separately.
+     */
+    const firstCartItem = store.cart[0];
+
+    if (!firstCartItem?.product) {
+      toast.error('Unable to open checkout');
       return;
     }
 
     setIsCartOpen(false);
+    setSelectedProduct(firstCartItem.product);
     setIsCheckoutOpen(true);
   };
 
@@ -180,20 +222,33 @@ const handleBuyNow = (product: typeof store.products[0]) => {
 
   const handleDrawerGoHome = () => {
     setView('store');
+
     setTimeout(
-      () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+      () =>
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        }),
       50
     );
   };
 
   const handleDrawerGoProduct = () => {
     setView('store');
-    setTimeout(scrollToCatalog, 100);
+
+    setTimeout(
+      scrollToCatalog,
+      100
+    );
   };
 
   const handleDrawerGoContact = () => {
     setView('store');
-    setTimeout(() => scrollToSection('contact'), 100);
+
+    setTimeout(
+      () => scrollToSection('contact'),
+      100
+    );
   };
 
   const handleDrawerGoDeposit = () => {
@@ -212,7 +267,9 @@ const handleBuyNow = (product: typeof store.products[0]) => {
 
           <div
             className="absolute inset-0 w-16 h-16 border-4 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"
-            style={{ animationDuration: '1.5s' }}
+            style={{
+              animationDuration: '1.5s',
+            }}
           ></div>
         </div>
       </div>
@@ -221,31 +278,48 @@ const handleBuyNow = (product: typeof store.products[0]) => {
 
   return (
     <div className="min-h-screen bg-black">
-      <Toaster position="top-right" richColors />
+      <Toaster
+        position="top-right"
+        richColors
+      />
 
       <FloatingContactButtons />
 
       <Navbar
         cartCount={store.cartCount}
-        onCartClick={() => setIsCartOpen(true)}
+        onCartClick={() =>
+          setIsCartOpen(true)
+        }
         view={view}
         onViewChange={setView}
-        isAuthenticated={auth.isAuthenticated}
+        isAuthenticated={
+          auth.isAuthenticated
+        }
         user={auth.user}
         onLogout={() => {
           auth.logout();
           setView('store');
-          toast.success('Logged out successfully');
+          toast.success(
+            'Logged out successfully'
+          );
         }}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() =>
+          setIsAuthModalOpen(true)
+        }
         onAdminClick={handleAdminAccess}
-        onOpenAccountMenu={() => setIsAccountDrawerOpen(true)}
+        onOpenAccountMenu={() =>
+          setIsAccountDrawerOpen(true)
+        }
       />
 
       <AccountDrawer
         isOpen={isAccountDrawerOpen}
-        onClose={() => setIsAccountDrawerOpen(false)}
-        isAuthenticated={auth.isAuthenticated}
+        onClose={() =>
+          setIsAccountDrawerOpen(false)
+        }
+        isAuthenticated={
+          auth.isAuthenticated
+        }
         user={auth.user}
         balance={wallet.balance}
         onGoHome={handleDrawerGoHome}
@@ -256,23 +330,39 @@ const handleBuyNow = (product: typeof store.products[0]) => {
         onLogout={() => {
           auth.logout();
           setView('store');
-          toast.success('Logged out successfully');
+          toast.success(
+            'Logged out successfully'
+          );
         }}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() =>
+          setIsAuthModalOpen(true)
+        }
       />
 
       {view === 'store' && (
         <>
-          <HeroSection onGetStarted={handleGetStarted} />
+          <HeroSection
+            onGetStarted={
+              handleGetStarted
+            }
+          />
 
-          <ServicesSection categories={store.categories} />
+          <ServicesSection
+            categories={
+              store.categories
+            }
+          />
 
           <ProductCatalog
-  products={store.products}
-  categories={store.categories}
-  onAddToCart={handleAddToCart}
-  onBuyNow={handleBuyNow}
-/>
+            products={store.products}
+            categories={store.categories}
+            onAddToCart={
+              handleAddToCart
+            }
+            onBuyNow={
+              handleBuyNow
+            }
+          />
 
           <SecuritySection />
           <PolicySection />
@@ -281,117 +371,221 @@ const handleBuyNow = (product: typeof store.products[0]) => {
 
           <CartDrawer
             isOpen={isCartOpen}
-            onClose={() => setIsCartOpen(false)}
+            onClose={() =>
+              setIsCartOpen(false)
+            }
             cart={store.cart}
             cartTotal={store.cartTotal}
-            onUpdateQuantity={store.updateCartQuantity}
-            onRemove={store.removeFromCart}
-            onCheckout={handleCheckout}
+            onUpdateQuantity={
+              store.updateCartQuantity
+            }
+            onRemove={
+              store.removeFromCart
+            }
+            onCheckout={
+              handleCheckout
+            }
           />
 
+          {/* PRODUCT CHECKOUT */}
           <CheckoutModal
             isOpen={isCheckoutOpen}
-            onClose={() => setIsCheckoutOpen(false)}
-            cart={store.cart}
-            cartTotal={store.cartTotal}
-            walletBalance={wallet.balance}
-            onStartInstantDeposit={wallet.startInstantDeposit}
-            onSubmitManualDeposit={wallet.submitManualDeposit}
-            onPurchase={async (items) => {
-              for (const item of items) {
-                await store.purchaseItem(
-                  item.product.id,
-                  item.quantity
-                );
-              }
+            onClose={() => {
+              setIsCheckoutOpen(false);
+              setSelectedProduct(null);
+            }}
+            product={selectedProduct}
+            walletBalance={
+              wallet.balance
+            }
+            onStartInstantDeposit={
+              wallet.startInstantDeposit
+            }
+            onSubmitManualDeposit={
+              wallet.submitManualDeposit
+            }
+            onPurchase={async (
+              product,
+              quantity
+            ) => {
+              await store.purchaseItem(
+                product.id,
+                quantity
+              );
 
               await wallet.refresh();
               await auth.refresh();
 
-              store.clearCart();
               setIsCheckoutOpen(false);
+              setSelectedProduct(null);
+
               setView('dashboard');
             }}
           />
         </>
       )}
 
-      {view === 'admin' && auth.user?.isAdmin && (
-        <AdminDashboard
-          admin={auth.user}
-          products={store.products}
-          categories={store.categories}
-          onAddProduct={store.addProduct}
-          onUpdateProduct={store.updateProduct}
-          onDeleteProduct={store.deleteProduct}
-          onToggleStock={store.toggleStock}
-          onAddCategory={store.addCategory}
-          onUpdateCategory={store.updateCategory}
-          onDeleteCategory={store.deleteCategory}
-          onLogout={() => {
-            auth.logout();
-            setView('store');
-            toast.success('Admin logged out');
-          }}
-        />
-      )}
+      {view === 'admin' &&
+        auth.user?.isAdmin && (
+          <AdminDashboard
+            admin={auth.user}
+            products={store.products}
+            categories={
+              store.categories
+            }
+            onAddProduct={
+              store.addProduct
+            }
+            onUpdateProduct={
+              store.updateProduct
+            }
+            onDeleteProduct={
+              store.deleteProduct
+            }
+            onToggleStock={
+              store.toggleStock
+            }
+            onAddCategory={
+              store.addCategory
+            }
+            onUpdateCategory={
+              store.updateCategory
+            }
+            onDeleteCategory={
+              store.deleteCategory
+            }
+            onLogout={() => {
+              auth.logout();
+              setView('store');
+              toast.success(
+                'Admin logged out'
+              );
+            }}
+          />
+        )}
 
-      {view === 'dashboard' && auth.user && (
-        <CustomerDashboard
-          user={auth.user}
-          walletBalance={wallet.balance}
-          deposits={wallet.deposits}
-          purchasedItemIds={auth.user.purchasedItemIds}
-          products={store.products}
-          onStartInstantDeposit={wallet.startInstantDeposit}
-          onSubmitManualDeposit={wallet.submitManualDeposit}
-          onLogout={() => {
-            auth.logout();
-            setView('store');
-            toast.success('Logged out successfully');
-          }}
-          onUpdateProfile={auth.updateProfile}
-        />
-      )}
+      {view === 'dashboard' &&
+        auth.user && (
+          <CustomerDashboard
+            user={auth.user}
+            walletBalance={
+              wallet.balance
+            }
+            deposits={
+              wallet.deposits
+            }
+            purchasedItemIds={
+              auth.user.purchasedItemIds
+            }
+            products={
+              store.products
+            }
+            onStartInstantDeposit={
+              wallet.startInstantDeposit
+            }
+            onSubmitManualDeposit={
+              wallet.submitManualDeposit
+            }
+            onLogout={() => {
+              auth.logout();
+              setView('store');
+              toast.success(
+                'Logged out successfully'
+              );
+            }}
+            onUpdateProfile={
+              auth.updateProfile
+            }
+          />
+        )}
 
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
           setIsAuthModalOpen(false);
           setPendingCatalogScroll(false);
+          setPendingBuyProduct(null);
         }}
-        onLogin={async (email, password) => {
-          const result = await auth.login(email, password);
+        onLogin={async (
+          email,
+          password
+        ) => {
+          const result =
+            await auth.login(
+              email,
+              password
+            );
 
           if (result.success) {
-            if (result.user?.isAdmin) {
+            if (
+              result.user?.isAdmin
+            ) {
               setView('admin');
-            } else if (pendingCatalogScroll) {
-              setTimeout(scrollToCatalog, 300);
+            } else if (
+              pendingBuyProduct
+            ) {
+              /*
+               * User clicked Buy Now while logged out.
+               * After successful login, continue directly
+               * to the checkout for that product.
+               */
+              setSelectedProduct(
+                pendingBuyProduct
+              );
+              setPendingBuyProduct(null);
+              setIsAuthModalOpen(false);
+              setIsCheckoutOpen(true);
+            } else if (
+              pendingCatalogScroll
+            ) {
+              setTimeout(
+                scrollToCatalog,
+                300
+              );
             }
           }
 
-          setPendingCatalogScroll(false);
+          setPendingCatalogScroll(
+            false
+          );
+
           return result;
         }}
         onSignup={auth.signup}
-        pendingReferralCode={auth.pendingReferralCode}
+        pendingReferralCode={
+          auth.pendingReferralCode
+        }
       />
 
       <AdminLoginModal
-        isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
-        onLogin={async (email, password) => {
-          const result = await auth.login(email, password);
+        isOpen={
+          isAdminLoginOpen
+        }
+        onClose={() =>
+          setIsAdminLoginOpen(false)
+        }
+        onLogin={async (
+          email,
+          password
+        ) => {
+          const result =
+            await auth.login(
+              email,
+              password
+            );
 
-          if (!result.success) return result;
+          if (!result.success)
+            return result;
 
-          if (!result.user?.isAdmin) {
+          if (
+            !result.user?.isAdmin
+          ) {
             auth.logout();
 
             return {
               success: false,
-              message: 'This account does not have admin access',
+              message:
+                'This account does not have admin access',
             };
           }
 
@@ -399,7 +593,8 @@ const handleBuyNow = (product: typeof store.products[0]) => {
 
           return {
             success: true,
-            message: 'Welcome back!',
+            message:
+              'Welcome back!',
           };
         }}
       />
