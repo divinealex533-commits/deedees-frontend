@@ -26,6 +26,10 @@ type ViewType = 'store' | 'admin' | 'dashboard';
 function App() {
   const [view, setView] = useState<ViewType>('store');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] =
+  useState<typeof store.products[0] | null>(null);
+const [pendingBuyProduct, setPendingBuyProduct] =
+  useState<typeof store.products[0] | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
@@ -133,7 +137,22 @@ const isResetPasswordPage =
     store.addToCart(product);
     toast.success(`${product.name} added to cart`);
   };
+const handleBuyNow = (product: typeof store.products[0]) => {
+  if (!product.inStock) {
+    toast.error('This product is out of stock');
+    return;
+  }
 
+  if (!auth.isAuthenticated) {
+    setPendingBuyProduct(product);
+    setIsAuthModalOpen(true);
+    toast.info('Please login to continue');
+    return;
+  }
+
+  setSelectedProduct(product);
+  setIsCheckoutOpen(true);
+};
   const handleCheckout = () => {
     if (store.cart.length === 0) {
       toast.error('Your cart is empty');
@@ -249,10 +268,11 @@ const isResetPasswordPage =
           <ServicesSection categories={store.categories} />
 
           <ProductCatalog
-            products={store.products}
-            categories={store.categories}
-            onAddToCart={handleAddToCart}
-          />
+  products={store.products}
+  categories={store.categories}
+  onAddToCart={handleAddToCart}
+  onBuyNow={handleBuyNow}
+/>
 
           <SecuritySection />
           <PolicySection />
