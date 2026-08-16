@@ -338,182 +338,245 @@ export function ProductCatalog({
             const isHovered =
               hoveredProduct === product.id;
 
-            return (
-              <div
-                key={product.id}
-                className="
-                  group
-                  overflow-hidden
-                  rounded-2xl
-                  border
-                  border-slate-200
-                  bg-white
-                  shadow-sm
-                  transition-all
-                  duration-300
-                  hover:-translate-y-1
-                  hover:border-emerald-200
-                  hover:shadow-xl
-                "
-                style={{
-                  animationDelay: `${index * 60}ms`,
-                }}
-                onMouseEnter={() =>
-                  setHoveredProduct(
-                    product.id
-                  )
-                }
-                onMouseLeave={() =>
-                  setHoveredProduct(null)
-                }
-              >
-                {/* PRODUCT IMAGE */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                  {!imageErrors[
-                    product.id
-                  ] ? (
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      loading="lazy"
-                      className={`
-                        h-full
-                        w-full
-                        object-cover
-                        transition-transform
-                        duration-700
-                        ${
-                          isHovered
-                            ? 'scale-105'
-                            : 'scale-100'
-                        }
-                      `}
-                      onError={() =>
-                        handleImageError(
-                          product.id
-                        )
-                      }
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <ImageOff className="h-7 w-7 text-slate-400" />
-                    </div>
-                  )}
+          <Card
+  key={product.id}
+  className="
+    group
+    relative
+    overflow-hidden
+    rounded-2xl
+    border
+    border-blue-500/15
+    bg-slate-950
+    shadow-lg
+    shadow-black/20
+    transition-all
+    duration-300
+    hover:-translate-y-1
+    hover:border-cyan-500/50
+    hover:shadow-cyan-500/10
+  "
+  style={{
+    animationDelay: `${index * 80}ms`,
+  }}
+  onMouseEnter={() =>
+    setHoveredProduct(product.id)
+  }
+  onMouseLeave={() =>
+    setHoveredProduct(null)
+  }
+>
+  {/* IMAGE */}
+  <div className="relative aspect-[4/3] overflow-hidden bg-slate-900">
 
-                  {/* Image overlay */}
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-                  {/* Stock */}
-                  <div className="absolute left-2.5 top-2.5">
-                    <Badge
-                      className="
-                        border-0
-                        bg-white/95
-                        px-2
-                        py-1
-                        text-[9px]
-                        font-bold
-                        text-emerald-700
-                        shadow-sm
-                        backdrop-blur
-                      "
-                    >
-                      <Check className="mr-1 h-3 w-3" />
-                      {getStockText(product)}
-                    </Badge>
-                  </div>
-
-                  {/* Category */}
-                  <div className="absolute bottom-2.5 left-2.5">
-                    <span className="rounded-full bg-slate-950/75 px-2.5 py-1 text-[9px] font-bold text-white backdrop-blur">
-                      {categoryName}
-                    </span>
-                  </div>
-                </div>
-
-                {/* PRODUCT INFO */}
-                <div className="p-3.5 sm:p-4">
-                  <h3 className="line-clamp-2 min-h-[40px] text-sm font-extrabold leading-5 text-slate-900 sm:text-base">
-                    {product.name}
-                  </h3>
-
-                  {product.description && (
-                    <p className="mt-1.5 line-clamp-2 min-h-[32px] text-[11px] leading-4 text-slate-500 sm:text-xs">
-                      {product.description}
-                    </p>
-                  )}
-
-                  {/* Price */}
-                  <div className="mt-3">
-                    <p className="text-base font-black text-slate-950 sm:text-lg">
-                      {formatPrice(
-                        product.price
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Buttons */}
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      onClick={() =>
-                        onAddToCart(product)
-                      }
-                      variant="outline"
-                      className="
-                        h-9
-                        min-w-0
-                        flex-1
-                        rounded-xl
-                        border-slate-200
-                        bg-white
-                        px-2
-                        text-[10px]
-                        font-bold
-                        text-slate-700
-                        hover:border-emerald-200
-                        hover:bg-emerald-50
-                        hover:text-emerald-700
-                        sm:text-xs
-                      "
-                    >
-                      <ShoppingBag className="mr-1 h-3.5 w-3.5" />
-                      Cart
-                    </Button>
-
-                    <Button
-                      onClick={() =>
-                        handleBuyNow(product)
-                      }
-                      className="
-                        h-9
-                        min-w-0
-                        flex-1
-                        rounded-xl
-                        bg-gradient-to-r
-                        from-emerald-500
-                        to-teal-500
-                        px-2
-                        text-[10px]
-                        font-bold
-                        text-white
-                        shadow-sm
-                        shadow-emerald-500/20
-                        hover:from-emerald-600
-                        hover:to-teal-600
-                        sm:text-xs
-                      "
-                    >
-                      Buy Now
-                      <ArrowRight className="ml-1 h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
+    {!imageErrors[product.id] ? (
+      <img
+        src={product.imageUrl}
+        alt={product.name}
+        loading="lazy"
+        className={`
+          h-full
+          w-full
+          object-cover
+          transition-transform
+          duration-700
+          ${
+            hoveredProduct === product.id
+              ? 'scale-110'
+              : 'scale-100'
           }
-        )}
+        `}
+        onError={() =>
+          handleImageError(product.id)
+        }
+      />
+    ) : (
+      <div className="flex h-full w-full items-center justify-center bg-slate-900">
+        <ImageOff className="h-8 w-8 text-slate-700" />
       </div>
-    );
+    )}
+
+    {/* IMAGE OVERLAY */}
+    <div
+      className="
+        absolute
+        inset-0
+        bg-gradient-to-t
+        from-black/70
+        via-transparent
+        to-transparent
+        opacity-70
+      "
+    />
+
+    {/* STOCK BADGE */}
+    <div className="absolute right-2.5 top-2.5">
+      <Badge
+        className="
+          border-0
+          bg-emerald-500/95
+          px-2
+          py-1
+          text-[10px]
+          font-semibold
+          text-white
+          shadow-lg
+        "
+      >
+        <Check className="mr-1 h-3 w-3" />
+
+        {product.quantity != null
+          ? `${product.quantity} left`
+          : product.stockCount != null
+            ? `${product.stockCount} left`
+            : 'In Stock'}
+      </Badge>
+    </div>
+
+    {/* QUICK LABEL */}
+    <div className="absolute bottom-2.5 left-2.5">
+      <span
+        className="
+          rounded-full
+          border
+          border-white/10
+          bg-black/60
+          px-2.5
+          py-1
+          text-[10px]
+          font-medium
+          text-white
+          backdrop-blur-md
+        "
+      >
+        ✓ Verified
+      </span>
+    </div>
+  </div>
+
+  {/* CONTENT */}
+  <CardContent className="p-3.5">
+
+    {/* CATEGORY */}
+    <Badge
+      variant="secondary"
+      className="
+        mb-2
+        max-w-full
+        truncate
+        border
+        border-blue-500/20
+        bg-blue-500/10
+        px-2
+        py-0.5
+        text-[9px]
+        font-medium
+        text-blue-300
+      "
+    >
+      {categories.find(
+        (c) =>
+          c.id === product.categoryId
+      )?.name || 'Product'}
+    </Badge>
+
+    {/* PRODUCT NAME */}
+    <h3
+      className="
+        mb-1
+        line-clamp-2
+        min-h-[40px]
+        text-sm
+        font-bold
+        leading-5
+        text-white
+      "
+    >
+      {product.name}
+    </h3>
+
+    {/* DESCRIPTION */}
+    {product.description && (
+      <p
+        className="
+          mb-3
+          line-clamp-2
+          min-h-[30px]
+          text-[11px]
+          leading-4
+          text-slate-400
+        "
+      >
+        {product.description}
+      </p>
+    )}
+
+    {/* PRICE + BUY */}
+    <div
+      className="
+        mt-2
+        flex
+        items-end
+        justify-between
+        gap-2
+        border-t
+        border-slate-800
+        pt-3
+      "
+    >
+      <div className="min-w-0">
+
+        <p className="text-[9px] uppercase tracking-wide text-slate-500">
+          Price
+        </p>
+
+        <p
+          className="
+            truncate
+            text-base
+            font-black
+            text-blue-400
+          "
+        >
+          {formatPrice(product.price)}
+        </p>
+
+      </div>
+
+      <Button
+        size="sm"
+        onClick={() =>
+          handleBuyNow(product)
+        }
+        className="
+          h-9
+          shrink-0
+          rounded-lg
+          bg-gradient-to-r
+          from-blue-500
+          to-cyan-500
+          px-3
+          text-xs
+          font-semibold
+          text-white
+          shadow-md
+          shadow-blue-500/10
+          transition-all
+          duration-300
+          hover:from-blue-600
+          hover:to-cyan-600
+          hover:shadow-lg
+          hover:shadow-blue-500/20
+        "
+      >
+        <ShoppingBag className="mr-1.5 h-3.5 w-3.5" />
+        Buy
+      </Button>
+
+    </div>
+
+  </CardContent>
+</Card>
   };
 
   const isSearching =
