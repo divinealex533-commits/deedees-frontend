@@ -1446,3 +1446,513 @@ html.dark .desktop-nav {
     color 0.25s ease,
     box-shadow 0.25s ease;
 }
+/* =========================================================
+   DEEDEE'S MARKETPLACE
+   ROLLING SERVICES SECTION
+   ========================================================= */
+
+.marketplace-services {
+  position: relative;
+  width: 100%;
+
+  padding: 48px 0 42px;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(248, 250, 252, 0.98)
+    );
+
+  border-top:
+    1px solid
+    var(--market-border-soft);
+
+  border-bottom:
+    1px solid
+    var(--market-border-soft);
+}
+
+
+/* ---------------------------------------------------------
+   CONTAINER
+   --------------------------------------------------------- */
+
+.marketplace-services-inner {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  overflow: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   HEADING
+   --------------------------------------------------------- */
+
+.marketplace-services-heading {
+  text-align: center;
+
+  padding: 0 20px;
+
+  margin-bottom: 28px;
+}
+
+.marketplace-services-badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 8px 18px;
+
+  border-radius: 999px;
+
+  color:
+    var(--market-primary);
+
+  background:
+    var(--market-soft);
+
+  border:
+    1px solid
+    var(--market-border);
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+.marketplace-services-heading h2 {
+  margin: 14px 0 6px;
+
+  color: #0f172a;
+
+  font-size: clamp(
+    28px,
+    4vw,
+    42px
+  );
+
+  font-weight: 800;
+
+  line-height: 1.1;
+}
+
+.marketplace-services-heading h2 span {
+  color:
+    var(--market-primary);
+}
+
+.marketplace-services-heading p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 15px;
+
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   MARQUEE
+   ========================================================= */
+
+.services-marquee {
+  width: 100%;
+
+  overflow: hidden;
+
+  position: relative;
+
+  margin-top: 14px;
+
+  /*
+   * Fade the edges so the services smoothly
+   * disappear into the sides.
+   */
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 7%,
+      black 93%,
+      transparent 100%
+    );
+
+  -webkit-mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      black 7%,
+      black 93%,
+      transparent 100%
+    );
+}
+
+.services-marquee-track {
+  display: flex;
+
+  align-items: center;
+
+  width: max-content;
+
+  gap: 12px;
+
+  padding: 6px 0;
+
+  animation:
+    services-roll
+    32s
+    linear
+    infinite;
+}
+
+
+/* ---------------------------------------------------------
+   SECOND ROW
+   --------------------------------------------------------- */
+
+.services-marquee-reverse
+.services-marquee-track {
+  animation:
+    services-roll-reverse
+    38s
+    linear
+    infinite;
+}
+
+
+/* ---------------------------------------------------------
+   SERVICE PILL
+   --------------------------------------------------------- */
+
+.service-pill {
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  gap: 9px;
+
+  min-height: 52px;
+
+  padding: 8px 18px 8px 9px;
+
+  border-radius: 999px;
+
+  border:
+    1px solid
+    rgba(148, 163, 184, 0.22);
+
+  background:
+    rgba(248, 250, 252, 0.96);
+
+  color: #334155;
+
+  box-shadow:
+    0 4px 14px
+    rgba(15, 23, 42, 0.05);
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  font-family: inherit;
+
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.service-pill:hover {
+  color:
+    var(--market-primary);
+
+  background:
+    var(--market-soft);
+
+  border-color:
+    var(--market-border);
+
+  box-shadow:
+    0 8px 22px
+    var(--market-shadow);
+
+  transform:
+    translateY(-2px);
+}
+
+.service-pill:active {
+  transform:
+    scale(0.96);
+}
+
+
+/* ---------------------------------------------------------
+   PILL ICON
+   --------------------------------------------------------- */
+
+.service-pill-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  color:
+    var(--market-primary);
+
+  background:
+    var(--market-soft);
+
+  border:
+    1px solid
+    var(--market-border-soft);
+}
+
+
+/* ---------------------------------------------------------
+   PILL NAME
+   --------------------------------------------------------- */
+
+.service-pill-name {
+  font-size: 14px;
+
+  font-weight: 700;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   ROLL ANIMATION
+   ========================================================= */
+
+@keyframes services-roll {
+
+  from {
+    transform:
+      translateX(0);
+  }
+
+  to {
+    transform:
+      translateX(-50%);
+  }
+}
+
+
+@keyframes services-roll-reverse {
+
+  from {
+    transform:
+      translateX(-50%);
+  }
+
+  to {
+    transform:
+      translateX(0);
+  }
+}
+
+
+/* =========================================================
+   PAUSE WHEN USER TOUCHES / HOVERS
+   ========================================================= */
+
+.services-marquee:hover
+.services-marquee-track,
+
+.services-marquee:focus-within
+.services-marquee-track {
+  animation-play-state:
+    paused;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .marketplace-services {
+    padding:
+      34px 0 30px;
+  }
+
+  .marketplace-services-heading {
+    margin-bottom: 20px;
+
+    padding:
+      0 16px;
+  }
+
+  .marketplace-services-badge {
+    padding:
+      7px 15px;
+
+    font-size: 12px;
+  }
+
+  .marketplace-services-heading h2 {
+    font-size: 30px;
+
+    margin-top: 12px;
+  }
+
+  .marketplace-services-heading p {
+    font-size: 14px;
+  }
+
+  .services-marquee {
+    margin-top: 9px;
+  }
+
+  .services-marquee-track {
+    gap: 9px;
+
+    padding:
+      5px 0;
+
+    animation-duration:
+      28s;
+  }
+
+  .service-pill {
+    min-height: 46px;
+
+    padding:
+      6px 15px 6px 7px;
+
+    gap: 8px;
+  }
+
+  .service-pill-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .service-pill-name {
+    font-size: 13px;
+  }
+}
+
+
+/* =========================================================
+   SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 390px) {
+
+  .marketplace-services {
+    padding:
+      30px 0 26px;
+  }
+
+  .marketplace-services-heading h2 {
+    font-size: 27px;
+  }
+
+  .service-pill {
+    min-height: 43px;
+
+    padding:
+      5px 13px 5px 6px;
+  }
+
+  .service-pill-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .service-pill-name {
+    font-size: 12px;
+  }
+}
+
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+html.dark .marketplace-services {
+  background:
+    linear-gradient(
+      180deg,
+      #020617,
+      #0f172a
+    );
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+html.dark .marketplace-services-heading h2 {
+  color: #f8fafc;
+}
+
+html.dark .marketplace-services-heading p {
+  color: #94a3b8;
+}
+
+html.dark .service-pill {
+  color: #cbd5e1;
+
+  background:
+    rgba(15, 23, 42, 0.9);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 5px 18px
+    rgba(0, 0, 0, 0.25);
+}
+
+html.dark .service-pill:hover {
+  color:
+    var(--market-primary);
+
+  background:
+    rgba(16, 185, 129, 0.08);
+
+  border-color:
+    var(--market-border);
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .services-marquee-track {
+    animation: none;
+  }
+
+  .service-pill {
+    transition: none;
+  }
+}
