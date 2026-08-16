@@ -3,24 +3,72 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MessageCircle, Phone, Clock, Shield, Headphones, Star, LifeBuoy } from 'lucide-react';
+import {
+  MessageCircle,
+  Phone,
+  Clock,
+  Shield,
+  Headphones,
+  Star,
+  LifeBuoy,
+  Send,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 
 const ALL_TESTIMONIALS = [
-  { name: 'Chidinma A.', quote: 'Grew my page way faster than I expected. Support actually replies too.' },
-  { name: 'Emeka O.', quote: 'Bought an account and it was exactly as described. No wahala at all.' },
-  { name: 'Blessing U.', quote: 'Reliable and secure — my go-to for social media growth in Nigeria now.' },
-  { name: 'Tunde F.', quote: 'Engagement felt real, not bot activity. My followers actually interact now.' },
-  { name: 'Amaka N.', quote: 'Fast delivery and the credentials worked immediately. Very smooth process.' },
-  { name: 'Ibrahim S.', quote: 'Been using them for months for my brand page. Consistent results every time.' },
-  { name: 'Ngozi C.', quote: 'Customer service on Telegram was quick and actually helpful, not just automated replies.' },
-  { name: 'Segun A.', quote: 'Wallet checkout made everything easy. No stress moving money around.' },
-  { name: 'Funke L.', quote: 'My TikTok views jumped within days. Would recommend to any Nigerian creator.' },
-  { name: 'David K.', quote: 'Genuinely trustworthy. I was skeptical at first but they delivered exactly what was promised.' },
+  {
+    name: 'Chidinma A.',
+    quote:
+      'Grew my page way faster than I expected. Support actually replies too.',
+  },
+  {
+    name: 'Emeka O.',
+    quote:
+      'Bought an account and it was exactly as described. No wahala at all.',
+  },
+  {
+    name: 'Blessing U.',
+    quote:
+      'Reliable and secure — my go-to for social media growth in Nigeria now.',
+  },
+  {
+    name: 'Tunde F.',
+    quote:
+      'Engagement felt real, not bot activity. My followers actually interact now.',
+  },
+  {
+    name: 'Amaka N.',
+    quote:
+      'Fast delivery and the credentials worked immediately. Very smooth process.',
+  },
+  {
+    name: 'Ibrahim S.',
+    quote:
+      'Been using them for months for my brand page. Consistent results every time.',
+  },
+  {
+    name: 'Ngozi C.',
+    quote:
+      'Customer service was quick and actually helpful, not just automated replies.',
+  },
+  {
+    name: 'Segun A.',
+    quote:
+      'Wallet checkout made everything easy. No stress moving money around.',
+  },
+  {
+    name: 'Funke L.',
+    quote:
+      'My TikTok views jumped within days. Would recommend to any Nigerian creator.',
+  },
+  {
+    name: 'David K.',
+    quote:
+      'Genuinely trustworthy. I was skeptical at first but they delivered exactly what was promised.',
+  },
 ];
 
-// Picks n random, non-repeating items from the pool.
 function pickRandom<T>(arr: T[], n: number): T[] {
   const shuffled = [...arr].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, n);
@@ -30,225 +78,431 @@ export function ContactSection() {
   const whatsappNumbers = ['07046019436', '09035206681'];
   const supportNumbers = ['09035206681', '09139382082'];
 
-  // Randomized once per page load, then stays put while the user browses.
-  const testimonials = useMemo(() => pickRandom(ALL_TESTIMONIALS, 3), []);
+  const testimonials = useMemo(
+    () => pickRandom(ALL_TESTIMONIALS, 3),
+    []
+  );
 
-  // Support ticket form state
-  const [ticketForm, setTicketForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [ticketForm, setTicketForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+
+  const [isSubmittingTicket, setIsSubmittingTicket] =
+    useState(false);
 
   const handleSubmitTicket = async () => {
-    if (!ticketForm.name.trim() || !ticketForm.email.trim() || !ticketForm.subject.trim() || !ticketForm.message.trim()) {
+    if (
+      !ticketForm.name.trim() ||
+      !ticketForm.email.trim() ||
+      !ticketForm.subject.trim() ||
+      !ticketForm.message.trim()
+    ) {
       toast.error('Please fill in all fields');
       return;
     }
+
     try {
       setIsSubmittingTicket(true);
-      await api.createTicket(ticketForm.name.trim(), ticketForm.email.trim(), ticketForm.subject.trim(), ticketForm.message.trim());
-      toast.success("Ticket submitted — we'll get back to you soon");
-      setTicketForm({ name: '', email: '', subject: '', message: '' });
+
+      await api.createTicket(
+        ticketForm.name.trim(),
+        ticketForm.email.trim(),
+        ticketForm.subject.trim(),
+        ticketForm.message.trim()
+      );
+
+      toast.success(
+        "Ticket submitted — we'll get back to you soon"
+      );
+
+      setTicketForm({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+      });
     } catch (err) {
-      toast.error((err as Error).message || 'Could not submit ticket');
+      toast.error(
+        (err as Error).message ||
+          'Could not submit ticket'
+      );
     } finally {
       setIsSubmittingTicket(false);
     }
   };
 
   return (
-    <section id="contact" className="py-20 bg-slate-950 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px]"></div>
+    <section
+      id="contact"
+      className="relative py-14 sm:py-16 bg-slate-50 overflow-hidden"
+    >
+      {/* Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 mb-6">
-            <Headphones className="h-4 w-4 text-cyan-400" />
-            <span className="text-sm text-blue-300">Get in Touch</span>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* HEADER */}
+        <div className="text-center max-w-2xl mx-auto mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-blue-100 mb-3">
+            <Headphones className="h-3.5 w-3.5 text-blue-500" />
+
+            <span className="text-xs font-semibold text-blue-600">
+              We're here to help
+            </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Contact & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Order</span>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">
+            Contact{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">
+              DeeDee's
+            </span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Ready to purchase? Reach out to us directly
+
+          <p className="text-sm sm:text-base text-slate-500">
+            Need help, want to place an order, or have a question?
+            Reach us directly.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Order Buttons */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-green-400" />
-              Order via WhatsApp
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {whatsappNumbers.map((number, index) => (
-                <a 
-                  key={number}
-                  href={`https://wa.me/${number.replace(/^0/, '234')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block"
-                >
-                  <Button 
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-6 text-lg rounded-xl shadow-lg shadow-green-500/20 transition-all duration-300 hover:scale-105 hover:shadow-green-500/40"
-                  >
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    💬 Order {index + 1}
-                    <span className="block text-xs mt-1 opacity-80">{number}</span>
-                  </Button>
-                </a>
-              ))}
-            </div>
+        {/* CONTACT OPTIONS */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
 
-            {/* Support Numbers */}
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
-                <Phone className="h-5 w-5 text-blue-400" />
-                Support Lines
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {supportNumbers.map((number) => (
-                  <a 
-                    key={number}
-                    href={`tel:${number}`}
-                    className="block"
-                  >
-                    <Card className="bg-slate-950 border-blue-500/20 hover:border-cyan-500/50 transition-all duration-300 group">
-                      <CardContent className="p-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Phone className="h-5 w-5 text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{number}</p>
-                          <p className="text-slate-400 text-sm">Click to call</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </a>
-                ))}
-              </div>
-            </div>
+          {/* WhatsApp */}
+          <a
+            href={`https://wa.me/${whatsappNumbers[0].replace(
+              /^0/,
+              '234'
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group"
+          >
+            <Card className="h-full bg-white border-slate-200 hover:border-green-300 hover:shadow-md transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="mx-auto mb-3 w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
 
-            {/* Support Ticket Form */}
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
-                <LifeBuoy className="h-5 w-5 text-cyan-400" />
-                Open a Support Ticket
-              </h3>
-              <Card className="bg-slate-950 border-blue-500/20">
-                <CardContent className="p-6 space-y-4">
-                  <p className="text-slate-400 text-sm">
-                    Have an issue with an order or payment? Send us a message and we'll get back to you — this creates a written record we can track.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-slate-300">Your Name</Label>
-                      <Input
-                        value={ticketForm.name}
-                        onChange={(e) => setTicketForm({ ...ticketForm, name: e.target.value })}
-                        placeholder="e.g., Amaka Nwosu"
-                        className="bg-slate-900 border-blue-500/30 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-slate-300">Your Email</Label>
-                      <Input
-                        type="email"
-                        value={ticketForm.email}
-                        onChange={(e) => setTicketForm({ ...ticketForm, email: e.target.value })}
-                        placeholder="you@example.com"
-                        className="bg-slate-900 border-blue-500/30 text-white"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-slate-300">Subject</Label>
-                    <Input
-                      value={ticketForm.subject}
-                      onChange={(e) => setTicketForm({ ...ticketForm, subject: e.target.value })}
-                      placeholder="e.g., Payment not reflecting in wallet"
-                      className="bg-slate-900 border-blue-500/30 text-white"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-slate-300">Message</Label>
-                    <textarea
-                      value={ticketForm.message}
-                      onChange={(e) => setTicketForm({ ...ticketForm, message: e.target.value })}
-                      placeholder="Describe what's going on..."
-                      rows={4}
-                      className="w-full bg-slate-900 border border-blue-500/30 text-white rounded-md px-3 py-2 resize-none"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleSubmitTicket}
-                    disabled={isSubmittingTicket}
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-                  >
-                    {isSubmittingTicket ? 'Submitting...' : 'Submit Ticket'}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  WhatsApp
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Chat with us
+                </p>
+              </CardContent>
+            </Card>
+          </a>
+
+          {/* Phone */}
+          <a
+            href={`tel:${supportNumbers[0]}`}
+            className="group"
+          >
+            <Card className="h-full bg-white border-slate-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="mx-auto mb-3 w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Phone className="w-5 h-5 text-white" />
+                </div>
+
+                <h3 className="text-sm font-bold text-slate-900">
+                  Call Us
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Speak with support
+                </p>
+              </CardContent>
+            </Card>
+          </a>
+
+          {/* Availability */}
+          <div className="group">
+            <Card className="h-full bg-white border-slate-200">
+              <CardContent className="p-4 text-center">
+                <div className="mx-auto mb-3 w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+
+                <h3 className="text-sm font-bold text-slate-900">
+                  24/7
+                </h3>
+
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Always available
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Info Cards */}
-          <div className="space-y-4">
-            <Card className="bg-slate-950 border-blue-500/20 group hover:border-cyan-500/40 transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Clock className="h-6 w-6 text-green-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-white mb-1">24/7 Availability</h4>
-                    <p className="text-slate-400">We're always available to meet your business needs. Place an order anytime, day or night.</p>
-                  </div>
+          {/* Security */}
+          <div className="group">
+            <Card className="h-full bg-white border-slate-200">
+              <CardContent className="p-4 text-center">
+                <div className="mx-auto mb-3 w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Shield className="w-5 h-5 text-white" />
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="bg-slate-950 border-blue-500/20 group hover:border-cyan-500/40 transition-all duration-300">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Shield className="h-6 w-6 text-blue-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-white mb-1">Secure Transactions</h4>
-                    <p className="text-slate-400">All payments are verified and accounts are tested before delivery. Your security is our priority.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Secure
+                </h3>
 
-            <Card className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 border-blue-500/30">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Star className="h-5 w-5 text-cyan-400" />
-                  <h4 className="text-lg font-semibold text-white">What Customers Are Saying</h4>
-                </div>
-                <div className="space-y-4">
-                  {testimonials.map((t, idx) => (
-                    <div key={idx} className="border-l-2 border-cyan-500/40 pl-4">
-                      <div className="flex items-center gap-0.5 mb-1">
-                        {[...Array(5)].map((_, starIdx) => (
-                          <Star key={starIdx} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                        ))}
-                      </div>
-                      <p className="text-slate-300 text-sm italic">"{t.quote}"</p>
-                      <p className="text-slate-500 text-xs mt-1">— {t.name}</p>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Safe transactions
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* SUPPORT TICKET */}
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardContent className="p-5 sm:p-6">
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <LifeBuoy className="w-5 h-5 text-white" />
+                </div>
+
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Open a Support Ticket
+                  </h3>
+
+                  <p className="text-xs text-slate-500">
+                    We'll get back to you as soon as possible.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+
+                {/* Name + Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                  <div>
+                    <Label className="text-xs text-slate-600">
+                      Your Name
+                    </Label>
+
+                    <Input
+                      value={ticketForm.name}
+                      onChange={(e) =>
+                        setTicketForm({
+                          ...ticketForm,
+                          name: e.target.value,
+                        })
+                      }
+                      placeholder="Your name"
+                      className="mt-1 bg-white border-slate-200 text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-slate-600">
+                      Email
+                    </Label>
+
+                    <Input
+                      type="email"
+                      value={ticketForm.email}
+                      onChange={(e) =>
+                        setTicketForm({
+                          ...ticketForm,
+                          email: e.target.value,
+                        })
+                      }
+                      placeholder="you@example.com"
+                      className="mt-1 bg-white border-slate-200 text-slate-900"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Subject */}
+                <div>
+                  <Label className="text-xs text-slate-600">
+                    Subject
+                  </Label>
+
+                  <Input
+                    value={ticketForm.subject}
+                    onChange={(e) =>
+                      setTicketForm({
+                        ...ticketForm,
+                        subject: e.target.value,
+                      })
+                    }
+                    placeholder="What do you need help with?"
+                    className="mt-1 bg-white border-slate-200 text-slate-900"
+                  />
+                </div>
+
+                {/* Message */}
+                <div>
+                  <Label className="text-xs text-slate-600">
+                    Message
+                  </Label>
+
+                  <textarea
+                    value={ticketForm.message}
+                    onChange={(e) =>
+                      setTicketForm({
+                        ...ticketForm,
+                        message: e.target.value,
+                      })
+                    }
+                    placeholder="Tell us what happened..."
+                    rows={4}
+                    className="mt-1 w-full bg-white border border-slate-200 text-slate-900 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleSubmitTicket}
+                  disabled={isSubmittingTicket}
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+
+                  {isSubmittingTicket
+                    ? 'Submitting...'
+                    : 'Submit Support Ticket'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* RIGHT SIDE */}
+          <div className="space-y-5">
+
+            {/* ORDER DIRECTLY */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="p-5">
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
+                    <MessageCircle className="w-5 h-5 text-white" />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Order Directly
+                    </h3>
+
+                    <p className="text-xs text-slate-500">
+                      Chat with us on WhatsApp
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {whatsappNumbers.map(
+                    (number, index) => (
+                      <a
+                        key={number}
+                        href={`https://wa.me/${number.replace(
+                          /^0/,
+                          '234'
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                          <MessageCircle className="w-4 h-4 mr-2" />
+
+                          WhatsApp {index + 1}
+                        </Button>
+
+                        <p className="text-center text-[10px] text-slate-400 mt-1">
+                          {number}
+                        </p>
+                      </a>
+                    )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* CUSTOMER REVIEWS */}
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="p-5">
+
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Star className="w-5 h-5 text-white fill-white" />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Customer Reviews
+                    </h3>
+
+                    <p className="text-xs text-slate-500">
+                      What our customers say
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {testimonials.map(
+                    (testimonial) => (
+                      <div
+                        key={testimonial.name}
+                        className="rounded-xl bg-slate-50 border border-slate-100 p-4"
+                      >
+                        <div className="flex items-center gap-1 mb-2">
+                          {[...Array(5)].map(
+                            (_, index) => (
+                              <Star
+                                key={index}
+                                className="w-3.5 h-3.5 text-amber-400 fill-amber-400"
+                              />
+                            )
+                          )}
+                        </div>
+
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                          "{testimonial.quote}"
+                        </p>
+
+                        <p className="text-xs font-semibold text-slate-900 mt-2">
+                          — {testimonial.name}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+
+              </CardContent>
+            </Card>
+
+          </div>
+        </div>
+
+        {/* SUPPORT NUMBERS */}
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          {supportNumbers.map((number) => (
+            <a
+              key={number}
+              href={`tel:${number}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              {number}
+            </a>
+          ))}
+        </div>
+
       </div>
     </section>
   );
