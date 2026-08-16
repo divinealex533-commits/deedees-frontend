@@ -420,3 +420,36 @@ select:focus-visible {
 html {
   scroll-behavior: smooth;
 }
+
+/* =========================================================
+   FIX — GRADIENT TEXT MUST NEVER SHOW AS A RECTANGLE
+   ========================================================= */
+
+.bg-clip-text.text-transparent {
+  background-color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Keep gradient text elements transparent even when
+   the Emerald theme is active. */
+html[data-market-theme='emerald']
+  .bg-clip-text.text-transparent {
+  background-color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Never apply theme background colors directly to
+   gradient-text spans. */
+.bg-clip-text {
+  background-color: transparent !important;
+}
+
+/* Preserve the actual gradient only for elements
+   intentionally using it as a background. */
+.market-gradient {
+  background-color: transparent;
+}
