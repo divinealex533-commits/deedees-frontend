@@ -120,28 +120,7 @@ export function Footer() {
               Support
             </h3>
 
-            <div className="mt-4 space-y-3">
-              <a
-                href="https://t.me/deedeesmarketsupport"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-cyan-400"
-              >
-                <Send className="h-4 w-4" />
-                Telegram Support
-              </a>
-
-              <a
-                href="https://wa.me/07046019436"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-green-400"
-              >
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp Support
-              </a>
-            </div>
-          </div>
+          h3>
 
           {/* Trust */}
           <div>
