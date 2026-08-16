@@ -320,32 +320,35 @@ function App() {
         }
       />
 
-      <AccountDrawer
-        isOpen={isAccountDrawerOpen}
-        onClose={() =>
-          setIsAccountDrawerOpen(false)
-        }
-        isAuthenticated={
-          auth.isAuthenticated
-        }
-        user={auth.user}
-        balance={wallet.balance}
-        onGoHome={handleDrawerGoHome}
-        onGoProduct={handleDrawerGoProduct}
-        onGoDeposit={handleDrawerGoDeposit}
-        onGoHistory={handleDrawerGoHistory}
-        onGoContact={handleDrawerGoContact}
-        onLogout={() => {
-          auth.logout();
-          setView('store');
-          toast.success(
-            'Logged out successfully'
-          );
-        }}
-        onOpenAuth={() =>
-          setIsAuthModalOpen(true)
-        }
-      />
+      <<AccountDrawer
+  isOpen={isAccountDrawerOpen}
+  onClose={() =>
+    setIsAccountDrawerOpen(false)
+  }
+  isAuthenticated={
+    auth.isAuthenticated
+  }
+  user={auth.user}
+  balance={wallet.balance}
+  onGoHome={handleDrawerGoHome}
+  onGoProduct={handleDrawerGoProduct}
+  onGoDeposit={handleDrawerGoDeposit}
+  onGoHistory={handleDrawerGoHistory}
+  onGoContact={handleDrawerGoContact}
+  onGoAffiliate={() => {
+    setView('affiliate');
+  }}
+  onLogout={() => {
+    auth.logout();
+    setView('store');
+    toast.success(
+      'Logged out successfully'
+    );
+  }}
+  onOpenAuth={() =>
+    setIsAuthModalOpen(true)
+  }
+/>
 
       {view === 'store' && (
         <>
@@ -511,20 +514,20 @@ function App() {
             }
           />
         )}
-      {view === 'affiliate' && (
+     {view === 'affiliate' && (
   <AffiliateProgram
- onGoHistory={handleDrawerGoHistory}
-onGoContact={handleDrawerGoContact}
-onGoAffiliate={() => {
-  setView('affiliate');
-}}
-onLogout={() => {
-  auth.logout();
-  setView('store');
-  toast.success(
-    'Logged out successfully'
-  );
-}}
+    onBack={() => {
+      setView('store');
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }, 50);
+    }}
+  />
+)}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
