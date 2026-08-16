@@ -703,7 +703,19 @@ html[data-market-theme='emerald'] .border-cyan-500\/30 {
  * visible rectangular backgrounds behind gradient text.
  */
 
+/* =========================================================
+   GRADIENT TEXT — NO RECTANGULAR BACKGROUND
+   ========================================================= */
+
 .bg-clip-text.text-transparent {
+  background-color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html[data-market-theme='emerald']
+  .bg-clip-text.text-transparent {
   background-color: transparent !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
