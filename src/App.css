@@ -696,6 +696,19 @@ html[data-market-theme='emerald'] .border-cyan-500\/30 {
   background: var(--market-gradient) !important;
 }
 
+/*
+ * IMPORTANT:
+ * Keep gradient text transparent.
+ * The global background rules above must not create
+ * visible rectangular backgrounds behind gradient text.
+ */
+
+.bg-clip-text.text-transparent {
+  background-color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
 
 /* =========================================================
    DARK MODE
@@ -2608,4 +2621,14 @@ html.dark
   .customer-review-card {
     transition: none;
   }
+}
+/* =========================================================
+   GRADIENT TEXT SAFETY
+   ========================================================= */
+
+[class*="bg-clip-text"][class*="text-transparent"] {
+  background-color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
