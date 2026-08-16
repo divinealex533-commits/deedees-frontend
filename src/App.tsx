@@ -9,6 +9,8 @@ import { TestimonialsSection } from '@/sections/TestimonialsSection';
 import { SecuritySection } from '@/sections/SecuritySection';
 import { PolicySection } from '@/sections/PolicySection';
 import { ProductCatalog } from '@/sections/ProductCatalog';
+import { HowItWorksSection } from '@/sections/HowItWorksSection';
+import { FAQSection } from '@/sections/FAQSection';
 import { CartDrawer } from '@/sections/CartDrawer';
 import { CheckoutModal } from '@/sections/CheckoutModal';
 import { AdminDashboard } from '@/sections/AdminDashboard';
