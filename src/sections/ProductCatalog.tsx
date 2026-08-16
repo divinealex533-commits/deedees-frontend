@@ -336,10 +336,11 @@ export function ProductCatalog({
               );
 
             const isHovered =
-              hoveredProduct === product.id;
+  hoveredProduct === product.id;
 
-          <Card
-  key={product.id}
+return (
+  <Card
+    key={product.id}
   className="
     group
     relative
@@ -576,7 +577,12 @@ export function ProductCatalog({
     </div>
 
   </CardContent>
-</Card>
+  </Card>
+  );
+          }
+        )}
+      </div>
+    );
   };
 
   const isSearching =
