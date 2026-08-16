@@ -150,7 +150,7 @@ export function Footer() {
               </a>
 
               <a
-                href={`mailto:support@deedeesmarketplace.com`}
+                href={`mailto:deedeesmarketagent@gmail.com`}
                 className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
               >
                 <Mail className="w-4 h-4" />
