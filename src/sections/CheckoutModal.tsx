@@ -188,21 +188,24 @@ export function CheckoutModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="
-          w-[calc(100%-24px)]
-          sm:max-w-lg
-          bg-white
-          dark:bg-slate-950
-          border-blue-500/30
-          p-0
-          overflow-hidden
-          max-h-[88vh]
-          overflow-y-auto
-        "
-      >
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-slate-200 dark:border-blue-500/20">
-          <DialogTitle className="text-slate-900 dark:text-white text-xl">
+     <DialogContent
+  className="
+    w-[calc(100%-20px)]
+    max-w-[420px]
+    sm:max-w-lg
+    max-h-[82vh]
+    p-0
+    bg-white
+    dark:bg-slate-950
+    border-blue-500/30
+    rounded-2xl
+    overflow-hidden
+    flex
+    flex-col
+  "
+>
+        <DialogHeader className="px-4 sm:px-5 pt-4 pb-3 border-b border-slate-200 dark:border-blue-500/20 shrink-0">
+       <DialogTitle className="text-slate-900 dark:text-white text-lg sm:text-xl">
             Complete Order
           </DialogTitle>
 
@@ -211,7 +214,7 @@ export function CheckoutModal({
           </div>
         </DialogHeader>
 
-        <div className="px-5 py-4 space-y-4">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 space-y-3 overflow-y-auto">
 
           {/* PRODUCT */}
           <div className="rounded-xl border border-slate-200 dark:border-blue-500/20 overflow-hidden">
@@ -395,8 +398,8 @@ export function CheckoutModal({
                 hover:from-blue-600
                 hover:to-cyan-600
                 text-white
-                py-6
-                text-base
+                py-4
+text-sm sm:text-base
               "
             >
               {isProcessing ? 'Processing...' : 'Buy Now'}
