@@ -1,586 +1,968 @@
-import { useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+
+import { Button } from "@/components/ui/button";
+
+import { Badge } from "@/components/ui/badge";
+
 import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Circle,
   RefreshCw,
-  Activity,
+  Search,
   Store,
   ShoppingCart,
   Users,
-  Wallet,
   CreditCard,
-  Server,
-  Database,
   ShieldCheck,
-  ChevronRight,
+  Activity,
+  Wrench,
+  ExternalLink,
 } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { API_URL } from "@/lib/api";
-
-type DiagnosticStatus =
+type HealthStatus =
   | "healthy"
   | "warning"
-  | "critical"
-  | "untested";
+  | "broken"
+  | "checking";
 
-interface DiagnosticItem {
+type DiagnosticItem = {
   id: string;
   name: string;
   description: string;
-  status: DiagnosticStatus;
+  status: HealthStatus;
   details: string;
-}
-
-const INITIAL_DIAGNOSTICS: DiagnosticItem[] = [
-  {
-    id: "backend",
-    name: "Backend Server",
-    description: "Checks whether the DeeDee's backend is reachable.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "database",
-    name: "Database",
-    description: "Checks the application's data layer.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "seller-storefront",
-    name: "Seller Storefront",
-    description: "Reseller storefront and public shopping experience.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "seller-dashboard",
-    name: "Seller Dashboard",
-    description: "Reseller management dashboard.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "customers",
-    name: "Customer Accounts",
-    description: "Customer registration, login and account management.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "orders",
-    name: "Orders & Checkout",
-    description: "Shopping cart, checkout and reseller orders.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "subscriptions",
-    name: "Seller Subscriptions",
-    description: "Standard, Premium Monthly and Premium Yearly subscriptions.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "withdrawals",
-    name: "Seller Withdrawals",
-    description: "Seller earnings and withdrawal system.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-  {
-    id: "admin",
-    name: "Admin Controls",
-    description: "Admin seller management and freeze/unfreeze controls.",
-    status: "untested",
-    details: "No diagnostic has been run yet.",
-  },
-];
-
-const STATUS_CONFIG = {
-  healthy: {
-    label: "Healthy",
-    icon: CheckCircle2,
-  },
-  warning: {
-    label: "Warning",
-    icon: AlertTriangle,
-  },
-  critical: {
-    label: "Critical",
-    icon: XCircle,
-  },
-  untested: {
-    label: "Not tested",
-    icon: Circle,
-  },
+  recommendation: string;
+  endpoint?: string;
 };
 
-function statusClass(status: DiagnosticStatus) {
+type SellerPlan = {
+  id: string;
+  name: string;
+  price: number;
+  currency?: string;
+  billing?: string;
+};
+
+type FrozenSeller = {
+  id: string | number;
+  name?: string;
+  email?: string;
+  sellerPlan?: SellerPlan | null;
+  sellerPlanStatus?: string;
+  sellerPlanExpiresAt?: number | string | null;
+  sellerFreezeReason?: string;
+  sellerFrozenAt?: string | null;
+};
+
+type DiagnosticResponse = {
+  sellers?: FrozenSeller[];
+};
+
+const ADMIN_ENDPOINTS = {
+  frozenSellers: "/api/admin/sellers/frozen",
+  subscription: "/api/seller/subscription",
+};
+
+function StatusIcon({
+  status,
+}: {
+  status: HealthStatus;
+}) {
   if (status === "healthy") {
-    return "border-emerald-500/30 bg-emerald-500/10";
+    return (
+      <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+    );
   }
 
   if (status === "warning") {
-    return "border-yellow-500/30 bg-yellow-500/10";
+    return (
+      <AlertTriangle className="h-6 w-6 text-yellow-400" />
+    );
   }
 
-  if (status === "critical") {
-    return "border-red-500/30 bg-red-500/10";
+  if (status === "broken") {
+    return (
+      <XCircle className="h-6 w-6 text-red-400" />
+    );
   }
 
-  return "border-slate-500/20 bg-slate-900/60";
+  return (
+    <RefreshCw className="h-6 w-6 animate-spin text-blue-400" />
+  );
 }
 
-function statusTextClass(status: DiagnosticStatus) {
-  if (status === "healthy") {
-    return "text-emerald-400";
+function statusLabel(status: HealthStatus) {
+  switch (status) {
+    case "healthy":
+      return "Healthy";
+
+    case "warning":
+      return "Needs attention";
+
+    case "broken":
+      return "Broken";
+
+    case "checking":
+      return "Checking...";
+
+    default:
+      return "Unknown";
+  }
+}
+
+function statusClass(status: HealthStatus) {
+  switch (status) {
+    case "healthy":
+      return "border-emerald-500/30 bg-emerald-500/10";
+
+    case "warning":
+      return "border-yellow-500/30 bg-yellow-500/10";
+
+    case "broken":
+      return "border-red-500/30 bg-red-500/10";
+
+    default:
+      return "border-blue-500/30 bg-blue-500/10";
+  }
+}
+
+async function requestJson<T>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
+  const response = await fetch(url, {
+    credentials: "include",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options?.headers || {}),
+    },
+  });
+
+  const text = await response.text();
+
+  let data: unknown = null;
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
   }
 
-  if (status === "warning") {
-    return "text-yellow-400";
+  if (!response.ok) {
+    const message =
+      typeof data === "object" &&
+      data !== null &&
+      "error" in data &&
+      typeof data.error === "string"
+        ? data.error
+        : `Request failed with status ${response.status}`;
+
+    throw new Error(message);
   }
 
-  if (status === "critical") {
-    return "text-red-400";
-  }
-
-  return "text-slate-400";
+  return data as T;
 }
 
 export default function ResellerSystemDiagnostic() {
-  const [diagnostics, setDiagnostics] =
-    useState<DiagnosticItem[]>(
-      INITIAL_DIAGNOSTICS
-    );
+  const [items, setItems] = useState<
+    DiagnosticItem[]
+  >([]);
 
   const [selectedId, setSelectedId] =
     useState<string | null>(null);
 
-  const [running, setRunning] =
-    useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const selected =
-    diagnostics.find(
+  const [lastChecked, setLastChecked] =
+    useState<Date | null>(null);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [frozenSellers, setFrozenSellers] =
+    useState<FrozenSeller[]>([]);
+
+  const runDiagnostics = useCallback(
+    async () => {
+      setLoading(true);
+
+      const results: DiagnosticItem[] = [];
+
+      // --------------------------------------------------
+      // 1. Seller subscription API
+      // --------------------------------------------------
+
+      try {
+        await requestJson(
+          ADMIN_ENDPOINTS.subscription
+        );
+
+        results.push({
+          id: "subscription-api",
+          name: "Seller Subscription System",
+          description:
+            "Checks whether the seller subscription API is responding.",
+          status: "healthy",
+          details:
+            "The seller subscription endpoint responded successfully.",
+          recommendation:
+            "No action required.",
+          endpoint:
+            ADMIN_ENDPOINTS.subscription,
+        });
+      } catch (error) {
+        results.push({
+          id: "subscription-api",
+          name: "Seller Subscription System",
+          description:
+            "Checks the seller subscription API.",
+          status: "broken",
+          details:
+            error instanceof Error
+              ? error.message
+              : "The subscription endpoint could not be reached.",
+          recommendation:
+            "Check the backend subscription routes, authentication, database connection, and deployment logs.",
+          endpoint:
+            ADMIN_ENDPOINTS.subscription,
+        });
+      }
+
+      // --------------------------------------------------
+      // 2. Frozen sellers / reseller administration API
+      // --------------------------------------------------
+
+      try {
+        const data =
+          await requestJson<DiagnosticResponse>(
+            ADMIN_ENDPOINTS.frozenSellers
+          );
+
+        const sellers =
+          Array.isArray(data.sellers)
+            ? data.sellers
+            : [];
+
+        setFrozenSellers(sellers);
+
+        results.push({
+          id: "seller-admin-api",
+          name: "Seller Administration",
+          description:
+            "Checks whether the admin can retrieve reseller/seller status data.",
+          status: "healthy",
+          details:
+            `${sellers.length} frozen seller(s) currently returned by the system.`,
+          recommendation:
+            sellers.length > 0
+              ? "Review frozen sellers below and confirm their renewal/payment status."
+              : "No frozen sellers currently require attention.",
+          endpoint:
+            ADMIN_ENDPOINTS.frozenSellers,
+        });
+      } catch (error) {
+        setFrozenSellers([]);
+
+        results.push({
+          id: "seller-admin-api",
+          name: "Seller Administration",
+          description:
+            "Checks the admin seller-management API.",
+          status: "broken",
+          details:
+            error instanceof Error
+              ? error.message
+              : "Unable to load seller administration data.",
+          recommendation:
+            "Check requireAdmin, the admin seller routes, authentication, and the users database.",
+          endpoint:
+            ADMIN_ENDPOINTS.frozenSellers,
+        });
+      }
+
+      // --------------------------------------------------
+      // 3. Frontend diagnostic
+      // --------------------------------------------------
+
+      results.push({
+        id: "frontend",
+        name: "Reseller Frontend",
+        description:
+          "Confirms that this diagnostic interface itself is running.",
+        status: "healthy",
+        details:
+          "The reseller diagnostic interface loaded successfully.",
+        recommendation:
+          "No action required.",
+      });
+
+      // --------------------------------------------------
+      // 4. Database dependency
+      // --------------------------------------------------
+
+      const sellerAdmin =
+        results.find(
+          (item) =>
+            item.id === "seller-admin-api"
+        );
+
+      results.push({
+        id: "database",
+        name: "Seller Database Dependency",
+        description:
+          "Uses the seller administration endpoint as a practical database health check.",
+        status:
+          sellerAdmin?.status === "healthy"
+            ? "healthy"
+            : "warning",
+        details:
+          sellerAdmin?.status === "healthy"
+            ? "The backend successfully returned seller data from the database layer."
+            : "The seller database could not be confirmed through the administration endpoint.",
+        recommendation:
+          sellerAdmin?.status === "healthy"
+            ? "No action required."
+            : "Check DATABASE_URL, PostgreSQL availability, and backend database initialization.",
+      });
+
+      // --------------------------------------------------
+      // 5. Seller storefront readiness
+      // --------------------------------------------------
+
+      results.push({
+        id: "storefront",
+        name: "Seller Storefront System",
+        description:
+          "Checks whether the seller platform has backend support available for storefront management.",
+        status:
+          sellerAdmin?.status === "healthy"
+            ? "healthy"
+            : "warning",
+        details:
+          sellerAdmin?.status === "healthy"
+            ? "Seller administration is responding, so the storefront backend dependency is available."
+            : "The storefront backend dependency could not be confirmed.",
+        recommendation:
+          sellerAdmin?.status === "healthy"
+            ? "Open an individual reseller storefront to verify its customer-facing experience."
+            : "Fix seller administration/backend connectivity first.",
+      });
+
+      // --------------------------------------------------
+      // 6. Orders system
+      // --------------------------------------------------
+
+      results.push({
+        id: "orders",
+        name: "Reseller Orders",
+        description:
+          "Represents the reseller order-management subsystem.",
+        status:
+          sellerAdmin?.status === "healthy"
+            ? "healthy"
+            : "warning",
+        details:
+          "The diagnostic center can confirm the reseller backend dependency, but order processing should also be tested with a real reseller account.",
+        recommendation:
+          "Open a reseller account and perform a test customer order before production use.",
+      });
+
+      // --------------------------------------------------
+      // 7. Payment system
+      // --------------------------------------------------
+
+      results.push({
+        id: "payments",
+        name: "Seller Subscription Payments",
+        description:
+          "Checks the subscription-payment dependency through the subscription API.",
+        status:
+          results.some(
+            (item) =>
+              item.id === "subscription-api" &&
+              item.status === "healthy"
+          )
+            ? "healthy"
+            : "broken",
+        details:
+          results.some(
+            (item) =>
+              item.id === "subscription-api" &&
+              item.status === "healthy"
+          )
+            ? "The subscription payment initialization/verification system has a responding subscription API."
+            : "The subscription API is not responding correctly.",
+        recommendation:
+          "Perform a controlled test payment using the configured payment provider before opening subscriptions to customers.",
+      });
+
+      // --------------------------------------------------
+      // 8. Security / admin access
+      // --------------------------------------------------
+
+      results.push({
+        id: "security",
+        name: "Admin Access Protection",
+        description:
+          "Checks that seller administration is protected behind the admin API.",
+        status:
+          sellerAdmin?.status === "healthy"
+            ? "healthy"
+            : "warning",
+        details:
+          "Seller administration requests are routed through the protected admin endpoint.",
+        recommendation:
+          "Continue using requireAuth and requireAdmin on all administrative reseller routes.",
+      });
+
+      setItems(results);
+
+      if (!selectedId && results.length > 0) {
+        setSelectedId(results[0].id);
+      }
+
+      setLastChecked(new Date());
+      setLoading(false);
+    },
+    [selectedId]
+  );
+
+  useEffect(() => {
+    runDiagnostics();
+  }, [runDiagnostics]);
+
+  const filteredItems =
+    useMemo(() => {
+      const query =
+        search.trim().toLowerCase();
+
+      if (!query) {
+        return items;
+      }
+
+      return items.filter(
+        (item) =>
+          item.name
+            .toLowerCase()
+            .includes(query) ||
+          item.description
+            .toLowerCase()
+            .includes(query) ||
+          item.details
+            .toLowerCase()
+            .includes(query)
+      );
+    }, [items, search]);
+
+  const selectedItem =
+    items.find(
       (item) => item.id === selectedId
-    );
+    ) || null;
 
   const healthyCount =
-    diagnostics.filter(
-      (item) => item.status === "healthy"
+    items.filter(
+      (item) =>
+        item.status === "healthy"
     ).length;
 
   const warningCount =
-    diagnostics.filter(
-      (item) => item.status === "warning"
+    items.filter(
+      (item) =>
+        item.status === "warning"
     ).length;
 
-  const criticalCount =
-    diagnostics.filter(
-      (item) => item.status === "critical"
+  const brokenCount =
+    items.filter(
+      (item) =>
+        item.status === "broken"
     ).length;
-
-  async function runDiagnostic() {
-    setRunning(true);
-
-    setDiagnostics((current) =>
-      current.map((item) => ({
-        ...item,
-        status: "untested",
-        details:
-          "Running diagnostic...",
-      }))
-    );
-
-    try {
-      const started = performance.now();
-
-      const response = await fetch(
-        `${API_URL}/api/admin/sellers/frozen`,
-        {
-          credentials: "include",
-        }
-      );
-
-      const responseTime =
-        Math.round(
-          performance.now() - started
-        );
-
-      setDiagnostics((current) =>
-        current.map((item) => {
-          if (item.id === "backend") {
-            return {
-              ...item,
-              status:
-                response.ok
-                  ? "healthy"
-                  : "critical",
-              details: response.ok
-                ? `Backend responded successfully in ${responseTime}ms.`
-                : `Backend returned HTTP ${response.status}.`,
-            };
-          }
-
-          if (item.id === "admin") {
-            return {
-              ...item,
-              status:
-                response.ok
-                  ? "healthy"
-                  : "critical",
-              details: response.ok
-                ? "Admin authentication and frozen-seller endpoint responded successfully."
-                : `Admin diagnostic endpoint returned HTTP ${response.status}.`,
-            };
-          }
-
-          return {
-            ...item,
-            status: "untested",
-            details:
-              "This subsystem will be connected to its own diagnostic test in the next diagnostic-center step.",
-          };
-        })
-      );
-    } catch (error) {
-      setDiagnostics((current) =>
-        current.map((item) => {
-          if (
-            item.id === "backend" ||
-            item.id === "admin"
-          ) {
-            return {
-              ...item,
-              status: "critical",
-              details:
-                error instanceof Error
-                  ? error.message
-                  : "Unable to reach the backend.",
-            };
-          }
-
-          return item;
-        })
-      );
-    } finally {
-      setRunning(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="rounded-2xl border border-blue-500/20 bg-slate-950 p-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <Activity className="h-6 w-6 text-blue-400" />
+      <Card className="border-blue-500/30 bg-slate-950">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <Activity className="h-7 w-7 text-blue-400" />
 
-              <h2 className="text-2xl font-bold text-white">
-                Reseller System Diagnostic
-                & Control Center
-              </h2>
+                <h2 className="text-2xl font-bold text-white">
+                  Reseller System Diagnostic
+                  & Control Center
+                </h2>
+              </div>
+
+              <p className="max-w-3xl text-sm text-slate-400">
+                Monitor the Standard, Premium Monthly,
+                and Premium Yearly reseller systems.
+                When something is unhealthy, select it
+                below to see what was checked and what
+                should be investigated.
+              </p>
             </div>
 
-            <p className="max-w-3xl text-sm text-slate-400">
-              Inspect the complete reseller system,
-              identify broken components and drill
-              into individual diagnostics.
-            </p>
+            <Button
+              onClick={runDiagnostics}
+              disabled={loading}
+              className="gap-2"
+            >
+              <RefreshCw
+                className={
+                  loading
+                    ? "h-4 w-4 animate-spin"
+                    : "h-4 w-4"
+                }
+              />
+
+              Run diagnostics
+            </Button>
           </div>
 
-          <Button
-            onClick={runDiagnostic}
-            disabled={running}
-            className="gap-2"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${
-                running
-                  ? "animate-spin"
-                  : ""
-              }`}
-            />
-
-            {running
-              ? "Running..."
-              : "Run Full Diagnostic"}
-          </Button>
-        </div>
-      </div>
+          {lastChecked && (
+            <p className="mt-4 text-xs text-slate-500">
+              Last checked:{" "}
+              {lastChecked.toLocaleString()}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* SUMMARY */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-slate-800 bg-slate-950">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
           <CardContent className="p-5">
-            <p className="text-sm text-slate-400">
-              Components
-            </p>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
 
-            <p className="mt-2 text-3xl font-bold text-white">
-              {diagnostics.length}
-            </p>
+              <div>
+                <p className="text-sm text-slate-400">
+                  Healthy
+                </p>
+
+                <p className="text-3xl font-bold text-white">
+                  {healthyCount}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-emerald-500/20 bg-slate-950">
+        <Card className="border-yellow-500/30 bg-yellow-500/5">
           <CardContent className="p-5">
-            <p className="text-sm text-slate-400">
-              Healthy
-            </p>
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-6 w-6 text-yellow-400" />
 
-            <p className="mt-2 text-3xl font-bold text-emerald-400">
-              {healthyCount}
-            </p>
+              <div>
+                <p className="text-sm text-slate-400">
+                  Needs attention
+                </p>
+
+                <p className="text-3xl font-bold text-white">
+                  {warningCount}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-yellow-500/20 bg-slate-950">
+        <Card className="border-red-500/30 bg-red-500/5">
           <CardContent className="p-5">
-            <p className="text-sm text-slate-400">
-              Warnings
-            </p>
+            <div className="flex items-center gap-3">
+              <XCircle className="h-6 w-6 text-red-400" />
 
-            <p className="mt-2 text-3xl font-bold text-yellow-400">
-              {warningCount}
-            </p>
-          </CardContent>
-        </Card>
+              <div>
+                <p className="text-sm text-slate-400">
+                  Broken
+                </p>
 
-        <Card className="border-red-500/20 bg-slate-950">
-          <CardContent className="p-5">
-            <p className="text-sm text-slate-400">
-              Critical
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-red-400">
-              {criticalCount}
-            </p>
+                <p className="text-3xl font-bold text-white">
+                  {brokenCount}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* PLAN OVERVIEW */}
-      <Card className="border-slate-800 bg-slate-950">
+      <Card className="border-slate-700 bg-slate-950">
         <CardContent className="p-6">
-          <div className="mb-5">
-            <h3 className="text-xl font-bold text-white">
-              Reseller Plan Overview
-            </h3>
+          <div className="mb-5 flex items-center gap-3">
+            <Store className="h-6 w-6 text-blue-400" />
 
-            <p className="mt-1 text-sm text-slate-400">
-              Current DeeDee's reseller plan structure.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold text-white">
+                Reseller Plan Overview
+              </h3>
+
+              <p className="text-sm text-slate-400">
+                Current commercial plans configured for
+                the reseller system.
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              {
-                name: "Standard Seller",
-                price: "₦50,000",
-                billing: "Standard",
-              },
-              {
-                name: "Premium Monthly",
-                price: "₦30,000",
-                billing: "Monthly",
-              },
-              {
-                name: "Premium Yearly",
-                price: "₦120,000",
-                billing: "Yearly",
-              },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className="rounded-xl border border-slate-800 bg-slate-900/60 p-5"
-              >
-                <p className="text-sm text-slate-400">
-                  {plan.billing}
-                </p>
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Standard
+              </p>
 
-                <h4 className="mt-1 text-lg font-bold text-white">
-                  {plan.name}
-                </h4>
+              <p className="mt-2 text-2xl font-bold text-white">
+                ₦50,000
+              </p>
 
-                <p className="mt-4 text-2xl font-bold text-blue-400">
-                  {plan.price}
-                </p>
+              <Badge className="mt-3">
+                Standard
+              </Badge>
+            </div>
 
-                <Badge className="mt-3">
-                  Configured
-                </Badge>
-              </div>
-            ))}
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Premium Monthly
+              </p>
+
+              <p className="mt-2 text-2xl font-bold text-white">
+                ₦30,000
+              </p>
+
+              <Badge className="mt-3">
+                Monthly
+              </Badge>
+            </div>
+
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Premium Yearly
+              </p>
+
+              <p className="mt-2 text-2xl font-bold text-white">
+                ₦120,000
+              </p>
+
+              <Badge className="mt-3">
+                Yearly
+              </Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* DIAGNOSTICS */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-slate-800 bg-slate-950">
+      {/* SEARCH */}
+      <Card className="border-slate-700 bg-slate-950">
+        <CardContent className="p-5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+
+            <input
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search diagnostic systems..."
+              className="w-full rounded-lg border border-slate-700 bg-slate-900 py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-blue-500"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DIAGNOSTIC SYSTEMS */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-3">
+          {filteredItems.map(
+            (item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() =>
+                  setSelectedId(item.id)
+                }
+                className={`w-full rounded-xl border p-4 text-left transition ${statusClass(
+                  item.status
+                )} ${
+                  selectedId === item.id
+                    ? "ring-2 ring-blue-500/50"
+                    : ""
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <StatusIcon
+                    status={item.status}
+                  />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-semibold text-white">
+                        {item.name}
+                      </h3>
+
+                      <Badge>
+                        {statusLabel(
+                          item.status
+                        )}
+                      </Badge>
+                    </div>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            )
+          )}
+        </div>
+
+        {/* INSPECTION PANEL */}
+        <Card className="border-slate-700 bg-slate-950">
           <CardContent className="p-6">
-            <h3 className="mb-4 text-xl font-bold text-white">
-              System Components
-            </h3>
-
-            <div className="space-y-3">
-              {diagnostics.map((item) => {
-                const config =
-                  STATUS_CONFIG[item.status];
-
-                const Icon =
-                  config.icon;
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedId(item.id)
-                    }
-                    className={`flex w-full items-center justify-between rounded-xl border p-4 text-left transition hover:border-blue-500/40 ${statusClass(
-                      item.status
+            {selectedItem ? (
+              <>
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`rounded-xl border p-3 ${statusClass(
+                      selectedItem.status
                     )}`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={`h-5 w-5 ${statusTextClass(
-                          item.status
-                        )}`}
-                      />
+                    <StatusIcon
+                      status={
+                        selectedItem.status
+                      }
+                    />
+                  </div>
 
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      {selectedItem.name}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                      {selectedItem.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Search className="h-4 w-4 text-blue-400" />
+
+                      <h4 className="font-semibold text-white">
+                        What was checked?
+                      </h4>
+                    </div>
+
+                    <p className="text-sm leading-6 text-slate-300">
+                      {selectedItem.details}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-yellow-400" />
+
+                      <h4 className="font-semibold text-white">
+                        Recommended action
+                      </h4>
+                    </div>
+
+                    <p className="text-sm leading-6 text-slate-300">
+                      {selectedItem.recommendation}
+                    </p>
+                  </div>
+
+                  {selectedItem.endpoint && (
+                    <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                        Endpoint checked
+                      </p>
+
+                      <p className="mt-2 break-all font-mono text-xs text-blue-300">
+                        {selectedItem.endpoint}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="py-12 text-center text-slate-500">
+                Select a diagnostic system to inspect it.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* FROZEN SELLERS */}
+      <Card className="border-slate-700 bg-slate-950">
+        <CardContent className="p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-yellow-400" />
+
+            <div>
+              <h3 className="text-lg font-semibold text-white">
+                Frozen Sellers Requiring Attention
+              </h3>
+
+              <p className="text-sm text-slate-400">
+                Sellers whose subscriptions currently
+                require admin review.
+              </p>
+            </div>
+          </div>
+
+          {frozenSellers.length === 0 ? (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-sm text-emerald-300">
+              No frozen sellers were returned by the
+              administration system.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {frozenSellers.map(
+                (seller) => (
+                  <div
+                    key={String(
+                      seller.id
+                    )}
+                    className="rounded-xl border border-slate-700 bg-slate-900 p-4"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="font-semibold text-white">
-                          {item.name}
+                          {seller.name ||
+                            "Unnamed seller"}
                         </p>
 
-                        <p className="text-xs text-slate-400">
-                          {item.description}
+                        <p className="text-sm text-slate-400">
+                          {seller.email ||
+                            "No email"}
                         </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Badge>
+                          {seller.sellerPlan
+                            ?.name ||
+                            seller.sellerPlan
+                              ?.id ||
+                            "Unknown plan"}
+                        </Badge>
+
+                        <Badge>
+                          Frozen
+                        </Badge>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-xs font-semibold ${statusTextClass(
-                          item.status
-                        )}`}
-                      >
-                        {config.label}
-                      </span>
+                    {seller.sellerFreezeReason && (
+                      <p className="mt-3 text-sm text-yellow-300">
+                        Reason:{" "}
+                        {
+                          seller.sellerFreezeReason
+                        }
+                      </p>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-                      <ChevronRight className="h-4 w-4 text-slate-500" />
-                    </div>
-                  </button>
-                );
-              })}
+      {/* NEXT CONTROL CENTER AREAS */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-slate-700 bg-slate-950">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <ShoppingCart className="h-5 w-5 text-blue-400" />
+
+              <div>
+                <h3 className="font-semibold text-white">
+                  Orders Inspection
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-400">
+                  Test reseller order creation,
+                  processing, and customer order
+                  visibility.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* DETAILS */}
-        <Card className="border-slate-800 bg-slate-950">
-          <CardContent className="p-6">
-            <h3 className="mb-4 text-xl font-bold text-white">
-              Diagnostic Details
-            </h3>
+        <Card className="border-slate-700 bg-slate-950">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-blue-400" />
 
-            {!selected ? (
-              <div className="rounded-xl border border-dashed border-slate-700 p-8 text-center">
-                <Server className="mx-auto h-10 w-10 text-slate-600" />
+              <div>
+                <h3 className="font-semibold text-white">
+                  Storefront Inspection
+                </h3>
 
-                <p className="mt-3 font-semibold text-slate-300">
-                  Select a component
-                </p>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Tap any diagnostic above to inspect
-                  what is happening.
+                <p className="mt-1 text-sm text-slate-400">
+                  Inspect reseller storefronts and
+                  customer-facing functionality.
                 </p>
               </div>
-            ) : (
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const Icon =
-                        STATUS_CONFIG[
-                          selected.status
-                        ].icon;
+            </div>
+          </CardContent>
+        </Card>
 
-                      return (
-                        <Icon
-                          className={`h-6 w-6 ${statusTextClass(
-                            selected.status
-                          )}`}
-                        />
-                      );
-                    })()}
+        <Card className="border-slate-700 bg-slate-950">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <CreditCard className="h-5 w-5 text-blue-400" />
 
-                    <h4 className="text-lg font-bold text-white">
-                      {selected.name}
-                    </h4>
-                  </div>
+              <div>
+                <h3 className="font-semibold text-white">
+                  Payment Inspection
+                </h3>
 
-                  <p
-                    className={`mt-2 font-semibold ${statusTextClass(
-                      selected.status
-                    )}`}
-                  >
-                    {
-                      STATUS_CONFIG[
-                        selected.status
-                      ].label
-                    }
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-slate-900 p-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Diagnostic result
-                  </p>
-
-                  <p className="mt-2 text-sm text-slate-300">
-                    {selected.details}
-                  </p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-800 p-4">
-                    <Database className="h-5 w-5 text-blue-400" />
-
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      Database
-                    </p>
-
-                    <p className="text-xs text-slate-500">
-                      Detailed database tests will be
-                      connected here.
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-800 p-4">
-                    <ShieldCheck className="h-5 w-5 text-emerald-400" />
-
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      Security
-                    </p>
-
-                    <p className="text-xs text-slate-500">
-                      Authentication and permission
-                      diagnostics.
-                    </p>
-                  </div>
-                </div>
+                <p className="mt-1 text-sm text-slate-400">
+                  Review subscription-payment
+                  initialization and verification.
+                </p>
               </div>
-            )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-700 bg-slate-950">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <ExternalLink className="h-5 w-5 text-blue-400" />
+
+              <div>
+                <h3 className="font-semibold text-white">
+                  Storefront Links
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-400">
+                  The next diagnostic stage will allow
+                  admin inspection of individual reseller
+                  storefront links.
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
