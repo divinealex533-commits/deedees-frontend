@@ -27,6 +27,29 @@ interface NavbarProps {
 
 type MarketTheme = 'blue' | 'emerald';
 
+const navigationItems = [
+  {
+    id: 'services',
+    label: 'Services',
+  },
+  {
+    id: 'catalog',
+    label: 'Products',
+  },
+  {
+    id: 'security',
+    label: 'Security',
+  },
+  {
+    id: 'policy',
+    label: 'Policies',
+  },
+  {
+    id: 'contact',
+    label: 'Contact',
+  },
+];
+
 export function Navbar({
   cartCount,
   onCartClick,
@@ -53,19 +76,18 @@ export function Navbar({
         'deedee-market-theme'
       ) as MarketTheme | null;
 
-    setDark(savedDark);
-
-    document.documentElement.classList.toggle(
-      'dark',
-      savedDark
-    );
-
     const theme =
       savedMarketTheme === 'emerald'
         ? 'emerald'
         : 'blue';
 
+    setDark(savedDark);
     setMarketTheme(theme);
+
+    document.documentElement.classList.toggle(
+      'dark',
+      savedDark
+    );
 
     document.documentElement.setAttribute(
       'data-market-theme',
@@ -108,38 +130,57 @@ export function Navbar({
     );
   };
 
-  const go = (id: string) => {
-    document
-      .getElementById(id)
-      ?.scrollIntoView({
-        behavior: 'smooth',
-      });
+  const goHome = () => {
+    onViewChange('store');
 
     setMobileOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  const go = (id: string) => {
+    onViewChange('store');
+
+    setMobileOpen(false);
+
+    setTimeout(() => {
+      document
+        .getElementById(id)
+        ?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+    }, 50);
   };
 
   return (
     <header className="marketplace-navbar">
+
       <div className="marketplace-nav-inner">
 
-        {/* LEFT */}
+        {/* LEFT SIDE */}
         <div className="nav-left">
 
+          {/* ACCOUNT / SIDEBAR */}
           <button
+            type="button"
             className="nav-icon-button"
             onClick={onOpenAccountMenu}
             aria-label="Open account menu"
+            title="Account menu"
           >
-            <AlignLeft size={24} />
+            <AlignLeft size={23} />
           </button>
 
-          {/* DEEDEE'S MARKETPLACE */}
+          {/* BRAND */}
           <button
+            type="button"
             className="nav-brand"
-            onClick={() =>
-              onViewChange('store')
-            }
-            aria-label="DeeDee's Marketplace"
+            onClick={goHome}
+            aria-label="Go to DeeDee's Marketplace home"
           >
             <span className="nav-brand-box">
               DM
@@ -152,34 +193,31 @@ export function Navbar({
 
         </div>
 
-        {/* DESKTOP NAV */}
-        <nav className="desktop-nav">
-
-          {[
-            'services',
-            'catalog',
-            'security',
-            'policy',
-            'contact',
-          ].map((item) => (
+        {/* DESKTOP NAVIGATION */}
+        <nav
+          className="desktop-nav"
+          aria-label="Main navigation"
+        >
+          {navigationItems.map((item) => (
             <button
-              key={item}
-              onClick={() => go(item)}
+              type="button"
+              key={item.id}
+              onClick={() => go(item.id)}
             >
-              {item}
+              {item.label}
             </button>
           ))}
-
         </nav>
 
-        {/* ACTIONS */}
+        {/* RIGHT SIDE ACTIONS */}
         <div className="nav-actions">
 
           {view === 'store' && (
             <>
 
-              {/* BLUE / EMERALD SWITCH */}
+              {/* THEME SWITCH */}
               <button
+                type="button"
                 className="nav-circle-button theme-switch-button"
                 onClick={toggleMarketTheme}
                 aria-label={
@@ -193,11 +231,12 @@ export function Navbar({
                     : 'Switch to Blue'
                 }
               >
-                <Palette size={21} />
+                <Palette size={20} />
               </button>
 
-              {/* LIGHT / DARK MODE */}
+              {/* DARK MODE */}
               <button
+                type="button"
                 className="nav-circle-button"
                 onClick={toggleDarkMode}
                 aria-label="Toggle dark mode"
@@ -208,23 +247,31 @@ export function Navbar({
                 }
               >
                 {dark ? (
-                  <Sun size={22} />
+                  <Sun size={21} />
                 ) : (
-                  <Moon size={22} />
+                  <Moon size={21} />
                 )}
               </button>
 
               {/* CART */}
               <button
+                type="button"
                 className="nav-circle-button cart-button"
                 onClick={onCartClick}
-                aria-label="Cart"
+                aria-label={`Shopping cart${
+                  cartCount > 0
+                    ? `, ${cartCount} items`
+                    : ''
+                }`}
+                title="Shopping cart"
               >
-                <ShoppingCart size={22} />
+                <ShoppingCart size={21} />
 
                 {cartCount > 0 && (
                   <span className="cart-badge">
-                    {cartCount}
+                    {cartCount > 99
+                      ? '99+'
+                      : cartCount}
                   </span>
                 )}
               </button>
@@ -232,36 +279,44 @@ export function Navbar({
               {/* ACCOUNT */}
               {isAuthenticated ? (
                 <button
+                  type="button"
                   className="nav-circle-button"
-                  onClick={onLogout}
-                  aria-label="Logout"
-                  title="Logout"
+                  onClick={onOpenAccountMenu}
+                  aria-label="Open account"
+                  title="My account"
                 >
-                  <LogOut size={21} />
+                  <UserRound size={20} />
                 </button>
               ) : (
                 <button
+                  type="button"
                   className="nav-circle-button"
                   onClick={onOpenAuth}
                   aria-label="Login"
                   title="Login"
                 >
-                  <UserRound size={21} />
+                  <UserRound size={20} />
                 </button>
               )}
 
               {/* MOBILE MENU */}
               <button
+                type="button"
                 className="nav-icon-button mobile-menu-button"
                 onClick={() =>
-                  setMobileOpen((v) => !v)
+                  setMobileOpen((value) => !value)
                 }
-                aria-label="Open menu"
+                aria-label={
+                  mobileOpen
+                    ? 'Close menu'
+                    : 'Open menu'
+                }
+                aria-expanded={mobileOpen}
               >
                 {mobileOpen ? (
-                  <X size={24} />
+                  <X size={23} />
                 ) : (
-                  <Menu size={24} />
+                  <Menu size={23} />
                 )}
               </button>
 
@@ -269,30 +324,40 @@ export function Navbar({
           )}
 
         </div>
-
       </div>
 
-      {/* MOBILE NAVIGATION */}
+      {/* MOBILE MENU */}
       {mobileOpen && view === 'store' && (
-        <div className="mobile-nav-panel">
+        <div
+          className="mobile-nav-panel"
+          aria-label="Mobile navigation"
+        >
 
-          {[
-            'services',
-            'catalog',
-            'security',
-            'policy',
-            'contact',
-          ].map((item) => (
+          {/* HOME */}
+          <button
+            type="button"
+            onClick={goHome}
+          >
+            Home
+          </button>
+
+          {/* NAVIGATION */}
+          {navigationItems.map((item) => (
             <button
-              key={item}
-              onClick={() => go(item)}
+              type="button"
+              key={item.id}
+              onClick={() => go(item.id)}
             >
-              {item}
+              {item.label}
             </button>
           ))}
 
-          {/* MOBILE THEME SWITCH */}
+          {/* DIVIDER */}
+          <div className="my-2 h-px bg-slate-200/70 dark:bg-slate-700" />
+
+          {/* THEME */}
           <button
+            type="button"
             onClick={toggleMarketTheme}
           >
             <Palette size={17} />
@@ -302,8 +367,9 @@ export function Navbar({
               : 'Switch to Blue'}
           </button>
 
-          {/* MOBILE DARK MODE */}
+          {/* DARK MODE */}
           <button
+            type="button"
             onClick={toggleDarkMode}
           >
             {dark ? (
@@ -317,19 +383,41 @@ export function Navbar({
               : 'Dark Mode'}
           </button>
 
+          {/* ACCOUNT */}
           {isAuthenticated ? (
-            <button
-              onClick={() =>
-                onViewChange('dashboard')
-              }
-            >
-              My Account
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  onViewChange('dashboard');
+                }}
+              >
+                <UserRound size={17} />
+                My Account
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  onLogout();
+                }}
+              >
+                <LogOut size={17} />
+                Logout
+              </button>
+            </>
           ) : (
             <button
-              onClick={onOpenAuth}
+              type="button"
+              onClick={() => {
+                setMobileOpen(false);
+                onOpenAuth();
+              }}
             >
-              Login
+              <UserRound size={17} />
+              Login / Sign Up
             </button>
           )}
 
