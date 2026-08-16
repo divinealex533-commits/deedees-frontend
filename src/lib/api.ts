@@ -119,6 +119,26 @@ export const api = {
   getSellerSubscription: () =>
     request("/api/seller/subscription"),
 
+    // ==========================================================
+  // Admin Seller Subscription Management
+  // ==========================================================
+  getFrozenSellers: async () => {
+    const data = await request(
+      "/api/admin/sellers/frozen"
+    );
+    return data.sellers || [];
+  },
+  unfreezeSeller: (
+    userId: string
+  ) =>
+    request(
+      `/api/admin/sellers/${userId}/unfreeze`,
+      {
+        method: "POST",
+      }
+    ),
+  
+
   // ==========================================================
   // Tonyix Catalogue
   // ==========================================================
