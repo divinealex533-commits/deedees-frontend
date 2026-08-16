@@ -200,7 +200,7 @@ const CustomerCard = ({ customer }: { customer: Customer }) => {
   );
 };
 
-export default function TestimonialsSection() {
+export function TestimonialsSection() {
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   /*
