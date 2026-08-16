@@ -10,6 +10,8 @@ import {
   WalletCards,
 } from 'lucide-react';
 
+import { api } from '../lib/api';
+
 type AffiliateProgramProps = {
   onBack: () => void;
 };
@@ -31,13 +33,10 @@ export default function AffiliateProgram({
   useEffect(() => {
     const loadAffiliateData = async () => {
       try {
-        const response = await fetch('/api/my-referrals');
-
-        if (!response.ok) {
-          throw new Error('Unable to load affiliate information');
-        }
-
-        const result = await response.json();
+        // IMPORTANT:
+        // Use the authenticated API helper so the backend
+        // receives the logged-in user's Bearer token.
+        const result = await api.getMyReferrals();
 
         setData({
           referralCode:
@@ -63,10 +62,6 @@ export default function AffiliateProgram({
       } catch (error) {
         console.error('Affiliate loading error:', error);
 
-        /*
-         * Keep the page usable even if the referral endpoint
-         * is temporarily unavailable.
-         */
         setData({
           referralCode: '',
           totalReferred: 0,
@@ -131,14 +126,10 @@ export default function AffiliateProgram({
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
-      {/* HERO */}
-
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-80 w-[700px] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          {/* BACK */}
-
           <button
             type="button"
             onClick={onBack}
@@ -166,8 +157,6 @@ export default function AffiliateProgram({
             <ArrowLeft className="h-4 w-4" />
             Back to Marketplace
           </button>
-
-          {/* HEADER */}
 
           <div className="mx-auto mt-10 max-w-3xl text-center">
             <div
@@ -206,8 +195,6 @@ export default function AffiliateProgram({
             </p>
           </div>
 
-          {/* LOADING */}
-
           {loading ? (
             <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-emerald-500/20 border-t-emerald-500" />
@@ -218,8 +205,6 @@ export default function AffiliateProgram({
             </div>
           ) : (
             <>
-              {/* STATS */}
-
               <div className="mx-auto mt-12 grid max-w-5xl gap-4 sm:grid-cols-3">
                 <StatCard
                   icon={<Users className="h-5 w-5" />}
@@ -243,8 +228,6 @@ export default function AffiliateProgram({
                   )}
                 />
               </div>
-
-              {/* REFERRAL LINK */}
 
               <div
                 className="
@@ -293,8 +276,6 @@ export default function AffiliateProgram({
                   </div>
                 </div>
 
-                {/* CODE */}
-
                 {data?.referralCode && (
                   <div className="mt-5">
                     <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
@@ -306,8 +287,6 @@ export default function AffiliateProgram({
                     </div>
                   </div>
                 )}
-
-                {/* LINK */}
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <div
@@ -397,8 +376,6 @@ export default function AffiliateProgram({
                   Share Referral Link
                 </button>
               </div>
-
-              {/* HOW IT WORKS */}
 
               <div className="mx-auto mt-12 max-w-5xl">
                 <div className="text-center">
