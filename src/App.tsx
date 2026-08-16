@@ -320,7 +320,7 @@ function App() {
         }
       />
 
-      <<AccountDrawer
+ <AccountDrawer
   isOpen={isAccountDrawerOpen}
   onClose={() =>
     setIsAccountDrawerOpen(false)
@@ -337,6 +337,7 @@ function App() {
   onGoContact={handleDrawerGoContact}
   onGoAffiliate={() => {
     setView('affiliate');
+    setIsAccountDrawerOpen(false);
   }}
   onLogout={() => {
     auth.logout();
