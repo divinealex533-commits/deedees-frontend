@@ -7,6 +7,7 @@ import {
   Sun,
   UserRound,
   X,
+  Palette,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { User } from '@/hooks/useAuth';
@@ -24,6 +25,8 @@ interface NavbarProps {
   onOpenAccountMenu: () => void;
 }
 
+type MarketTheme = 'blue' | 'emerald';
+
 export function Navbar({
   cartCount,
   onCartClick,
@@ -35,25 +38,82 @@ export function Navbar({
   onOpenAccountMenu,
 }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+
   const [dark, setDark] = useState(false);
 
+  const [marketTheme, setMarketTheme] =
+    useState<MarketTheme>('blue');
+
   useEffect(() => {
-    const saved = localStorage.getItem('deedee-theme') === 'dark';
-    setDark(saved);
-    document.documentElement.classList.toggle('dark', saved);
+    const savedDark =
+      localStorage.getItem('deedee-theme') === 'dark';
+
+    const savedMarketTheme =
+      localStorage.getItem(
+        'deedee-market-theme'
+      ) as MarketTheme | null;
+
+    setDark(savedDark);
+
+    document.documentElement.classList.toggle(
+      'dark',
+      savedDark
+    );
+
+    const theme =
+      savedMarketTheme === 'emerald'
+        ? 'emerald'
+        : 'blue';
+
+    setMarketTheme(theme);
+
+    document.documentElement.setAttribute(
+      'data-market-theme',
+      theme
+    );
   }, []);
 
-  const toggleTheme = () => {
+  const toggleDarkMode = () => {
     const next = !dark;
+
     setDark(next);
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('deedee-theme', next ? 'dark' : 'light');
+
+    document.documentElement.classList.toggle(
+      'dark',
+      next
+    );
+
+    localStorage.setItem(
+      'deedee-theme',
+      next ? 'dark' : 'light'
+    );
+  };
+
+  const toggleMarketTheme = () => {
+    const next: MarketTheme =
+      marketTheme === 'blue'
+        ? 'emerald'
+        : 'blue';
+
+    setMarketTheme(next);
+
+    document.documentElement.setAttribute(
+      'data-market-theme',
+      next
+    );
+
+    localStorage.setItem(
+      'deedee-market-theme',
+      next
+    );
   };
 
   const go = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: 'smooth',
-    });
+    document
+      .getElementById(id)
+      ?.scrollIntoView({
+        behavior: 'smooth',
+      });
 
     setMobileOpen(false);
   };
@@ -62,6 +122,7 @@ export function Navbar({
     <header className="marketplace-navbar">
       <div className="marketplace-nav-inner">
 
+        {/* LEFT */}
         <div className="nav-left">
 
           <button
@@ -72,9 +133,13 @@ export function Navbar({
             <AlignLeft size={24} />
           </button>
 
+          {/* DEEDEE'S MARKETPLACE */}
           <button
             className="nav-brand"
-            onClick={() => onViewChange('store')}
+            onClick={() =>
+              onViewChange('store')
+            }
+            aria-label="DeeDee's Marketplace"
           >
             <span className="nav-brand-box">
               DM
@@ -87,6 +152,7 @@ export function Navbar({
 
         </div>
 
+        {/* DESKTOP NAV */}
         <nav className="desktop-nav">
 
           {[
@@ -106,14 +172,40 @@ export function Navbar({
 
         </nav>
 
+        {/* ACTIONS */}
         <div className="nav-actions">
 
           {view === 'store' && (
             <>
 
+              {/* BLUE / EMERALD SWITCH */}
+              <button
+                className="nav-circle-button theme-switch-button"
+                onClick={toggleMarketTheme}
+                aria-label={
+                  marketTheme === 'blue'
+                    ? 'Switch to Emerald theme'
+                    : 'Switch to Blue theme'
+                }
+                title={
+                  marketTheme === 'blue'
+                    ? 'Switch to Emerald'
+                    : 'Switch to Blue'
+                }
+              >
+                <Palette size={21} />
+              </button>
+
+              {/* LIGHT / DARK MODE */}
               <button
                 className="nav-circle-button"
-                onClick={toggleTheme}
+                onClick={toggleDarkMode}
+                aria-label="Toggle dark mode"
+                title={
+                  dark
+                    ? 'Switch to light mode'
+                    : 'Switch to dark mode'
+                }
               >
                 {dark ? (
                   <Sun size={22} />
@@ -122,6 +214,7 @@ export function Navbar({
                 )}
               </button>
 
+              {/* CART */}
               <button
                 className="nav-circle-button cart-button"
                 onClick={onCartClick}
@@ -136,10 +229,13 @@ export function Navbar({
                 )}
               </button>
 
+              {/* ACCOUNT */}
               {isAuthenticated ? (
                 <button
                   className="nav-circle-button"
                   onClick={onLogout}
+                  aria-label="Logout"
+                  title="Logout"
                 >
                   <LogOut size={21} />
                 </button>
@@ -147,16 +243,20 @@ export function Navbar({
                 <button
                   className="nav-circle-button"
                   onClick={onOpenAuth}
+                  aria-label="Login"
+                  title="Login"
                 >
                   <UserRound size={21} />
                 </button>
               )}
 
+              {/* MOBILE MENU */}
               <button
                 className="nav-icon-button mobile-menu-button"
                 onClick={() =>
                   setMobileOpen((v) => !v)
                 }
+                aria-label="Open menu"
               >
                 {mobileOpen ? (
                   <X size={24} />
@@ -172,6 +272,7 @@ export function Navbar({
 
       </div>
 
+      {/* MOBILE NAVIGATION */}
       {mobileOpen && view === 'store' && (
         <div className="mobile-nav-panel">
 
@@ -190,6 +291,32 @@ export function Navbar({
             </button>
           ))}
 
+          {/* MOBILE THEME SWITCH */}
+          <button
+            onClick={toggleMarketTheme}
+          >
+            <Palette size={17} />
+
+            {marketTheme === 'blue'
+              ? 'Switch to Emerald'
+              : 'Switch to Blue'}
+          </button>
+
+          {/* MOBILE DARK MODE */}
+          <button
+            onClick={toggleDarkMode}
+          >
+            {dark ? (
+              <Sun size={17} />
+            ) : (
+              <Moon size={17} />
+            )}
+
+            {dark
+              ? 'Light Mode'
+              : 'Dark Mode'}
+          </button>
+
           {isAuthenticated ? (
             <button
               onClick={() =>
@@ -199,7 +326,9 @@ export function Navbar({
               My Account
             </button>
           ) : (
-            <button onClick={onOpenAuth}>
+            <button
+              onClick={onOpenAuth}
+            >
               Login
             </button>
           )}
