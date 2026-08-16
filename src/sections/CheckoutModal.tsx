@@ -18,6 +18,7 @@ import {
   Minus,
   Plus,
   ShieldCheck,
+  ShoppingBag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Product } from '@/types';
@@ -28,11 +29,21 @@ interface CheckoutModalProps {
   product: Product | null;
   walletBalance: number;
   onStartInstantDeposit: (amount: number) => Promise<void>;
-  onSubmitManualDeposit: (amount: number, file: File) => Promise<unknown>;
-  onPurchase: (product: Product, quantity: number) => Promise<void>;
+  onSubmitManualDeposit: (
+    amount: number,
+    file: File
+  ) => Promise<unknown>;
+  onPurchase: (
+    product: Product,
+    quantity: number
+  ) => Promise<void>;
 }
 
-function TelegramIcon({ className }: { className?: string }) {
+function TelegramIcon({
+  className,
+}: {
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -60,9 +71,14 @@ export function CheckoutModal({
   onPurchase,
 }: CheckoutModalProps) {
   const [quantity, setQuantity] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [manualFile, setManualFile] = useState<File | null>(null);
-  const [manualSubmitted, setManualSubmitted] = useState(false);
+  const [isProcessing, setIsProcessing] =
+    useState(false);
+
+  const [manualFile, setManualFile] =
+    useState<File | null>(null);
+
+  const [manualSubmitted, setManualSubmitted] =
+    useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,153 +90,275 @@ export function CheckoutModal({
   }, [isOpen, product?.id]);
 
   const maxQuantity =
-    product?.quantity != null ? Math.max(1, product.quantity) : 1;
+    product?.quantity != null
+      ? Math.max(1, Number(product.quantity))
+      : 1;
 
-  const total = product ? product.price * quantity : 0;
+  const total = product
+    ? product.price * quantity
+    : 0;
 
-  const shortfall = Math.max(0, total - walletBalance);
+  const shortfall = Math.max(
+    0,
+    total - walletBalance
+  );
 
-  const canAfford = walletBalance >= total;
+  const canAfford =
+    walletBalance >= total;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NG', {
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
     }).format(price);
-  };
 
   const stockText = useMemo(() => {
     if (!product) return '';
 
     if (product.quantity == null) {
-      return product.inStock ? 'In stock' : 'Out of stock';
+      return product.inStock
+        ? 'In stock'
+        : 'Out of stock';
     }
 
     return `${product.quantity} in stock`;
   }, [product]);
 
   const changeQuantity = (next: number) => {
-    setQuantity(Math.min(Math.max(1, next), maxQuantity));
+    setQuantity(
+      Math.min(
+        Math.max(1, next),
+        maxQuantity
+      )
+    );
   };
 
-  const handleCompletePurchase = async () => {
-    if (!product) return;
+  const handleCompletePurchase =
+    async () => {
+      if (!product) return;
 
-    setIsProcessing(true);
+      setIsProcessing(true);
 
-    try {
-      await onPurchase(product, quantity);
+      try {
+        await onPurchase(
+          product,
+          quantity
+        );
 
-      toast.success(
-        'Purchase complete! Check your dashboard for details.'
-      );
+        toast.success(
+          'Purchase complete! Check your dashboard for details.'
+        );
 
-      onClose();
-    } catch (err) {
-      toast.error((err as Error).message || 'Purchase failed');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+        onClose();
+      } catch (err) {
+        toast.error(
+          (err as Error).message ||
+            'Purchase failed'
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+    };
 
-  const handleInstantTopUp = async () => {
-    setIsProcessing(true);
+  const handleInstantTopUp =
+    async () => {
+      setIsProcessing(true);
 
-    try {
-      await onStartInstantDeposit(shortfall);
-    } catch (err) {
-      toast.error(
-        (err as Error).message || 'Could not start payment'
-      );
+      try {
+        await onStartInstantDeposit(
+          shortfall
+        );
+      } catch (err) {
+        toast.error(
+          (err as Error).message ||
+            'Could not start payment'
+        );
 
-      setIsProcessing(false);
-    }
-  };
+        setIsProcessing(false);
+      }
+    };
 
-  const handleManualTopUp = async () => {
-    if (!manualFile) {
-      toast.error('Please upload a payment screenshot');
-      return;
-    }
+  const handleManualTopUp =
+    async () => {
+      if (!manualFile) {
+        toast.error(
+          'Please upload a payment screenshot'
+        );
+        return;
+      }
 
-    setIsProcessing(true);
+      setIsProcessing(true);
 
-    try {
-      await onSubmitManualDeposit(shortfall, manualFile);
+      try {
+        await onSubmitManualDeposit(
+          shortfall,
+          manualFile
+        );
 
-      setManualSubmitted(true);
+        setManualSubmitted(true);
 
-      toast.success('Screenshot submitted — pending review.');
-    } catch (err) {
-      toast.error(
-        (err as Error).message || 'Could not submit payment proof'
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+        toast.success(
+          'Screenshot submitted — pending review.'
+        );
+      } catch (err) {
+        toast.error(
+          (err as Error).message ||
+            'Could not submit payment proof'
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+    };
 
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = e.target.files?.[0];
+    const file =
+      e.target.files?.[0];
 
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      toast.error(
+        'File size must be less than 5MB'
+      );
       return;
     }
 
     setManualFile(file);
   };
 
-  const handleCopyAccountNumber = () => {
-    navigator.clipboard.writeText(
-      MANUAL_BANK_ACCOUNT.accountNumber
-    );
+  const handleCopyAccountNumber =
+    () => {
+      navigator.clipboard.writeText(
+        MANUAL_BANK_ACCOUNT.accountNumber
+      );
 
-    toast.success('Account number copied');
-  };
+      toast.success(
+        'Account number copied'
+      );
+    };
 
   if (!product) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-     <DialogContent
-  className="
-    w-[calc(100%-20px)]
-    max-w-[420px]
-    sm:max-w-lg
-    max-h-[82vh]
-    p-0
-    bg-white
-    dark:bg-slate-950
-    border-blue-500/30
-    rounded-2xl
-    overflow-hidden
-    flex
-    flex-col
-  "
->
-        <DialogHeader className="px-4 sm:px-5 pt-4 pb-3 border-b border-slate-200 dark:border-blue-500/20 shrink-0">
-       <DialogTitle className="text-slate-900 dark:text-white text-lg sm:text-xl">
-            Complete Order
-          </DialogTitle>
+    <Dialog
+      open={isOpen}
+      onOpenChange={onClose}
+    >
+      <DialogContent
+        className="
+          w-[calc(100%-16px)]
+          max-w-[390px]
+          sm:max-w-[430px]
+          max-h-[88vh]
+          p-0
+          bg-white
+          dark:bg-slate-950
+          border-blue-500/30
+          rounded-2xl
+          overflow-hidden
+          flex
+          flex-col
+        "
+      >
 
-          <div className="text-blue-600 dark:text-blue-400 font-semibold pt-1">
-            Wallet: {formatPrice(walletBalance)}
+        {/* HEADER */}
+        <DialogHeader
+          className="
+            px-4
+            py-3
+            border-b
+            border-slate-200
+            dark:border-slate-800
+            shrink-0
+          "
+        >
+          <div className="flex items-center justify-between gap-3">
+
+            <div className="min-w-0">
+
+              <DialogTitle
+                className="
+                  text-base
+                  sm:text-lg
+                  text-slate-900
+                  dark:text-white
+                  truncate
+                "
+              >
+                Complete Order
+              </DialogTitle>
+
+              <p className="text-xs text-slate-500 mt-0.5">
+                Secure checkout
+              </p>
+
+            </div>
+
+            <div
+              className="
+                shrink-0
+                px-2.5
+                py-1.5
+                rounded-lg
+                bg-blue-500/10
+                text-blue-600
+                dark:text-blue-400
+                text-xs
+                font-bold
+              "
+            >
+              Wallet:{' '}
+              {formatPrice(walletBalance)}
+            </div>
+
           </div>
         </DialogHeader>
 
-        <div className="px-4 sm:px-5 py-3 sm:py-4 space-y-3 overflow-y-auto">
+        {/* CONTENT */}
+        <div
+          className="
+            px-3.5
+            sm:px-4
+            py-3
+            space-y-2.5
+            overflow-y-auto
+          "
+        >
 
           {/* PRODUCT */}
-          <div className="rounded-xl border border-slate-200 dark:border-blue-500/20 overflow-hidden">
+          <div
+            className="
+              rounded-xl
+              border
+              border-slate-200
+              dark:border-slate-800
+              overflow-hidden
+              bg-white
+              dark:bg-slate-950
+            "
+          >
+
             <div className="flex gap-3 p-3">
 
-              <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-900 overflow-hidden shrink-0">
+              <div
+                className="
+                  w-14
+                  h-14
+                  sm:w-16
+                  sm:h-16
+                  rounded-lg
+                  bg-slate-100
+                  dark:bg-slate-900
+                  overflow-hidden
+                  shrink-0
+                "
+              >
                 <img
                   src={product.imageUrl}
                   alt={product.name}
@@ -232,138 +370,180 @@ export function CheckoutModal({
 
                 <div className="flex items-start justify-between gap-2">
 
-                  <h3 className="font-semibold text-slate-900 dark:text-white truncate">
+                  <h3
+                    className="
+                      font-semibold
+                      text-sm
+                      text-slate-900
+                      dark:text-white
+                      line-clamp-2
+                    "
+                  >
                     {product.name}
                   </h3>
 
-                  <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0">
-                    {formatPrice(product.price)}
+                  <span
+                    className="
+                      text-blue-600
+                      dark:text-blue-400
+                      font-bold
+                      text-sm
+                      shrink-0
+                    "
+                  >
+                    {formatPrice(
+                      product.price
+                    )}
                   </span>
 
                 </div>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {stockText}
                 </p>
 
-                {product.description && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                    {product.description}
-                  </p>
-                )}
-
               </div>
+
             </div>
 
-            {/* QUANTITY */}
-            <div className="border-t border-slate-200 dark:border-blue-500/20 p-3">
-
-              <Label className="text-slate-700 dark:text-slate-300">
-                Quantity
-              </Label>
-
-              <div className="flex items-center mt-2">
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  disabled={quantity <= 1}
-                  onClick={() => changeQuantity(quantity - 1)}
-                  className="
-                    h-10
-                    w-10
-                    rounded-r-none
-                    border-slate-300
-                    dark:border-blue-500/30
-                    text-slate-700
-                    dark:text-white
-                  "
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-
-                <div
-                  className="
-                    h-10
-                    w-16
-                    border-y
-                    border-slate-300
-                    dark:border-blue-500/30
-                    flex
-                    items-center
-                    justify-center
-                    text-slate-900
-                    dark:text-white
-                    font-semibold
-                  "
-                >
-                  {quantity}
-                </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  disabled={quantity >= maxQuantity}
-                  onClick={() => changeQuantity(quantity + 1)}
-                  className="
-                    h-10
-                    w-10
-                    rounded-l-none
-                    border-slate-300
-                    dark:border-blue-500/30
-                    text-slate-700
-                    dark:text-white
-                  "
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-
-              </div>
-            </div>
-
-            {/* TOTAL */}
+            {/* QUANTITY + TOTAL */}
             <div
               className="
                 border-t
                 border-slate-200
-                dark:border-blue-500/20
-                p-3
+                dark:border-slate-800
+                px-3
+                py-2.5
                 flex
                 items-center
                 justify-between
+                gap-3
               "
             >
-              <span className="font-semibold text-slate-800 dark:text-white">
-                Total
-              </span>
 
-              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                {formatPrice(total)}
-              </span>
+              <div>
+
+                <p className="text-[11px] text-slate-500 mb-1">
+                  Quantity
+                </p>
+
+                <div className="flex items-center">
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={
+                      quantity <= 1
+                    }
+                    onClick={() =>
+                      changeQuantity(
+                        quantity - 1
+                      )
+                    }
+                    className="
+                      h-8
+                      w-8
+                      rounded-r-none
+                      border-slate-300
+                      dark:border-slate-700
+                    "
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </Button>
+
+                  <div
+                    className="
+                      h-8
+                      w-10
+                      border-y
+                      border-slate-300
+                      dark:border-slate-700
+                      flex
+                      items-center
+                      justify-center
+                      text-sm
+                      font-semibold
+                      text-slate-900
+                      dark:text-white
+                    "
+                  >
+                    {quantity}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={
+                      quantity >=
+                      maxQuantity
+                    }
+                    onClick={() =>
+                      changeQuantity(
+                        quantity + 1
+                      )
+                    }
+                    className="
+                      h-8
+                      w-8
+                      rounded-l-none
+                      border-slate-300
+                      dark:border-slate-700
+                    "
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+
+                </div>
+
+              </div>
+
+              <div className="text-right">
+
+                <p className="text-[11px] text-slate-500">
+                  Total
+                </p>
+
+                <p
+                  className="
+                    text-lg
+                    font-black
+                    text-blue-600
+                    dark:text-blue-400
+                  "
+                >
+                  {formatPrice(total)}
+                </p>
+
+              </div>
+
             </div>
 
           </div>
 
           {/* SECURITY */}
-          <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 flex gap-3">
+          <div
+            className="
+              rounded-xl
+              border
+              border-emerald-500/20
+              bg-emerald-500/5
+              px-3
+              py-2.5
+              flex
+              items-center
+              gap-2.5
+            "
+          >
+            <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
 
-            <ShieldCheck className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-
-            <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                Secure purchase
-              </p>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Your account/access details are released after a successful purchase.
-              </p>
-            </div>
-
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+              Secure purchase. Access details are released after successful payment.
+            </p>
           </div>
 
-          {/* TELEGRAM SUPPORT */}
+          {/* SUPPORT */}
           <a
             href="https://t.me/deedeesmarketsupport"
             target="_blank"
@@ -373,215 +553,315 @@ export function CheckoutModal({
               items-center
               justify-center
               gap-2
-              text-xs
+              text-[11px]
               text-cyan-600
               dark:text-cyan-400
               hover:underline
+              py-0.5
             "
           >
-            <TelegramIcon className="h-4 w-4" />
+            <TelegramIcon className="h-3.5 w-3.5" />
 
-            Need help with your order?
+            Need help?
             Chat with us on Telegram
           </a>
 
-          {/* BUY NOW */}
+          {/* CAN AFFORD */}
           {canAfford ? (
             <Button
-              onClick={handleCompletePurchase}
+              onClick={
+                handleCompletePurchase
+              }
               disabled={isProcessing}
               className="
                 w-full
+                h-10
                 bg-gradient-to-r
                 from-blue-500
                 to-cyan-500
                 hover:from-blue-600
                 hover:to-cyan-600
                 text-white
-                py-4
-text-sm sm:text-base
+                font-semibold
+                text-sm
               "
             >
-              {isProcessing ? 'Processing...' : 'Buy Now'}
+              <ShoppingBag className="h-4 w-4 mr-2" />
+
+              {isProcessing
+                ? 'Processing...'
+                : `Buy Now • ${formatPrice(total)}`}
             </Button>
           ) : (
-            <div className="space-y-3">
 
-              {/* WALLET SHORTFALL */}
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <div className="space-y-2.5">
 
-                <p className="text-amber-600 dark:text-amber-400 text-sm">
-                  You need {formatPrice(shortfall)} more to complete this purchase.
+              {/* SHORTFALL */}
+              <div
+                className="
+                  px-3
+                  py-2
+                  rounded-lg
+                  bg-amber-500/10
+                  border
+                  border-amber-500/30
+                "
+              >
+                <p className="text-amber-600 dark:text-amber-400 text-xs">
+                  You need{' '}
+                  <strong>
+                    {formatPrice(shortfall)}
+                  </strong>{' '}
+                  more in your wallet.
                 </p>
-
               </div>
 
               {!manualSubmitted && (
                 <>
 
-                  {/* INSTANT TOP UP */}
-                  <div className="p-3 rounded-xl border border-blue-500/20 bg-slate-50 dark:bg-slate-900">
+                  {/* PAYSTACK */}
+                  <div
+                    className="
+                      p-3
+                      rounded-xl
+                      border
+                      border-blue-500/20
+                      bg-slate-50
+                      dark:bg-slate-900
+                    "
+                  >
 
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-2.5 mb-2.5">
 
-                      <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <div
+                        className="
+                          w-8
+                          h-8
+                          rounded-lg
+                          bg-blue-500/10
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
                         <Zap className="h-4 w-4 text-blue-500" />
                       </div>
 
                       <div>
-
-                        <p className="text-slate-900 dark:text-white font-medium text-sm">
+                        <p className="text-slate-900 dark:text-white font-semibold text-xs">
                           Pay instantly
                         </p>
 
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">
-                          Card, bank, or USSD via Paystack
+                        <p className="text-slate-500 dark:text-slate-400 text-[10px]">
+                          Card, bank or USSD via Paystack
                         </p>
-
                       </div>
 
                     </div>
 
                     <Button
-                      onClick={handleInstantTopUp}
-                      disabled={isProcessing}
+                      onClick={
+                        handleInstantTopUp
+                      }
+                      disabled={
+                        isProcessing
+                      }
                       className="
                         w-full
+                        h-9
                         bg-gradient-to-r
                         from-blue-500
                         to-cyan-500
                         text-white
+                        text-xs
                       "
                     >
-                      Add {formatPrice(shortfall)} to wallet
+                      {isProcessing
+                        ? 'Opening payment...'
+                        : `Add ${formatPrice(shortfall)} to wallet`}
                     </Button>
 
                   </div>
 
                   {/* MANUAL TRANSFER */}
-                  <div className="p-3 rounded-xl border border-cyan-500/20 bg-slate-50 dark:bg-slate-900">
+                  <div
+                    className="
+                      p-3
+                      rounded-xl
+                      border
+                      border-cyan-500/20
+                      bg-slate-50
+                      dark:bg-slate-900
+                    "
+                  >
 
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-2.5 mb-2.5">
 
-                      <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                      <div
+                        className="
+                          w-8
+                          h-8
+                          rounded-lg
+                          bg-cyan-500/10
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
                         <Clock className="h-4 w-4 text-cyan-500" />
                       </div>
 
                       <div>
-
-                        <p className="text-slate-900 dark:text-white font-medium text-sm">
+                        <p className="text-slate-900 dark:text-white font-semibold text-xs">
                           Manual bank transfer
                         </p>
 
-                        <p className="text-slate-500 dark:text-slate-400 text-xs">
-                          Send the shortfall and upload proof
+                        <p className="text-slate-500 dark:text-slate-400 text-[10px]">
+                          Transfer and upload proof
                         </p>
-
                       </div>
 
                     </div>
 
-                    <div className="mb-3 p-3 rounded-lg bg-white dark:bg-slate-950 border border-cyan-500/20 space-y-2">
+                    {/* BANK DETAILS */}
+                    <div
+                      className="
+                        mb-2.5
+                        p-2.5
+                        rounded-lg
+                        bg-white
+                        dark:bg-slate-950
+                        border
+                        border-cyan-500/20
+                      "
+                    >
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-2">
 
-                        <Landmark className="h-4 w-4 text-cyan-500" />
+                        <Landmark className="h-3.5 w-3.5 text-cyan-500" />
 
-                        <p className="text-cyan-600 dark:text-cyan-400 text-xs font-medium uppercase tracking-wide">
+                        <p className="text-cyan-600 dark:text-cyan-400 text-[10px] font-bold uppercase tracking-wide">
                           Transfer to
                         </p>
 
                       </div>
 
-                      <div className="flex items-center justify-between">
+                      <div className="grid grid-cols-1 gap-1.5">
 
-                        <div>
+                        <div className="flex items-center justify-between gap-2">
 
-                          <p className="text-slate-500 text-xs">
-                            Account Number
-                          </p>
+                          <div>
+                            <p className="text-slate-500 text-[9px]">
+                              Account Number
+                            </p>
 
-                          <p className="text-slate-900 dark:text-white font-mono text-base font-semibold">
-                            {MANUAL_BANK_ACCOUNT.accountNumber}
-                          </p>
+                            <p className="text-slate-900 dark:text-white font-mono text-sm font-bold">
+                              {MANUAL_BANK_ACCOUNT.accountNumber}
+                            </p>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={
+                              handleCopyAccountNumber
+                            }
+                            className="
+                              h-7
+                              w-7
+                              text-cyan-500
+                            "
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
 
                         </div>
 
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleCopyAccountNumber}
-                          className="h-8 w-8 text-cyan-500"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                        <div className="grid grid-cols-2 gap-3">
 
-                      </div>
+                          <div>
+                            <p className="text-slate-500 text-[9px]">
+                              Account Name
+                            </p>
 
-                      <div>
+                            <p className="text-slate-900 dark:text-white text-[11px] font-medium truncate">
+                              {MANUAL_BANK_ACCOUNT.accountName}
+                            </p>
+                          </div>
 
-                        <p className="text-slate-500 text-xs">
-                          Account Name
-                        </p>
+                          <div>
+                            <p className="text-slate-500 text-[9px]">
+                              Bank
+                            </p>
 
-                        <p className="text-slate-900 dark:text-white text-sm">
-                          {MANUAL_BANK_ACCOUNT.accountName}
-                        </p>
+                            <p className="text-slate-900 dark:text-white text-[11px] font-medium truncate">
+                              {MANUAL_BANK_ACCOUNT.bankName}
+                            </p>
+                          </div>
 
-                      </div>
-
-                      <div>
-
-                        <p className="text-slate-500 text-xs">
-                          Bank
-                        </p>
-
-                        <p className="text-slate-900 dark:text-white text-sm">
-                          {MANUAL_BANK_ACCOUNT.bankName}
-                        </p>
+                        </div>
 
                       </div>
 
                     </div>
 
-                    {/* UPLOAD */}
-                    <div className="mb-3 space-y-1">
+                    {/* FILE */}
+                    <div className="mb-2.5 space-y-1">
 
-                      <Label className="text-slate-600 dark:text-slate-400 text-xs">
-                        Upload payment screenshot
+                      <Label className="text-slate-600 dark:text-slate-400 text-[10px]">
+                        Payment screenshot
                       </Label>
 
                       <Input
                         type="file"
                         accept="image/*"
-                        onChange={handleFileChange}
+                        onChange={
+                          handleFileChange
+                        }
                         className="
+                          h-9
                           bg-white
                           dark:bg-slate-950
                           border-blue-500/30
                           text-slate-900
                           dark:text-white
-                          text-xs
+                          text-[10px]
                           file:text-blue-500
                         "
                       />
 
+                      {manualFile && (
+                        <p className="text-[9px] text-emerald-500 truncate">
+                          ✓ {manualFile.name}
+                        </p>
+                      )}
+
                     </div>
 
                     <Button
-                      onClick={handleManualTopUp}
-                      disabled={isProcessing || !manualFile}
+                      onClick={
+                        handleManualTopUp
+                      }
+                      disabled={
+                        isProcessing ||
+                        !manualFile
+                      }
                       variant="outline"
                       className="
                         w-full
+                        h-9
                         border-cyan-500/30
                         text-slate-800
                         dark:text-white
+                        text-xs
                       "
                     >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Submit for review
+                      <Upload className="h-3.5 w-3.5 mr-2" />
+
+                      {isProcessing
+                        ? 'Submitting...'
+                        : 'Submit Payment Proof'}
                     </Button>
 
                   </div>
@@ -591,18 +871,25 @@ text-sm sm:text-base
 
               {/* SUBMITTED */}
               {manualSubmitted && (
-                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 text-center">
+                <div
+                  className="
+                    p-4
+                    rounded-xl
+                    border
+                    border-emerald-500/30
+                    bg-emerald-500/10
+                    text-center
+                  "
+                >
+                  <Check className="h-7 w-7 text-emerald-500 mx-auto mb-1.5" />
 
-                  <Check className="h-8 w-8 text-green-500 mx-auto mb-2" />
-
-                  <p className="text-green-600 dark:text-green-400 font-medium">
+                  <p className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
                     Payment proof submitted
                   </p>
 
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                    Once approved, your balance updates. You can then complete the purchase.
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
+                    Once approved, your wallet balance will update.
                   </p>
-
                 </div>
               )}
 
