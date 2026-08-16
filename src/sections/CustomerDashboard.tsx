@@ -18,6 +18,9 @@ import {
   Link as LinkIcon,
   Landmark,
   Copy,
+  CreditCard,
+Lock,
+RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -51,25 +54,28 @@ interface PurchasedItem {
   [key: string]: unknown;
 }
 
-interface Order {
-  id: string;
-  order_id?: string;
-  purchasedAt?: string;
-  createdAt?: string;
-  price?: number | string;
-  total?: number | string;
-  quantity?: number;
-  product_id?: number | string;
-  product_name?: string;
-  productName?: string;
+interface SellerSubscription {
+  isSeller?: boolean;
+  plan?: {
+    id?: string;
+    name?: string;
+    price?: number;
+    currency?: string;
+    billing?: string;
+    features?: string[];
+  } | null;
   status?: string;
-  currency?: string;
-  item?: Product | null;
-  items?: PurchasedItem[];
-  accessLink?: string | null;
-  url?: string | null;
-  link?: string | null;
-  details?: string;
+  expiresAt?: number | string | null;
+  subscriptionReference?: string | null;
+  isSellerFrozen?: boolean;
+  freezeReason?: string;
+  frozenAt?: number | string | null;
+  renewalPaymentDetails?: {
+    accountName?: string;
+    accountNumber?: string;
+    bankName?: string;
+    paymentInstructions?: string;
+  } | null;
 }
 
 const MANUAL_BANK_ACCOUNT = {
@@ -94,6 +100,14 @@ export function CustomerDashboard({
   const [editForm, setEditForm] = useState({ phone: user.phone });
   const [topUpAmount, setTopUpAmount] = useState('');
   const [manualFile, setManualFile] = useState<File | null>(null);
+  const [sellerSubscription, setSellerSubscription] =
+  useState<SellerSubscription | null>(null);
+
+const [sellerSubscriptionLoading, setSellerSubscriptionLoading] =
+  useState(true);
+
+const [sellerSubscriptionError, setSellerSubscriptionError] =
+  useState<string | null>(null);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
@@ -123,6 +137,47 @@ export function CustomerDashboard({
     loadOrders();
   }, [loadOrders]);
 
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadSellerSubscription() {
+    setSellerSubscriptionLoading(true);
+    setSellerSubscriptionError(null);
+
+    try {
+      const data =
+        await api.getSellerSubscription();
+
+      if (!cancelled) {
+        setSellerSubscription(data);
+      }
+    } catch (err) {
+      console.error(
+        "Failed to load seller subscription:",
+        err
+      );
+
+      if (!cancelled) {
+        setSellerSubscriptionError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load seller subscription"
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setSellerSubscriptionLoading(false);
+      }
+    }
+  }
+
+  loadSellerSubscription();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
+  
   const purchasedItems = products.filter((p) =>
     purchasedItemIds.includes(p.id)
   );
