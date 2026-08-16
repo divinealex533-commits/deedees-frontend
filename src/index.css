@@ -3,13 +3,12 @@
 @tailwind utilities;
 
 /* =========================================================
-   DEEDEE'S MARKETPLACE
-   LIGHT MARKETPLACE THEME
+   DEEDEE'S MARKETPLACE — GLOBAL FOUNDATION
    ========================================================= */
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,7 +17,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 221 83% 53%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 214 32% 96%;
@@ -33,45 +32,35 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 88%;
+    --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 96%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 88%;
-    --sidebar-ring: 221 83% 53%;
+    --radius: 0.625rem;
   }
 
-  /* IMPORTANT:
-     Keep the application LIGHT.
-     We intentionally do not switch the entire website
-     to dark mode when html.dark exists.
-  */
+  html[data-market-theme='emerald'] {
+    --primary: 160 84% 39%;
+    --ring: 160 84% 39%;
+  }
 
-  * {
-    @apply border-border;
-    box-sizing: border-box;
+  *,
+  *::before,
+  *::after {
+    border-color: hsl(var(--border));
   }
 
   html {
-    background: #f8fafc !important;
-    color-scheme: light;
+    scroll-behavior: smooth;
   }
 
   body {
     margin: 0;
     min-width: 320px;
-    min-height: 100vh;
 
-    background: #f8fafc !important;
-    color: #0f172a !important;
+    background: #ffffff;
+
+    color: #0f172a;
 
     font-family:
       Inter,
@@ -86,251 +75,253 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  #root {
-    min-height: 100vh;
-    width: 100%;
-    background: #f8fafc;
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
 
+
 /* =========================================================
-   REMOVE OLD DARK BACKGROUNDS
+   DARK MODE
    ========================================================= */
 
-.bg-black {
-  background-color: #f8fafc !important;
+html.dark body {
+  background: #020617;
+  color: #f8fafc;
 }
 
-.bg-slate-950 {
-  background-color: #f8fafc !important;
+html.dark {
+  --background: 222 47% 6%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 8%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 47% 8%;
+  --popover-foreground: 210 40% 98%;
+
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+
+  --border: 217 33% 20%;
+  --input: 217 33% 20%;
 }
 
-.bg-slate-900 {
-  background-color: #ffffff !important;
-}
-
-.bg-slate-800 {
-  background-color: #f1f5f9 !important;
-}
 
 /* =========================================================
-   TEXT
-   ========================================================= */
-
-.text-white {
-  color: #0f172a !important;
-}
-
-.text-slate-900 {
-  color: #0f172a !important;
-}
-
-.text-slate-800 {
-  color: #1e293b !important;
-}
-
-.text-slate-700 {
-  color: #334155 !important;
-}
-
-.text-slate-600 {
-  color: #475569 !important;
-}
-
-.text-slate-500 {
-  color: #64748b !important;
-}
-
-.text-slate-400 {
-  color: #64748b !important;
-}
-
-.text-slate-300 {
-  color: #475569 !important;
-}
-
-/* =========================================================
-   BRAND COLORS
-   ========================================================= */
-
-.text-blue-400,
-.text-blue-300 {
-  color: #2563eb !important;
-}
-
-.text-cyan-400,
-.text-cyan-300 {
-  color: #0891b2 !important;
-}
-
-.text-green-400,
-.text-green-300 {
-  color: #16a34a !important;
-}
-
-.text-emerald-400,
-.text-emerald-300 {
-  color: #059669 !important;
-}
-
-/* =========================================================
-   BUTTONS
+   THEME-SPECIFIC TAILWIND COLOR MAPPING
    ========================================================= */
 
 /*
-   White text must remain white on blue/colored buttons.
+   BLUE = default
+   EMERALD = selected by Navbar
 */
 
-button.bg-blue-500,
-button.bg-blue-600,
-button.bg-blue-700,
-button.bg-indigo-500,
-button.bg-indigo-600,
-button.bg-cyan-500,
-button.bg-cyan-600,
-button.bg-green-500,
-button.bg-green-600,
-button.bg-emerald-500,
-button.bg-emerald-600 {
-  color: #ffffff !important;
+html[data-market-theme='emerald'] {
+  --theme-primary: #059669;
+  --theme-secondary: #14b8a6;
+  --theme-primary-dark: #047857;
+  --theme-secondary-dark: #0f766e;
+
+  --theme-soft: #ecfdf5;
+  --theme-soft-dark: #d1fae5;
 }
 
-.bg-blue-500,
-.bg-blue-600,
-.bg-blue-700 {
-  color: #ffffff !important;
-}
-
-.bg-indigo-500,
-.bg-indigo-600,
-.bg-indigo-700 {
-  color: #ffffff !important;
-}
-
-/* Gradient buttons */
-
-.bg-gradient-to-r,
-.bg-gradient-to-br,
-.bg-gradient-to-b {
-  color: #ffffff;
-}
-
-.bg-gradient-to-r .text-white,
-.bg-gradient-to-br .text-white,
-.bg-gradient-to-b .text-white {
-  color: #ffffff !important;
-}
 
 /* =========================================================
-   INPUTS
+   EMERALD — TEXT
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  .text-blue-300 {
+  color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-blue-400 {
+  color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-blue-500 {
+  color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-blue-600 {
+  color: #047857 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-blue-700 {
+  color: #047857 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-cyan-300 {
+  color: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-cyan-400 {
+  color: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-cyan-500 {
+  color: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  .text-cyan-600 {
+  color: #0f766e !important;
+}
+
+
+/* =========================================================
+   EMERALD — BACKGROUNDS
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  .bg-blue-500 {
+  background-color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .bg-blue-600 {
+  background-color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .bg-blue-700 {
+  background-color: #047857 !important;
+}
+
+html[data-market-theme='emerald']
+  .bg-cyan-500 {
+  background-color: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  .bg-cyan-600 {
+  background-color: #0f766e !important;
+}
+
+
+/* =========================================================
+   EMERALD — BORDERS
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  .border-blue-400 {
+  border-color: #34d399 !important;
+}
+
+html[data-market-theme='emerald']
+  .border-blue-500 {
+  border-color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .border-blue-500\/20 {
+  border-color: rgba(5, 150, 105, 0.20) !important;
+}
+
+html[data-market-theme='emerald']
+  .border-blue-500\/30 {
+  border-color: rgba(5, 150, 105, 0.30) !important;
+}
+
+html[data-market-theme='emerald']
+  .border-cyan-500 {
+  border-color: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  .border-cyan-500\/20 {
+  border-color: rgba(20, 184, 166, 0.20) !important;
+}
+
+html[data-market-theme='emerald']
+  .border-cyan-500\/30 {
+  border-color: rgba(20, 184, 166, 0.30) !important;
+}
+
+
+/* =========================================================
+   EMERALD — GRADIENTS
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  [class*="from-blue-"] {
+  --tw-gradient-from: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  [class*="via-cyan-"] {
+  --tw-gradient-via: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  [class*="to-cyan-"] {
+  --tw-gradient-to: #14b8a6 !important;
+}
+
+html[data-market-theme='emerald']
+  [class*="to-blue-"] {
+  --tw-gradient-to: #059669 !important;
+}
+
+
+/* =========================================================
+   EMERALD — RINGS
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  .ring-blue-500 {
+  --tw-ring-color: #059669 !important;
+}
+
+html[data-market-theme='emerald']
+  .ring-cyan-500 {
+  --tw-ring-color: #14b8a6 !important;
+}
+
+
+/* =========================================================
+   FORM ELEMENTS
    ========================================================= */
 
 input,
 textarea,
 select {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-
-  border-color: #cbd5e1;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #94a3b8 !important;
+  outline: none;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  outline: none;
+  border-color: var(--market-primary, #2563eb);
 }
 
-/* =========================================================
-   CARDS
-   ========================================================= */
-
-.bg-white {
-  background-color: #ffffff !important;
-}
-
-.rounded-xl,
-.rounded-2xl {
-  background-clip: padding-box;
-}
-
-/* =========================================================
-   BORDERS
-   ========================================================= */
-
-.border-blue-500\/20 {
-  border-color: #dbeafe !important;
-}
-
-.border-blue-500\/30 {
-  border-color: #bfdbfe !important;
-}
-
-.border-cyan-500\/20 {
-  border-color: #cffafe !important;
-}
-
-.border-cyan-500\/30 {
-  border-color: #a5f3fc !important;
-}
-
-/* =========================================================
-   MARKETPLACE PRODUCT CARDS
-   ========================================================= */
-
-[class*="border-slate"] {
-  border-color: #e2e8f0;
-}
-
-/* =========================================================
-   SECTION BACKGROUNDS
-   ========================================================= */
-
-section {
-  position: relative;
-}
-
-section.bg-black,
-section.bg-slate-950,
-section.bg-slate-900 {
-  background: #f8fafc !important;
-}
-
-/* =========================================================
-   SEARCH
-   ========================================================= */
-
-input[type="search"] {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1;
-}
-
-/* =========================================================
-   SCROLLBAR
-   ========================================================= */
-
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
 
 /* =========================================================
    SELECTION
@@ -341,134 +332,88 @@ input[type="search"] {
   color: #0f172a;
 }
 
-/* =========================================================
-   ANIMATIONS
-   ========================================================= */
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-20px);
-  }
+html[data-market-theme='emerald'] ::selection {
+  background: rgba(5, 150, 105, 0.18);
+  color: #064e3b;
 }
 
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-  }
-
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
-}
 
 /* =========================================================
-   FORCE DARK-MODE CLASS TO STAY LIGHT
+   SCROLLBAR — BLUE
    ========================================================= */
 
-html.dark {
-  background: #f8fafc !important;
-  color-scheme: light;
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-html.dark body {
-  background: #f8fafc !important;
-  color: #0f172a !important;
+::-webkit-scrollbar-track {
+  background: #f8fafc;
 }
 
-html.dark #root {
-  background: #f8fafc !important;
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    #2563eb,
+    #06b6d4
+  );
+
+  border-radius: 999px;
 }
 
-/* Dark Tailwind classes remain converted to light surfaces */
 
-html.dark .bg-black {
-  background-color: #f8fafc !important;
+/* =========================================================
+   SCROLLBAR — EMERALD
+   ========================================================= */
+
+html[data-market-theme='emerald']
+  ::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    #059669,
+    #14b8a6
+  );
 }
 
-html.dark .bg-slate-950 {
-  background-color: #f8fafc !important;
+
+/* =========================================================
+   DARK SCROLLBAR
+   ========================================================= */
+
+html.dark
+  ::-webkit-scrollbar-track {
+  background: #020617;
 }
 
-html.dark .bg-slate-900 {
-  background-color: #ffffff !important;
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid
+    var(--market-primary, #2563eb);
+
+  outline-offset: 2px;
 }
 
-html.dark .bg-slate-800 {
-  background-color: #f1f5f9 !important;
-}
 
-html.dark .text-white {
-  color: #0f172a !important;
-}
+/* =========================================================
+   MOBILE SAFETY
+   ========================================================= */
 
-html.dark .text-slate-900,
-html.dark .text-slate-800 {
-  color: #0f172a !important;
-}
+@media (max-width: 640px) {
+  body {
+    overflow-x: hidden;
+  }
 
-html.dark .text-slate-700 {
-  color: #334155 !important;
-}
-
-html.dark .text-slate-600 {
-  color: #475569 !important;
-}
-
-html.dark .text-slate-500,
-html.dark .text-slate-400 {
-  color: #64748b !important;
-}
-
-html.dark input,
-html.dark textarea,
-html.dark select {
-  background: #ffffff !important;
-  color: #0f172a !important;
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
