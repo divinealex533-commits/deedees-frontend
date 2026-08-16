@@ -1,34 +1,20 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useMemo, useState } from 'react';
 import {
-  Check,
-  ImageOff,
-  Zap,
-  Search,
-  ChevronRight,
   ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  ImageOff,
   Layers,
-  ShoppingBag,
+  Search,
 } from 'lucide-react';
 import type { Product, Category } from '@/types';
-
-type CategoryWithImage = Category & {
-  imageUrl?: string;
-};
 
 interface ProductCatalogProps {
   products: Product[];
   categories: Category[];
-
   onAddToCart: (product: Product) => void;
-
   onBuyNow?: (product: Product) => void;
 }
-
-const PRIORITY_ORDER = ['social media growth', 'shoes'];
 
 export function ProductCatalog({
   products,
@@ -36,121 +22,105 @@ export function ProductCatalog({
   onAddToCart,
   onBuyNow,
 }: ProductCatalogProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(
-    null
-  );
+  const [selectedCategory, setSelectedCategory] =
+    useState<string | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] =
+    useState('');
 
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [categoryMenuOpen, setCategoryMenuOpen] =
+    useState(false);
 
-  const [categoryImageErrors, setCategoryImageErrors] = useState<
-    Record<string, boolean>
-  >({});
+  const [imageErrors, setImageErrors] =
+    useState<Record<string, boolean>>({});
 
-  const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
+  const [categoryImageErrors, setCategoryImageErrors] =
+    useState<Record<string, boolean>>({});
 
-  /*
-   * IMPORTANT:
-   *
-   * Tonyix products can have quantity/stockCount even when the old
-   * inStock boolean was not populated correctly.
-   *
-   * Therefore:
-   * - quantity > 0  = available
-   * - stockCount > 0 = available
-   * - otherwise, if inStock is explicitly false = unavailable
-   * - if no stock field exists, don't hide the product
-   */
-  const inStockProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (p.quantity != null) {
-        return Number(p.quantity) > 0;
+  const availableProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (product.stockCount !== undefined) {
+        return product.inStock && product.stockCount > 0;
       }
 
-      if (p.stockCount != null) {
-        return Number(p.stockCount) > 0;
+      if (product.quantity !== undefined) {
+        return product.inStock && product.quantity > 0;
       }
 
-      return p.inStock !== false;
+      return product.inStock;
     });
   }, [products]);
-
-  const orderedCategories = useMemo(() => {
-    const priorityCats: Category[] = [];
-    const restCats: Category[] = [];
-
-    PRIORITY_ORDER.forEach((name) => {
-      const match = categories.find(
-        (c) => c.name.trim().toLowerCase() === name
-      );
-
-      if (match) {
-        priorityCats.push(match);
-      }
-    });
-
-    categories.forEach((c) => {
-      const isPriority = PRIORITY_ORDER.includes(
-        c.name.trim().toLowerCase()
-      );
-
-      if (!isPriority) {
-        restCats.push(c);
-      }
-    });
-
-    return [...priorityCats, ...restCats];
-  }, [categories]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
 
-    inStockProducts.forEach((p) => {
-      counts[p.categoryId] = (counts[p.categoryId] || 0) + 1;
+    availableProducts.forEach((product) => {
+      counts[product.categoryId] =
+        (counts[product.categoryId] || 0) + 1;
     });
 
     return counts;
-  }, [inStockProducts]);
-
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return orderedCategories;
-    }
-
-    const q = searchQuery.toLowerCase();
-
-    return orderedCategories.filter((c) =>
-      c.name.toLowerCase().includes(q)
-    );
-  }, [orderedCategories, searchQuery]);
+  }, [availableProducts]);
 
   const currentCategory =
-    categories.find((c) => c.id === selectedCategory) || null;
+    categories.find(
+      (category) =>
+        category.id === selectedCategory
+    ) || null;
+
+  const filteredCategories = useMemo(() => {
+    const query =
+      searchQuery.trim().toLowerCase();
+
+    if (!query) {
+      return categories;
+    }
+
+    return categories.filter((category) =>
+      category.name
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [categories, searchQuery]);
 
   const filteredProducts = useMemo(() => {
-    return inStockProducts
-      .filter(
-        (p) =>
-          !selectedCategory ||
-          selectedCategory === 'all' ||
-          p.categoryId === selectedCategory
-      )
-      .filter((p) => {
-        if (!searchQuery.trim()) {
+    const query =
+      searchQuery.trim().toLowerCase();
+
+    return availableProducts
+      .filter((product) => {
+        if (!selectedCategory) {
           return true;
         }
 
-        const q = searchQuery.toLowerCase();
+        if (selectedCategory === 'all') {
+          return true;
+        }
 
         return (
-          p.name.toLowerCase().includes(q) ||
-          (p.description
-            ? p.description.toLowerCase().includes(q)
-            : false)
+          product.categoryId ===
+          selectedCategory
+        );
+      })
+      .filter((product) => {
+        if (!query) {
+          return true;
+        }
+
+        return (
+          product.name
+            .toLowerCase()
+            .includes(query) ||
+          product.description
+            ?.toLowerCase()
+            .includes(query)
         );
       });
-  }, [inStockProducts, selectedCategory, searchQuery]);
+  }, [
+    availableProducts,
+    selectedCategory,
+    searchQuery,
+  ]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -160,357 +130,424 @@ export function ProductCatalog({
     }).format(price);
   };
 
-  const handleImageError = (productId: string) => {
-    setImageErrors((prev) => ({
-      ...prev,
-      [productId]: true,
-    }));
-  };
+  const selectCategory = (id: string) => {
+    setSelectedCategory(id);
 
-  const handleCategoryImageError = (categoryId: string) => {
-    setCategoryImageErrors((prev) => ({
-      ...prev,
-      [categoryId]: true,
-    }));
-  };
-
-  const handleSelectCategory = (categoryId: string) => {
-    setSelectedCategory(categoryId);
     setSearchQuery('');
+
+    setCategoryMenuOpen(false);
   };
 
-  const handleBackToCategories = () => {
-    setSelectedCategory(null);
-    setSearchQuery('');
-  };
+  const handleBuy = (product: Product) => {
+    if (!product.inStock) {
+      return;
+    }
 
-  const handleBuyNow = (product: Product) => {
-    const available =
-      product.quantity != null
-        ? Number(product.quantity) > 0
-        : product.stockCount != null
-          ? Number(product.stockCount) > 0
-          : product.inStock !== false;
+    if (
+      product.stockCount !== undefined &&
+      product.stockCount <= 0
+    ) {
+      return;
+    }
 
-    if (!available) {
+    if (
+      product.quantity !== undefined &&
+      product.quantity <= 0
+    ) {
       return;
     }
 
     if (onBuyNow) {
       onBuyNow(product);
-      return;
+    } else {
+      onAddToCart(product);
     }
-
-    onAddToCart(product);
   };
 
   return (
     <section
       id="catalog"
-      className="py-16 bg-black relative overflow-hidden"
+      className="marketplace-section"
     >
-      {/* Background effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+      <div className="marketplace-container">
 
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px]" />
-      </div>
+        {/* HEADER */}
+        <div className="marketplace-heading">
 
-      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="marketplace-logo-wordmark">
 
-        {/* Section Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 mb-4">
-            <Zap className="h-3.5 w-3.5 text-cyan-400" />
+            <div className="marketplace-mini-logo">
+              DM
+            </div>
 
-            <span className="text-xs text-blue-300">
-              Premium Quality
-            </span>
+            <div>
+              <strong>
+                DeeDee's
+              </strong>
+
+              <span>
+                MARKETPLACE
+              </span>
+            </div>
+
           </div>
 
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">
-            Available{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-              Accounts
-            </span>
-          </h2>
+          <h1>
+            Buy Accounts — Marketplace
+          </h1>
 
-          <p className="text-slate-400 text-base max-w-2xl mx-auto">
-            {selectedCategory
-              ? 'Browse products in this category'
-              : 'Choose a category to browse our accounts'}
+          <p className="marketplace-breadcrumb">
+            <span>⌂</span>
+
+            Dashboard
+
+            <b>−</b>
+
+            Buy Accounts
+
+            <b>−</b>
+
+            Marketplace
           </p>
+
         </div>
 
-        {/* Search Bar */}
-        <div className="max-w-xl mx-auto mb-6">
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+        {/* SEARCH */}
+        <div className="marketplace-search-row">
 
-            <Input
+          <div className="marketplace-search">
+
+            <Search size={21} />
+
+            <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) =>
+                setSearchQuery(
+                  event.target.value
+                )
+              }
               placeholder={
                 selectedCategory
                   ? 'Search accounts...'
                   : 'Search categories...'
               }
-              className="pl-10 h-10 text-sm bg-slate-900/50 border-blue-500/20 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50 rounded-full"
             />
+
           </div>
+
         </div>
 
-        {/* CATEGORY LIST */}
+        {/* CATEGORY VIEW */}
         {!selectedCategory && (
-          <div className="space-y-2.5">
+          <>
 
-            {/* All Accounts */}
+            <div className="category-select-wrap">
+
+              <button
+                className="category-select"
+                onClick={() =>
+                  setCategoryMenuOpen(
+                    (value) => !value
+                  )
+                }
+              >
+
+                <span>
+                  All Categories
+                </span>
+
+                <ChevronDown
+                  size={21}
+                  className={
+                    categoryMenuOpen
+                      ? 'rotate-180'
+                      : ''
+                  }
+                />
+
+              </button>
+
+              {categoryMenuOpen && (
+                <div className="category-dropdown">
+
+                  {/* ALL */}
+                  <button
+                    className="category-dropdown-item active"
+                    onClick={() =>
+                      selectCategory('all')
+                    }
+                  >
+
+                    <div className="category-avatar brand">
+                      <Layers size={19} />
+                    </div>
+
+                    <span>
+                      All Categories
+                    </span>
+
+                    <small>
+                      {availableProducts.length}
+                    </small>
+
+                    <ChevronRight size={21} />
+
+                  </button>
+
+                  {/* CATEGORIES */}
+                  {filteredCategories.map(
+                    (category) => (
+                      <button
+                        key={category.id}
+                        className="category-dropdown-item"
+                        onClick={() =>
+                          selectCategory(
+                            category.id
+                          )
+                        }
+                      >
+
+                        <div className="category-avatar">
+
+                          {category.imageUrl &&
+                          !categoryImageErrors[
+                            category.id
+                          ] ? (
+                            <img
+                              src={
+                                category.imageUrl
+                              }
+                              alt=""
+                              onError={() =>
+                                setCategoryImageErrors(
+                                  (previous) => ({
+                                    ...previous,
+                                    [category.id]:
+                                      true,
+                                  })
+                                )
+                              }
+                            />
+                          ) : (
+                            category.name
+                              .trim()
+                              .charAt(0)
+                              .toUpperCase()
+                          )}
+
+                        </div>
+
+                        <span>
+                          {category.name}
+                        </span>
+
+                        <small>
+                          {categoryCounts[
+                            category.id
+                          ] || 0}
+                        </small>
+
+                        <ChevronRight
+                          size={21}
+                        />
+
+                      </button>
+                    )
+                  )}
+
+                </div>
+              )}
+
+            </div>
+
+            <div className="marketplace-section-label">
+
+              <span>
+                AVAILABLE ACCOUNTS
+              </span>
+
+              <strong>
+                {availableProducts.length}
+              </strong>
+
+            </div>
+
+          </>
+        )}
+
+        {/* SELECTED CATEGORY */}
+        {selectedCategory && (
+          <div className="selected-category-bar">
+
             <button
+              className="back-button"
               onClick={() => {
-                setSelectedCategory('all');
+                setSelectedCategory(null);
                 setSearchQuery('');
               }}
-              className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-xl bg-slate-800/60 border border-blue-500/20 text-slate-200 hover:border-cyan-500/50 hover:bg-slate-800 transition-all duration-300"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
-                  <Layers className="h-4 w-4 text-white" />
-                </div>
 
-                <span className="font-semibold text-sm">
-                  All Accounts
-                </span>
-              </div>
+              <ArrowLeft size={18} />
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">
-                  {inStockProducts.length}
-                </span>
+              Back to categories
 
-                <ChevronRight className="h-4 w-4 text-slate-500" />
-              </div>
             </button>
 
-            {filteredCategories.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                  <ImageOff className="h-8 w-8 text-slate-600" />
-                </div>
+            <div>
 
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  No categories match your search
+              <span>
+                CATEGORY
+              </span>
+
+              <strong>
+                {selectedCategory ===
+                'all'
+                  ? 'All Accounts'
+                  : currentCategory?.name}
+              </strong>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* PRODUCTS */}
+        {selectedCategory && (
+          <div className="marketplace-product-list">
+
+            {filteredProducts.length ===
+            0 ? (
+              <div className="marketplace-empty">
+
+                <ImageOff size={32} />
+
+                <h3>
+                  No accounts available
                 </h3>
 
-                <p className="text-slate-400 text-sm">
-                  Try a different search term
+                <p>
+                  Try another search or
+                  category.
                 </p>
+
               </div>
             ) : (
-              filteredCategories.map(
-                (category: CategoryWithImage) => (
-                  <button
-                    key={category.id}
-                    onClick={() =>
-                      handleSelectCategory(category.id)
-                    }
-                    className="w-full flex items-center justify-between gap-3 px-5 py-4 rounded-xl bg-slate-950 border border-blue-500/20 text-white hover:border-cyan-500/50 hover:bg-slate-900 transition-all duration-300 group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
+              filteredProducts.map(
+                (product) => {
 
-                      <div className="w-8 h-8 rounded-full bg-slate-800 border border-blue-500/30 flex items-center justify-center shrink-0 overflow-hidden text-xs font-bold text-cyan-400">
-                        {category.imageUrl &&
-                        !categoryImageErrors[category.id] ? (
+                  const category =
+                    categories.find(
+                      (item) =>
+                        item.id ===
+                        product.categoryId
+                    );
+
+                  const quantity =
+                    product.stockCount ??
+                    product.quantity ??
+                    0;
+
+                  return (
+                    <article
+                      className="marketplace-product-card"
+                      key={product.id}
+                    >
+
+                      {/* IMAGE */}
+                      <div className="product-thumb">
+
+                        {product.imageUrl &&
+                        !imageErrors[
+                          product.id
+                        ] ? (
                           <img
-                            src={category.imageUrl}
-                            alt={category.name}
-                            className="w-full h-full object-cover"
+                            src={
+                              product.imageUrl
+                            }
+                            alt={
+                              product.name
+                            }
                             onError={() =>
-                              handleCategoryImageError(
-                                category.id
+                              setImageErrors(
+                                (previous) => ({
+                                  ...previous,
+                                  [product.id]:
+                                    true,
+                                })
                               )
                             }
                           />
                         ) : (
-                          category.name
-                            .trim()
-                            .charAt(0)
-                            .toUpperCase()
+                          <ImageOff
+                            size={25}
+                          />
                         )}
+
                       </div>
 
-                      <span className="font-semibold text-sm truncate group-hover:text-cyan-300 transition-colors">
-                        {category.name}
-                      </span>
-                    </div>
+                      {/* INFO */}
+                      <div className="product-info">
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-slate-500">
-                        {categoryCounts[category.id] || 0}
-                      </span>
+                        <h3>
+                          {product.name}
+                        </h3>
 
-                      <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-cyan-400 transition-colors" />
-                    </div>
-                  </button>
-                )
+                        <p>
+                          {category?.name ||
+                            'Marketplace'}
+                        </p>
+
+                        <div className="product-meta">
+
+                          <strong>
+                            {quantity} pcs.
+                          </strong>
+
+                          <b>
+                            {formatPrice(
+                              product.price
+                            )}
+                          </b>
+
+                        </div>
+
+                      </div>
+
+                      {/* BUY */}
+                      <button
+                        className="product-buy-button"
+                        onClick={() =>
+                          handleBuy(product)
+                        }
+                      >
+
+                        <span>
+                          Buy
+                        </span>
+
+                        <ChevronRight
+                          size={22}
+                        />
+
+                      </button>
+
+                    </article>
+                  );
+                }
               )
             )}
+
           </div>
         )}
 
-        {/* PRODUCT LIST */}
-        {selectedCategory && (
-          <div>
-
-            <div className="flex items-center justify-between mb-6">
-              <button
-                onClick={handleBackToCategories}
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-cyan-300 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to categories
-              </button>
-
-              <span className="text-sm font-semibold text-white">
-                {selectedCategory === 'all'
-                  ? 'All Accounts'
-                  : currentCategory?.name}
-              </span>
-            </div>
-
-            {filteredProducts.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-full bg-slate-900 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                  <ImageOff className="h-8 w-8 text-slate-600" />
-                </div>
-
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {searchQuery.trim()
-                    ? 'No accounts match your search'
-                    : 'No accounts available'}
-                </h3>
-
-                <p className="text-slate-400 text-sm">
-                  {searchQuery.trim()
-                    ? 'Try a different search term'
-                    : 'Check back later or contact us for custom orders'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                {filteredProducts.map((product, index) => (
-                  <Card
-                    key={product.id}
-                    className="bg-slate-950 border-blue-500/20 overflow-hidden group hover:border-cyan-500/50 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/10"
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                    }}
-                    onMouseEnter={() =>
-                      setHoveredProduct(product.id)
-                    }
-                    onMouseLeave={() =>
-                      setHoveredProduct(null)
-                    }
-                  >
-
-                    {/* Product Image */}
-                    <div className="aspect-video relative overflow-hidden bg-slate-900">
-
-                      {!imageErrors[product.id] ? (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className={`w-full h-full object-cover transition-transform duration-700 ${
-                            hoveredProduct === product.id
-                              ? 'scale-110'
-                              : 'scale-100'
-                          }`}
-                          onError={() =>
-                            handleImageError(product.id)
-                          }
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageOff className="h-5 w-5 text-slate-600" />
-                        </div>
-                      )}
-
-                      <div
-                        className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-300 ${
-                          hoveredProduct === product.id
-                            ? 'opacity-100'
-                            : 'opacity-0'
-                        }`}
-                      />
-
-                      {/* Stock */}
-                      <div className="absolute top-2 right-2">
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg text-[10px] px-2 py-0.5">
-                          <Check className="h-2.5 w-2.5 mr-1" />
-
-                          {product.quantity != null
-                            ? `${product.quantity} left`
-                            : product.stockCount != null
-                              ? `${product.stockCount} left`
-                              : 'In Stock'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <CardContent className="p-3">
-
-                      {/* Category */}
-                      <Badge
-                        variant="secondary"
-                        className="mb-2 bg-blue-500/10 text-blue-300 border border-blue-500/30 text-[10px] px-2 py-0.5"
-                      >
-                        {
-                          categories.find(
-                            (c) =>
-                              c.id === product.categoryId
-                          )?.name
-                        }
-                      </Badge>
-
-                      {/* Name */}
-                      <h3 className="text-sm font-semibold text-white mb-1 line-clamp-2 group-hover:text-blue-300 transition-colors">
-                        {product.name}
-                      </h3>
-
-                      {/* Description */}
-                      {product.description && (
-                        <p className="text-slate-400 text-xs mb-2 line-clamp-2">
-                          {product.description}
-                        </p>
-                      )}
-
-                      {/* Price + Buy */}
-                      <div className="flex items-center justify-between mt-3 gap-2">
-
-                        <div className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
-                          {formatPrice(product.price)}
-                        </div>
-
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            handleBuyNow(product)
-                          }
-                          className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 h-8 text-xs px-3"
-                        >
-                          <ShoppingBag className="h-3.5 w-3.5 mr-1" />
-                          Buy Now
-                        </Button>
-
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+        {!selectedCategory && (
+          <div className="marketplace-hint">
+            Select a category above to
+            browse available products.
           </div>
         )}
+
       </div>
     </section>
   );
