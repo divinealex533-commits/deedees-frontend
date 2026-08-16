@@ -16,8 +16,16 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import type { User } from '@/hooks/useAuth';
+
+interface ReferralInfo {
+  referralCode: string;
+  totalReferred: number;
+  successfulReferrals: number;
+  totalEarned: number;
+}
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -82,27 +90,27 @@ export function AccountDrawer({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60]"
+        className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
         onClick={handleClose}
         aria-hidden="true"
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-slate-950 border-r border-blue-500/20 z-[70] overflow-y-auto animate-in slide-in-from-left duration-300">
+      <div className="fixed left-0 top-0 bottom-0 z-[70] w-[85vw] max-w-sm overflow-y-auto border-r border-blue-500/20 bg-slate-950 animate-in slide-in-from-left duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-blue-500/20">
+        <div className="flex items-center justify-between border-b border-blue-500/20 p-5">
           <div className="flex items-center gap-2">
-            <div className="relative w-9 h-9">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg opacity-90" />
+            <div className="relative h-9 w-9">
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 opacity-90" />
 
-              <div className="absolute inset-0.5 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold text-xs">
+              <div className="absolute inset-0.5 flex items-center justify-center rounded-lg bg-black">
+                <span className="bg-gradient-to-br from-blue-400 to-cyan-400 bg-clip-text text-xs font-bold text-transparent">
                   DM
                 </span>
               </div>
             </div>
 
-            <span className="text-white font-bold text-sm tracking-wide">
+            <span className="text-sm font-bold tracking-wide text-white">
               DEEDEE'S MARKET
             </span>
           </div>
@@ -111,22 +119,22 @@ export function AccountDrawer({
             variant="ghost"
             size="icon"
             onClick={handleClose}
-            className="text-slate-400 hover:text-white hover:bg-blue-500/10"
+            className="text-slate-400 hover:bg-blue-500/10 hover:text-white"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
 
-        {/* MAIN MENU */}
+        {/* MAIN PANEL */}
         {subPanel === null && (
           <>
             {/* User row */}
             <div className="p-5">
               {isAuthenticated && user ? (
-                <div className="w-full bg-black rounded-lg px-4 py-3 flex items-center gap-2 border border-blue-500/20">
+                <div className="flex w-full items-center gap-2 rounded-lg border border-blue-500/20 bg-black px-4 py-3">
                   <UserRoundIcon className="h-4 w-4 text-blue-400" />
 
-                  <span className="text-white font-medium">
+                  <span className="font-medium text-white">
                     {user.name}
                   </span>
                 </div>
@@ -136,7 +144,7 @@ export function AccountDrawer({
                     handleClose();
                     onOpenAuth();
                   }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600"
                 >
                   Login / Sign Up
                 </Button>
@@ -146,9 +154,9 @@ export function AccountDrawer({
             {/* Balance */}
             {isAuthenticated && (
               <div className="px-5 pb-4">
-                <p className="text-slate-400 text-sm text-center">
+                <p className="text-center text-sm text-slate-400">
                   My balance:{' '}
-                  <span className="text-white font-semibold">
+                  <span className="font-semibold text-white">
                     {formatPrice(balance)}
                   </span>
                 </p>
@@ -157,7 +165,7 @@ export function AccountDrawer({
 
             <div className="border-t border-blue-500/20" />
 
-            {/* Menu items */}
+            {/* Menu */}
             <nav className="p-3">
               <DrawerItem
                 icon={Home}
@@ -202,7 +210,7 @@ export function AccountDrawer({
                 }
               />
 
-              {/* AFFILIATE PROGRAM */}
+              {/* AFFILIATE */}
               <DrawerItem
                 icon={TrendingUp}
                 label="Affiliate Program"
@@ -249,12 +257,12 @@ export function AccountDrawer({
             </nav>
 
             {/* SUPPORT */}
-            <div className="border-t border-blue-500/20 mt-2 p-5 space-y-4">
+            <div className="mt-2 space-y-4 border-t border-blue-500/20 p-5">
               <a
                 href="https://t.me/deedeesmarketsupport"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors"
+                className="flex items-center gap-3 text-white transition-colors hover:text-blue-400"
               >
                 <Send className="h-5 w-5 text-blue-400" />
 
@@ -269,7 +277,7 @@ export function AccountDrawer({
                   handleClose();
                   onGoContact();
                 }}
-                className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors"
+                className="flex items-center gap-3 text-white transition-colors hover:text-blue-400"
               >
                 <MessageCircle className="h-5 w-5 text-blue-400" />
 
@@ -281,43 +289,43 @@ export function AccountDrawer({
           </>
         )}
 
-        {/* BLOGS */}
+        {/* BLOGS PANEL */}
         {subPanel === 'blogs' && (
           <div className="p-5">
             <button
               type="button"
               onClick={() => setSubPanel(null)}
-              className="text-slate-400 hover:text-white text-sm mb-4"
+              className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
             </button>
 
-            <h3 className="text-white font-semibold text-lg mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-white">
               Blogs
             </h3>
 
-            <p className="text-slate-400 text-sm">
+            <p className="text-sm text-slate-400">
               Coming soon — check back for updates, tips and guides.
             </p>
           </div>
         )}
 
-        {/* API */}
+        {/* API PANEL */}
         {subPanel === 'api' && (
           <div className="p-5">
             <button
               type="button"
               onClick={() => setSubPanel(null)}
-              className="text-slate-400 hover:text-white text-sm mb-4"
+              className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
             </button>
 
-            <h3 className="text-white font-semibold text-lg mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-white">
               API Documentation
             </h3>
 
-            <p className="text-slate-400 text-sm">
+            <p className="text-sm text-slate-400">
               Coming soon — API access and documentation for developers.
             </p>
           </div>
@@ -342,7 +350,7 @@ function DrawerItem({
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-between px-3 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-blue-500/10 transition-colors"
+      className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-slate-300 transition-colors hover:bg-blue-500/10 hover:text-white"
     >
       <span className="flex items-center gap-3">
         <Icon className="h-5 w-5 text-blue-400" />
