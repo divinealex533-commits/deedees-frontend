@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Customer = {
   name: string;
@@ -54,28 +54,10 @@ const REVIEWS = [
   "Simple checkout, fast response and good service. I will definitely come back.",
 ];
 
-const AVATARS = [
-  "https://i.pravatar.cc/150?img=1",
-  "https://i.pravatar.cc/150?img=2",
-  "https://i.pravatar.cc/150?img=3",
-  "https://i.pravatar.cc/150?img=4",
-  "https://i.pravatar.cc/150?img=5",
-  "https://i.pravatar.cc/150?img=6",
-  "https://i.pravatar.cc/150?img=7",
-  "https://i.pravatar.cc/150?img=8",
-  "https://i.pravatar.cc/150?img=9",
-  "https://i.pravatar.cc/150?img=10",
-  "https://i.pravatar.cc/150?img=11",
-  "https://i.pravatar.cc/150?img=12",
-  "https://i.pravatar.cc/150?img=13",
-  "https://i.pravatar.cc/150?img=14",
-  "https://i.pravatar.cc/150?img=15",
-  "https://i.pravatar.cc/150?img=16",
-  "https://i.pravatar.cc/150?img=17",
-  "https://i.pravatar.cc/150?img=18",
-  "https://i.pravatar.cc/150?img=19",
-  "https://i.pravatar.cc/150?img=20",
-];
+const AVATARS = Array.from(
+  { length: 20 },
+  (_, index) => `https://i.pravatar.cc/150?img=${index + 1}`
+);
 
 function shuffle<T>(array: T[]): T[] {
   const copy = [...array];
@@ -83,12 +65,25 @@ function shuffle<T>(array: T[]): T[] {
   for (let i = copy.length - 1; i > 0; i--) {
     const randomIndex = Math.floor(Math.random() * (i + 1));
 
-    [copy[i], copy[randomIndex]] = [copy[randomIndex], copy[i]];
+    [copy[i], copy[randomIndex]] = [
+      copy[randomIndex],
+      copy[i],
+    ];
   }
 
   return copy;
 }
 
+/*
+ * Creates a completely new combination of:
+ * - customer name
+ * - avatar
+ * - review
+ *
+ * Every time the page loads, the order is randomized.
+ * Names and avatars are shuffled separately so each card
+ * receives a different avatar.
+ */
 function createCustomers(): Customer[] {
   const names = shuffle(CUSTOMER_NAMES);
   const avatars = shuffle(AVATARS);
@@ -101,122 +96,148 @@ function createCustomers(): Customer[] {
   }));
 }
 
-const StarRating = () => {
+function StarRating() {
   return (
-    <div className="flex items-center gap-1" aria-label="5 out of 5 stars">
+    <div
+      className="flex items-center gap-0.5"
+      aria-label="5 star rating"
+    >
       {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
-          className="text-[22px] leading-none text-amber-500"
+          className="text-lg leading-none text-amber-400"
+          aria-hidden="true"
         >
           ★
         </span>
       ))}
     </div>
   );
-};
+}
 
-const CustomerCard = ({ customer }: { customer: Customer }) => {
+function CustomerCard({
+  customer,
+}: {
+  customer: Customer;
+}) {
   return (
     <article
       className="
         w-[300px]
-        sm:w-[340px]
-        lg:w-[380px]
         shrink-0
-        rounded-[24px]
+        rounded-2xl
         border
-        border-emerald-100
+        border-slate-200
         bg-white
-        p-6
-        shadow-[0_10px_35px_rgba(15,23,42,0.08)]
+        p-5
+        shadow-sm
         transition-all
         duration-300
         hover:-translate-y-1
-        hover:shadow-[0_16px_40px_rgba(15,23,42,0.12)]
+        hover:border-emerald-300
+        hover:shadow-lg
+        sm:w-[340px]
+        lg:w-[380px]
       "
     >
-      <div className="flex items-center gap-4">
+      {/* CUSTOMER */}
+      <div className="flex items-center gap-3">
         <img
           src={customer.avatar}
-          alt={`${customer.name} avatar`}
+          alt={`${customer.name}'s profile`}
           className="
-            h-14
-            w-14
+            h-12
+            w-12
+            shrink-0
             rounded-full
+            border-2
+            border-emerald-100
             object-cover
-            border-4
-            border-emerald-50
             shadow-sm
           "
           loading="lazy"
+          onError={(event) => {
+            event.currentTarget.src =
+              "https://i.pravatar.cc/150?img=12";
+          }}
         />
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-lg font-bold text-slate-900">
-              {customer.name}
-            </h3>
+          <h3 className="truncate text-base font-bold text-slate-900">
+            {customer.name}
+          </h3>
 
-            <span
-              className="
-                flex
-                h-5
-                w-5
-                items-center
-                justify-center
-                rounded-full
-                bg-emerald-500
-                text-[11px]
-                font-bold
-                text-white
-              "
-              title="Verified Customer"
-            >
-              ✓
-            </span>
-          </div>
-
-          <p className="mt-1 text-sm font-medium text-slate-400">
-            Verified Customer
+          <p className="mt-0.5 text-xs font-medium text-slate-400">
+            Marketplace Customer
           </p>
+        </div>
+
+        <div
+          className="
+            ml-auto
+            flex
+            h-6
+            w-6
+            shrink-0
+            items-center
+            justify-center
+            rounded-full
+            bg-emerald-50
+            text-xs
+            font-bold
+            text-emerald-600
+          "
+          title="Customer"
+        >
+          ✓
         </div>
       </div>
 
-      <div className="mt-5">
+      {/* RATING */}
+      <div className="mt-4">
         <StarRating />
       </div>
 
-      <div className="mt-5 flex gap-3">
-        <span className="text-4xl font-bold leading-none text-emerald-300">
+      {/* REVIEW */}
+      <div className="mt-4 flex gap-2">
+        <span
+          className="
+            text-3xl
+            font-bold
+            leading-none
+            text-emerald-200
+          "
+          aria-hidden="true"
+        >
           “
         </span>
 
-        <p className="pt-1 text-[16px] leading-7 font-medium text-slate-600">
+        <p className="pt-0.5 text-sm leading-6 text-slate-600">
           {customer.review}
         </p>
       </div>
     </article>
   );
-};
+}
 
 export function TestimonialsSection() {
   const [customers, setCustomers] = useState<Customer[]>([]);
 
   /*
-   * Create a completely new set of customers whenever
-   * the page/component loads.
+   * Generate a fresh random set every time the component loads.
    */
   useEffect(() => {
     setCustomers(createCustomers());
   }, []);
 
   /*
-   * Duplicate the cards so the rolling animation can
-   * continue seamlessly without showing an empty space.
+   * Duplicate the list so the horizontal animation can
+   * loop continuously without an empty space.
    */
   const rollingCustomers = useMemo(() => {
-    if (customers.length === 0) return [];
+    if (customers.length === 0) {
+      return [];
+    }
 
     return [...customers, ...customers];
   }, [customers]);
@@ -233,14 +254,14 @@ export function TestimonialsSection() {
         sm:py-20
       "
     >
-      {/* Soft background glow */}
+      {/* BACKGROUND GLOW */}
       <div
         className="
           pointer-events-none
           absolute
           left-1/2
           top-0
-          h-64
+          h-72
           w-[700px]
           -translate-x-1/2
           rounded-full
@@ -251,7 +272,7 @@ export function TestimonialsSection() {
       />
 
       <div className="relative mx-auto max-w-7xl">
-        {/* SECTION HEADER */}
+        {/* HEADER */}
         <div className="px-5 text-center">
           <div
             className="
@@ -263,20 +284,27 @@ export function TestimonialsSection() {
               border
               border-emerald-200
               bg-emerald-50
-              px-5
+              px-4
               py-2
-              text-sm
+              text-xs
               font-bold
               text-emerald-600
+              sm:text-sm
             "
           >
-            <span className="text-lg">★</span>
+            <span
+              className="text-base text-amber-400"
+              aria-hidden="true"
+            >
+              ★
+            </span>
+
             Customer Feedback
           </div>
 
           <h2
             className="
-              mt-6
+              mt-5
               text-3xl
               font-extrabold
               tracking-tight
@@ -296,50 +324,42 @@ export function TestimonialsSection() {
               mx-auto
               mt-4
               max-w-2xl
-              text-base
-              leading-7
+              text-sm
+              leading-6
               text-slate-500
-              sm:text-lg
+              sm:text-base
+              sm:leading-7
             "
           >
-            Real experiences from customers who have used our
-            marketplace.
+            See what customers have to say about their
+            experience with DeeDee's Marketplace.
           </p>
 
-          {/* RATING */}
+          {/* RATING SUMMARY */}
           <div
             className="
               mx-auto
-              mt-7
+              mt-6
               inline-flex
               items-center
               gap-3
               rounded-full
               border
-              border-emerald-100
+              border-slate-200
               bg-white
-              px-5
-              py-3
+              px-4
+              py-2.5
               shadow-sm
             "
           >
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                  key={star}
-                  className="text-2xl text-amber-500"
-                >
-                  ★
-                </span>
-              ))}
-            </div>
+            <StarRating />
 
-            <strong className="text-lg font-extrabold text-slate-900">
+            <span className="font-extrabold text-slate-900">
               5.0
-            </strong>
+            </span>
 
-            <span className="text-sm font-semibold text-slate-500 sm:text-base">
-              Customer Rating
+            <span className="text-xs font-medium text-slate-500 sm:text-sm">
+              Customer Experience
             </span>
           </div>
         </div>
@@ -349,12 +369,13 @@ export function TestimonialsSection() {
           className="
             group
             relative
-            mt-12
+            mt-10
             w-full
             overflow-hidden
+            sm:mt-12
           "
         >
-          {/* Left fade */}
+          {/* LEFT FADE */}
           <div
             className="
               pointer-events-none
@@ -363,7 +384,7 @@ export function TestimonialsSection() {
               top-0
               z-10
               h-full
-              w-16
+              w-12
               bg-gradient-to-r
               from-white
               to-transparent
@@ -371,7 +392,7 @@ export function TestimonialsSection() {
             "
           />
 
-          {/* Right fade */}
+          {/* RIGHT FADE */}
           <div
             className="
               pointer-events-none
@@ -380,7 +401,7 @@ export function TestimonialsSection() {
               top-0
               z-10
               h-full
-              w-16
+              w-12
               bg-gradient-to-l
               from-white
               to-transparent
@@ -392,29 +413,32 @@ export function TestimonialsSection() {
             className="
               flex
               w-max
-              gap-5
+              gap-4
               animate-testimonials
               group-hover:[animation-play-state:paused]
+              sm:gap-5
             "
           >
-            {rollingCustomers.map((customer, index) => (
-              <CustomerCard
-                key={`${customer.name}-${index}`}
-                customer={customer}
-              />
-            ))}
+            {rollingCustomers.map(
+              (customer, index) => (
+                <CustomerCard
+                  key={`${customer.name}-${index}`}
+                  customer={customer}
+                />
+              )
+            )}
           </div>
         </div>
 
-        {/* Small trust message */}
-        <div className="mt-10 text-center">
-          <p className="text-sm font-medium text-slate-400">
-            ✓ Trusted customers • ✓ Verified feedback • ★ 5-star service
+        {/* TRUST MESSAGE */}
+        <div className="mt-9 px-5 text-center">
+          <p className="text-xs font-medium text-slate-400 sm:text-sm">
+            ★ Quality service • ✓ Customer-focused support • ⚡ Fast delivery
           </p>
         </div>
       </div>
 
-      {/* ANIMATION */}
+      {/* ROLLING ANIMATION */}
       <style>{`
         @keyframes testimonialsRoll {
           from {
@@ -448,3 +472,5 @@ export function TestimonialsSection() {
     </section>
   );
 }
+
+export default TestimonialsSection;
