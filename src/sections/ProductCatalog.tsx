@@ -646,69 +646,107 @@ return (
           </p>
         </div>
 
-        {/* SEARCH BAR */}
-        <div className="mx-auto mt-8 max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-500" />
+{/* SEARCH BAR */}
+<div className="mx-auto mt-8 max-w-2xl">
+  <div className="group relative">
 
-            <Input
-              type="search"
-              value={searchQuery}
-              onChange={(event) =>
-                setSearchQuery(
-                  event.target.value
-                )
-              }
-              placeholder="Search products, services or categories..."
-              className="
-                h-14
-                rounded-2xl
-                border-slate-200
-                bg-white
-                pl-12
-                pr-12
-                text-sm
-                text-slate-900
-                shadow-lg
-                shadow-slate-200/40
-                placeholder:text-slate-400
-                focus-visible:border-emerald-400
-                focus-visible:ring-emerald-100
-                sm:text-base
-              "
-            />
+    <div
+      className="
+        absolute
+        -inset-0.5
+        rounded-2xl
+        bg-gradient-to-r
+        from-blue-500/20
+        via-cyan-500/20
+        to-blue-500/20
+        opacity-0
+        blur
+        transition-opacity
+        duration-300
+        group-focus-within:opacity-100
+      "
+    />
 
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() =>
-                  setSearchQuery('')
-                }
-                className="
-                  absolute
-                  right-4
-                  top-1/2
-                  flex
-                  h-7
-                  w-7
-                  -translate-y-1/2
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-slate-100
-                  text-slate-500
-                  transition-colors
-                  hover:bg-emerald-50
-                  hover:text-emerald-600
-                "
-                aria-label="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
+    <div
+      className="
+        relative
+        flex
+        items-center
+        rounded-2xl
+        border
+        border-blue-500/20
+        bg-slate-900/90
+        shadow-xl
+        shadow-black/20
+        backdrop-blur-xl
+        transition-all
+        duration-300
+        focus-within:border-cyan-500/50
+      "
+    >
+      <Search
+        className="
+          ml-4
+          h-5
+          w-5
+          shrink-0
+          text-blue-400
+          transition-colors
+          group-focus-within:text-cyan-400
+        "
+      />
 
+      <Input
+        type="search"
+        value={searchQuery}
+        onChange={(e) =>
+          setSearchQuery(e.target.value)
+        }
+        placeholder="Search products, accounts or categories..."
+        className="
+          h-14
+          border-0
+          bg-transparent
+          px-3
+          text-sm
+          text-white
+          shadow-none
+          placeholder:text-slate-500
+          focus-visible:ring-0
+        "
+      />
+
+      {searchQuery && (
+        <button
+          type="button"
+          onClick={() => setSearchQuery('')}
+          className="
+            mr-3
+            flex
+            h-8
+            w-8
+            shrink-0
+            items-center
+            justify-center
+            rounded-full
+            text-slate-500
+            transition-colors
+            hover:bg-white/10
+            hover:text-white
+          "
+          aria-label="Clear search"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  </div>
+
+  <div className="mt-2.5 flex items-center justify-center gap-2 text-[10px] text-slate-500">
+    <Search className="h-3 w-3" />
+    Search by product name, description or category
+  </div>
+</div>
         {/* SEARCH RESULTS */}
         {isSearching ? (
           <div className="mt-10">
