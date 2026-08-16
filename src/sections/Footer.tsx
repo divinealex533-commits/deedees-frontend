@@ -1,256 +1,212 @@
 import {
   MessageCircle,
-  Phone,
+  Send,
   ShieldCheck,
   ArrowUp,
-  Heart,
-  ShoppingBag,
-  Mail,
 } from 'lucide-react';
 
-const whatsappNumber = '07046019436';
-const supportNumber = '09035206681';
-
 export function Footer() {
-  const scrollTo = (id: string) => {
-    const element = document.getElementById(id);
-
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  const goHome = () => {
+  const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth',
     });
   };
 
-  const whatsappLink = `https://wa.me/${whatsappNumber.replace(
-    /^0/,
-    '234'
-  )}`;
-
   return (
-    <footer className="relative bg-slate-950 text-white overflow-hidden">
+    <footer className="relative overflow-hidden bg-slate-950 text-white">
+      {/* Background glow */}
+      <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[700px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[100px]" />
 
-      {/* Background decoration */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-24 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* MAIN FOOTER */}
-        <div className="py-10 sm:py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
-
-          {/* BRAND */}
-          <div className="col-span-2 md:col-span-1">
-
+      <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pt-16 lg:px-8">
+        {/* Main footer */}
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Brand */}
+          <div className="sm:col-span-2 lg:col-span-1">
             <button
               type="button"
-              onClick={goHome}
-              className="text-left group"
+              onClick={scrollToTop}
+              className="text-left"
             >
-              <div className="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:scale-[1.02] transition-transform">
+              <h2 className="text-2xl font-black tracking-tight">
                 DEEDEE'S
-              </div>
-
-              <div className="text-sm sm:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400">
-                MARKETPLACE
-              </div>
+                <span className="ml-1 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  MARKETPLACE
+                </span>
+              </h2>
             </button>
 
-            <p className="mt-4 text-xs sm:text-sm leading-relaxed text-slate-400 max-w-xs">
-              Your trusted marketplace for digital products,
-              social media growth services and more.
+            <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
+              A simple and reliable marketplace built to make buying
+              digital products and services easier.
             </p>
 
-            {/* Mini trust badge */}
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-
-              <span className="text-[11px] text-slate-300">
-                Secure & Trusted
-              </span>
+            <div className="mt-5 flex items-center gap-2 text-xs font-medium text-emerald-400">
+              <ShieldCheck className="h-4 w-4" />
+              Secure &amp; trusted marketplace
             </div>
           </div>
 
-          {/* QUICK LINKS */}
+          {/* Quick links */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              Quick Links
+            <h3 className="text-sm font-bold text-white">
+              Marketplace
             </h3>
 
-            <div className="space-y-2.5">
-
+            <div className="mt-4 space-y-3">
               <button
                 type="button"
-                onClick={goHome}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                onClick={() =>
+                  document
+                    .getElementById('catalog')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
-                Home
+                Browse Products
               </button>
 
               <button
                 type="button"
-                onClick={() => scrollTo('catalog')}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                onClick={() =>
+                  document
+                    .getElementById('how-it-works')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
-                Products
+                How It Works
               </button>
 
               <button
                 type="button"
-                onClick={() => scrollTo('contact')}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                onClick={() =>
+                  document
+                    .getElementById('testimonials')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
-                Contact
+                Customer Reviews
               </button>
 
               <button
                 type="button"
-                onClick={() => scrollTo('policy')}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+                onClick={() =>
+                  document
+                    .getElementById('faq')
+                    ?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
-                Policies
+                FAQ
               </button>
             </div>
           </div>
 
-          {/* SUPPORT */}
+          {/* Support */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+            <h3 className="text-sm font-bold text-white">
               Support
             </h3>
 
-            <div className="space-y-3">
-
+            <div className="mt-4 space-y-3">
               <a
-                href={whatsappLink}
+                href="https://t.me/deedeesmarketsupport"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-green-400 transition-colors"
+                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
-                <MessageCircle className="w-4 h-4" />
-                WhatsApp
+                <Send className="h-4 w-4" />
+                Telegram Support
               </a>
 
               <a
-                href={`tel:${supportNumber}`}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-blue-400 transition-colors"
+                href="https://wa.me/07046019436"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-green-400"
               >
-                <Phone className="w-4 h-4" />
-                Call Support
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp Support
               </a>
-
-              <a
-                href={`mailto:deedeesmarketagent@gmail.com`}
-                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
-              >
-                <Mail className="w-4 h-4" />
-                Email Support
-              </a>
-
             </div>
           </div>
 
-          {/* CONTACT */}
+          {/* Trust */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
-              Contact Us
+            <h3 className="text-sm font-bold text-white">
+              Why DeeDee's?
             </h3>
 
-            <div className="space-y-3">
+            <div className="mt-4 space-y-3 text-sm text-slate-400">
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Secure checkout
+              </p>
 
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
-                  WhatsApp
-                </p>
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Reliable service
+              </p>
 
-                <p className="text-xs sm:text-sm text-slate-300">
-                  {whatsappNumber}
-                </p>
-              </div>
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Fast processing
+              </p>
 
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
-                  Phone
-                </p>
-
-                <p className="text-xs sm:text-sm text-slate-300">
-                  {supportNumber}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
-                  Location
-                </p>
-
-                <p className="text-xs sm:text-sm text-slate-300">
-                  Nigeria 🇳🇬
-                </p>
-              </div>
-
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                Customer support
+              </p>
             </div>
           </div>
         </div>
 
-        {/* TRUST STRIP */}
-        <div className="border-y border-slate-800 py-4">
+        {/* Divider */}
+        <div className="my-10 h-px bg-white/10" />
 
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+        {/* Bottom */}
+        <div className="flex flex-col items-center justify-between gap-5 sm:flex-row">
+          <div className="text-center sm:text-left">
+            <p className="text-xs text-slate-500 sm:text-sm">
+              © {new Date().getFullYear()} DeeDee's Marketplace. All
+              rights reserved.
+            </p>
 
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Secure Checkout
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <ShoppingBag className="w-4 h-4 text-blue-400" />
-              Quality Products
-            </div>
-
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <MessageCircle className="w-4 h-4 text-cyan-400" />
-              Customer Support
-            </div>
-
-          </div>
-        </div>
-
-        {/* BOTTOM */}
-        <div className="py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-
-          <p className="text-[10px] sm:text-[11px] text-slate-500 text-center sm:text-left">
-            © {new Date().getFullYear()} DeeDee's Marketplace.
-            All rights reserved.
-          </p>
-
-          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500">
-            Made with
-            <Heart className="w-3 h-3 text-red-400 fill-red-400" />
-            for Nigerian customers 🇳🇬
+            <p className="mt-1 text-[11px] text-slate-600">
+              Built for a simple, secure and reliable shopping experience.
+            </p>
           </div>
 
           <button
             type="button"
-            onClick={goHome}
-            className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 hover:text-cyan-400 transition-colors"
+            onClick={scrollToTop}
+            aria-label="Back to top"
+            className="
+              flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-blue-500/20
+              bg-blue-500/10
+              text-blue-400
+              transition-all
+              duration-300
+              hover:border-cyan-400/40
+              hover:bg-cyan-400/10
+              hover:text-cyan-400
+            "
           >
-            Back to top
-            <ArrowUp className="w-3.5 h-3.5" />
+            <ArrowUp className="h-4 w-4" />
           </button>
-
         </div>
-
       </div>
     </footer>
   );
 }
+
+export default Footer;
