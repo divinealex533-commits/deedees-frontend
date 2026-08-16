@@ -53,6 +53,27 @@ interface PurchasedItem {
   video?: string | null;
   [key: string]: unknown;
 }
+interface Order {
+  id?: string | number;
+  order_id?: string | number;
+
+  product_name?: string;
+  productName?: string;
+
+  price?: number | string;
+  total?: number | string;
+  quantity?: number;
+
+  purchasedAt?: string | number | Date;
+  createdAt?: string | number | Date;
+
+  item?: PurchasedItem | null;
+  items?: PurchasedItem[];
+
+  status?: string;
+
+  [key: string]: unknown;
+}
 
 interface SellerSubscription {
   isSeller?: boolean;
