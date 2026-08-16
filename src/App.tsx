@@ -513,18 +513,18 @@ function App() {
         )}
       {view === 'affiliate' && (
   <AffiliateProgram
-    onBack={() => {
-      setView('store');
-
-      setTimeout(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth',
-        });
-      }, 50);
-    }}
-  />
-)}
+ onGoHistory={handleDrawerGoHistory}
+onGoContact={handleDrawerGoContact}
+onGoAffiliate={() => {
+  setView('affiliate');
+}}
+onLogout={() => {
+  auth.logout();
+  setView('store');
+  toast.success(
+    'Logged out successfully'
+  );
+}}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
