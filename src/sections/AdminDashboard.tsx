@@ -119,6 +119,81 @@ export function AdminDashboard({
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [isSendingReply, setIsSendingReply] = useState<string | null>(null);
 
+  interface FrozenSeller {
+  id: string;
+  name: string;
+  email: string;
+  sellerPlan: {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+    billing: string;
+  } | null;
+  sellerPlanStatus: string;
+  sellerPlanExpiresAt: number | null;
+  sellerFreezeReason: string;
+  sellerFrozenAt: number | null;
+}
+
+const [frozenSellers, setFrozenSellers] =
+  useState<FrozenSeller[]>([]);
+
+const [isLoadingFrozenSellers, setIsLoadingFrozenSellers] =
+  useState(false);
+
+const [unfreezingSellerId, setUnfreezingSellerId] =
+  useState<string | null>(null);
+
+const loadFrozenSellers = useCallback(async () => {
+  try {
+    setIsLoadingFrozenSellers(true);
+
+    const sellers =
+      await api.getFrozenSellers();
+
+    setFrozenSellers(sellers);
+  } catch (err) {
+    console.error(
+      'Failed to load frozen sellers:',
+      err
+    );
+  } finally {
+    setIsLoadingFrozenSellers(false);
+  }
+}, []);
+
+const handleUnfreezeSeller = async (
+  seller: FrozenSeller
+) => {
+  const confirmed = window.confirm(
+    `Have you verified the renewal payment from ${seller.name || seller.email}?`
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    setUnfreezingSellerId(seller.id);
+
+    await api.unfreezeSeller(seller.id);
+
+    toast.success(
+      `${seller.name || seller.email} has been unfrozen`
+    );
+
+    await loadFrozenSellers();
+  } catch (err) {
+    toast.error(
+      (err as Error).message ||
+        'Unable to unfreeze seller'
+    );
+  } finally {
+    setUnfreezingSellerId(null);
+  }
+};
+
   const loadSales = useCallback(async () => {
     try {
       setSales(await api.getSales());
@@ -152,11 +227,18 @@ export function AdminDashboard({
   }, []);
 
   useEffect(() => {
-    loadSales();
-    loadDeposits();
-    loadAdminItems();
-    loadTickets();
-  }, [loadSales, loadDeposits, loadAdminItems, loadTickets]);
+  loadSales();
+  loadDeposits();
+  loadAdminItems();
+  loadTickets();
+  loadFrozenSellers();
+}, [
+  loadSales,
+  loadDeposits,
+  loadAdminItems,
+  loadTickets,
+  loadFrozenSellers,
+]);
 
   const handleApproveDeposit = async (id: string) => {
     try {
@@ -852,7 +934,13 @@ export function AdminDashboard({
               label: 'Support',
               icon: LifeBuoy,
             },
-          ].map((tab) => (
+      {
+  id: 'frozenSellers',
+  label: 'Frozen Sellers',
+  icon: Shield,
+},
+   
+       ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -877,6 +965,114 @@ export function AdminDashboard({
 
         {/* Overview */}
         {activeTab === 'overview' && (
+      {/* Frozen Sellers */}
+{activeTab === 'frozenSellers' && (
+  <div className="space-y-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <h3 className="text-white font-semibold">
+          Frozen Sellers
+        </h3>
+        <p className="text-slate-400 text-sm mt-1">
+          Verify renewal payments and restore seller access.
+        </p>
+      </div>
+      <Badge className="bg-red-500/10 text-red-400 border border-red-500/20">
+        {frozenSellers.length} frozen
+      </Badge>
+    </div>
+    {isLoadingFrozenSellers ? (
+      <Card className="bg-slate-950 border-blue-500/20">
+        <CardContent className="p-8 text-center">
+          <p className="text-slate-400">
+            Loading frozen sellers...
+          </p>
+        </CardContent>
+      </Card>
+    ) : frozenSellers.length === 0 ? (
+      <Card className="bg-slate-950 border-blue-500/20">
+        <CardContent className="p-8 text-center">
+          <Shield className="h-10 w-10 text-green-400 mx-auto mb-3" />
+          <p className="text-white font-semibold">
+            No frozen sellers
+          </p>
+          <p className="text-slate-400 text-sm mt-1">
+            All seller accounts are currently active.
+          </p>
+        </CardContent>
+      </Card>
+    ) : (
+      <div className="space-y-4">
+        {frozenSellers.map((seller) => (
+          <Card
+            key={seller.id}
+            className="bg-slate-950 border-red-500/20"
+          >
+            <CardContent className="p-5">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-white font-semibold">
+                      {seller.name || 'Unnamed Seller'}
+                    </p>
+                    <p className="text-slate-400 text-sm">
+                      {seller.email}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className="bg-red-500/10 text-red-400 border border-red-500/20">
+                      FROZEN
+                    </Badge>
+                    {seller.sellerPlan && (
+                      <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        {seller.sellerPlan.name}
+                      </Badge>
+                    )}
+                  </div>
+                  {seller.sellerFreezeReason && (
+                    <p className="text-slate-300 text-sm">
+                      <span className="text-slate-500">
+                        Reason:
+                      </span>{' '}
+                      {seller.sellerFreezeReason}
+                    </p>
+                  )}
+                  {seller.sellerFrozenAt && (
+                    <p className="text-slate-500 text-xs">
+                      Frozen:{' '}
+                      {new Date(
+                        seller.sellerFrozenAt
+                      ).toLocaleString('en-NG')}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  disabled={
+                    unfreezingSellerId === seller.id
+                  }
+                  onClick={() =>
+                    handleUnfreezeSeller(seller)
+                  }
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                >
+                  {unfreezingSellerId === seller.id ? (
+                    'Unfreezing...'
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Verify Payment & Unfreeze
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )}
+  </div>
+)}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-slate-950 border-blue-500/20">
               <CardContent className="p-6">
