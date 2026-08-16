@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
 import { HeroSection } from '@/sections/HeroSection';
 import { ServicesSection } from '@/sections/ServicesSection';
+import { TestimonialsSection } from '@/sections/TestimonialsSection';
 import { SecuritySection } from '@/sections/SecuritySection';
 import { PolicySection } from '@/sections/PolicySection';
 import { ProductCatalog } from '@/sections/ProductCatalog';
@@ -352,6 +353,8 @@ function App() {
               store.categories
             }
           />
+          
+          <TestimonialsSection />
 
           <ProductCatalog
             products={store.products}
