@@ -553,11 +553,16 @@ const [sellerSubscriptionError, setSellerSubscriptionError] =
                     label: 'Wallet',
                     icon: Wallet,
                   },
-                  {
-                    id: 'profile',
-                    label: 'Profile',
-                    icon: UserIcon,
-                  },
+               {
+  id: 'profile',
+  label: 'Profile',
+  icon: UserIcon,
+},
+      {
+  id: 'sellerSubscription',
+  label: 'Seller Subscription',
+  icon: CreditCard,
+},
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1048,6 +1053,241 @@ const [sellerSubscriptionError, setSellerSubscriptionError] =
                 </Card>
               </div>
             )}
+
+            {/* SELLER SUBSCRIPTION */}
+{activeTab === 'sellerSubscription' && (
+  <div className="space-y-6">
+    <Card className="bg-slate-950 border-blue-500/20">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-xl font-semibold text-white">
+              Seller Subscription
+            </h3>
+            <p className="text-slate-400 text-sm mt-1">
+              Manage your seller access and subscription status.
+            </p>
+          </div>
+
+          <CreditCard className="h-7 w-7 text-cyan-400" />
+        </div>
+
+        {sellerSubscriptionLoading ? (
+          <div className="py-10 text-center text-slate-400">
+            Loading subscription...
+          </div>
+        ) : sellerSubscriptionError ? (
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
+            <p className="text-red-400 text-sm">
+              {sellerSubscriptionError}
+            </p>
+          </div>
+        ) : !sellerSubscription?.plan ? (
+          <div className="rounded-xl border border-blue-500/20 bg-slate-900 p-5">
+            <p className="text-white font-semibold">
+              No seller subscription
+            </p>
+
+            <p className="text-slate-400 text-sm mt-1">
+              Subscribe to a seller plan to unlock seller access.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div
+              className={`rounded-xl border p-5 ${
+                sellerSubscription.isSellerFrozen
+                  ? 'border-red-500/30 bg-red-500/10'
+                  : 'border-green-500/20 bg-green-500/5'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-slate-400 text-xs uppercase tracking-wide">
+                    Current Plan
+                  </p>
+
+                  <h4 className="text-2xl font-bold text-white mt-1">
+                    {sellerSubscription.plan.name}
+                  </h4>
+
+                  <p className="text-cyan-400 font-semibold mt-2">
+                    {formatPrice(
+                      sellerSubscription.plan.price || 0
+                    )}
+
+                    {sellerSubscription.plan.billing === 'monthly'
+                      ? ' / month'
+                      : sellerSubscription.plan.billing === 'yearly'
+                        ? ' / year'
+                        : ' / one-time'}
+                  </p>
+                </div>
+
+                <Badge
+                  className={
+                    sellerSubscription.isSellerFrozen
+                      ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                      : sellerSubscription.status === 'active'
+                        ? 'bg-green-500/10 text-green-400 border-green-500/30'
+                        : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  }
+                >
+                  {sellerSubscription.isSellerFrozen
+                    ? 'Frozen'
+                    : sellerSubscription.status || 'Inactive'}
+                </Badge>
+              </div>
+
+              {sellerSubscription.expiresAt && (
+                <div className="mt-5 pt-5 border-t border-white/10">
+                  <p className="text-slate-400 text-xs">
+                    Subscription expiry
+                  </p>
+
+                  <p className="text-white font-medium mt-1">
+                    {new Date(
+                      Number(sellerSubscription.expiresAt)
+                    ).toLocaleString('en-NG')}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {sellerSubscription.isSellerFrozen && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <Lock className="h-5 w-5 text-red-400" />
+
+                  <h4 className="text-white font-semibold">
+                    Seller Access Frozen
+                  </h4>
+                </div>
+
+                <p className="text-slate-300 text-sm">
+                  {sellerSubscription.freezeReason ||
+                    'Your seller access is currently frozen because your subscription was not renewed.'}
+                </p>
+
+                {sellerSubscription.renewalPaymentDetails && (
+                  <div className="mt-5 rounded-xl bg-slate-950 border border-red-500/20 p-4 space-y-3">
+                    <p className="text-white font-semibold">
+                      Renewal Payment Details
+                    </p>
+
+                    <div>
+                      <p className="text-slate-500 text-xs">
+                        Account Name
+                      </p>
+                      <p className="text-white">
+                        {
+                          sellerSubscription
+                            .renewalPaymentDetails
+                            .accountName
+                        }
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-slate-500 text-xs">
+                        Account Number
+                      </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-white font-mono font-semibold">
+                          {
+                            sellerSubscription
+                              .renewalPaymentDetails
+                              .accountNumber
+                          }
+                        </p>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            handleCopy(
+                              sellerSubscription
+                                .renewalPaymentDetails
+                                ?.accountNumber || ''
+                            )
+                          }
+                          className="text-cyan-400"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-slate-500 text-xs">
+                        Bank
+                      </p>
+                      <p className="text-white">
+                        {
+                          sellerSubscription
+                            .renewalPaymentDetails
+                            .bankName
+                        }
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-slate-500 text-xs">
+                        Payment Instructions
+                      </p>
+                      <p className="text-slate-300 text-sm">
+                        {
+                          sellerSubscription
+                            .renewalPaymentDetails
+                            .paymentInstructions
+                        }
+                      </p>
+                    </div>
+
+                    <p className="text-amber-400 text-xs pt-2">
+                      After payment, your seller access must be
+                      verified and unfrozen by the administrator.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-blue-500/20 bg-slate-900 p-5">
+              <h4 className="text-white font-semibold mb-4">
+                Included Features
+              </h4>
+
+              <div className="space-y-3">
+                {(sellerSubscription.plan.features || []).map(
+                  (feature) => (
+                    <div
+                      key={feature}
+                      className="flex items-start gap-3"
+                    >
+                      <span className="text-green-400 mt-0.5">
+                        ✓
+                      </span>
+
+                      <p className="text-slate-300 text-sm">
+                        {feature
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, (letter) =>
+                            letter.toUpperCase()
+                          )}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+)}
 
             {/* PROFILE */}
             {activeTab === 'profile' && (
