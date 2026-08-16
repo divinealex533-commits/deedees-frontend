@@ -963,9 +963,8 @@ const handleUnfreezeSeller = async (
           ))}
         </div>
 
-        {/* Overview */}
-        {activeTab === 'overview' && (
-      {/* Frozen Sellers */}
+
+          {/* Frozen Sellers */}
 {activeTab === 'frozenSellers' && (
   <div className="space-y-4">
     <div className="flex items-center justify-between">
@@ -1073,7 +1072,10 @@ const handleUnfreezeSeller = async (
     )}
   </div>
 )}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Overview */}
+        {activeTab === 'overview' && (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-slate-950 border-blue-500/20">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold text-white mb-4">
