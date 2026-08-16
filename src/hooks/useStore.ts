@@ -25,8 +25,11 @@ function toProduct(item: any): Product {
     // Tonyix-synced products will therefore show as available
     // when the backend says they are in stock.
     inStock:
-      item.inStock !== false &&
-      Number(item.stockCount ?? item.quantity ?? 0) > 0,
+  item.inStock !== false &&
+  (
+    Number(item.stockCount ?? item.quantity ?? 0) > 0 ||
+    Number(item.tonyixProductId ?? 0) > 0
+  ),
 
     description: item.description || '',
     createdAt: item.createdAt,
