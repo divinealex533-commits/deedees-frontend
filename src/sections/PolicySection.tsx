@@ -1,93 +1,134 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, RefreshCw, UserCheck, FileText } from 'lucide-react';
+import {
+  FileText,
+  RotateCcw,
+  Clock3,
+  MessageCircle,
+  CheckCircle2,
+  ShieldCheck,
+} from 'lucide-react';
+
+const policies = [
+  {
+    icon: RotateCcw,
+    title: 'Order Policy',
+    description:
+      'Please review your selected product carefully before completing your order.',
+  },
+  {
+    icon: Clock3,
+    title: 'Delivery',
+    description:
+      'Orders are processed as quickly as possible. Delivery time may vary depending on the product.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Need Help?',
+    description:
+      'Our support team is available to help with questions, orders, and product issues.',
+  },
+];
 
 export function PolicySection() {
-  const policies = [
-    {
-      icon: AlertTriangle,
-      title: 'Final Sale Policy',
-      description: 'Due to the nature of digital assets, refunds are not provided once login details are sent. Please verify your order before completing payment.',
-      highlight: 'No Refunds',
-      color: 'text-amber-400',
-      bgColor: 'from-amber-500/20 to-orange-500/20',
-    },
-    {
-      icon: RefreshCw,
-      title: 'Replacement Policy',
-      description: 'We offer a one-time replacement for any account that fails to log in within the first 24 hours. Contact support immediately if you encounter issues.',
-      highlight: '24h Replacement',
-      color: 'text-blue-400',
-      bgColor: 'from-blue-500/20 to-cyan-500/20',
-    },
-    {
-      icon: UserCheck,
-      title: 'User Responsibility',
-      description: 'Buyers are responsible for following platform guidelines (Meta/TikTok/Twitter) after a successful login. Account suspension due to violation of terms is not covered.',
-      highlight: 'Follow Guidelines',
-      color: 'text-cyan-400',
-      bgColor: 'from-cyan-500/20 to-teal-500/20',
-    },
-  ];
-
   return (
-    <section id="policy" className="py-20 bg-black relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0">
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]"></div>
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px]"></div>
+    <section className="relative py-14 sm:py-16 bg-white overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 mb-6">
-            <FileText className="h-4 w-4 text-cyan-400" />
-            <span className="text-sm text-blue-300">Please Read</span>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* HEADER */}
+        <div className="text-center max-w-2xl mx-auto mb-9">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200 mb-3">
+            <FileText className="w-3.5 h-3.5 text-blue-500" />
+
+            <span className="text-xs font-semibold text-blue-600">
+              Important information
+            </span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Refund & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">Replacement</span> Policy
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">
+            Our{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500">
+              Policies
+            </span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Please read our policies carefully before making a purchase
+
+          <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
+            A few simple guidelines to help make every order smooth
+            and hassle-free.
           </p>
         </div>
 
-        {/* Policies Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {policies.map((policy, index) => (
-            <Card key={index} className="group bg-slate-950 border-blue-500/20 hover:border-cyan-500/40 transition-all duration-500">
-              <CardContent className="p-8">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${policy.bgColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                  <policy.icon className={`h-7 w-7 ${policy.color}`} />
+        {/* POLICY CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {policies.map((policy) => {
+            const Icon = policy.icon;
+
+            return (
+              <div
+                key={policy.title}
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md hover:-translate-y-1 hover:border-blue-200 transition-all duration-300"
+              >
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
-                <div className={`inline-block px-3 py-1 rounded-full bg-slate-900 text-xs font-medium ${policy.color} mb-4 border border-blue-500/20`}>
-                  {policy.highlight}
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">
+
+                <h3 className="text-base font-bold text-slate-900 mb-2">
                   {policy.title}
                 </h3>
-                <p className="text-slate-400 leading-relaxed text-sm">
+
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
                   {policy.description}
                 </p>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Important Notice */}
-        <div className="mt-12 p-6 rounded-xl bg-amber-500/10 border border-amber-500/30">
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="h-6 w-6 text-amber-400 flex-shrink-0 mt-1" />
+        {/* QUICK POLICY NOTICE */}
+        <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-white" />
+            </div>
+
             <div>
-              <h4 className="text-lg font-semibold text-amber-300 mb-2">Important Notice</h4>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                By purchasing from DeeDee's Marketplace, you agree to our terms and conditions. 
-                We strongly recommend testing your account immediately upon receipt. 
-                Any issues must be reported within 24 hours for replacement eligibility. 
-                After 24 hours, all sales are final and no replacements will be issued.
+              <h3 className="text-sm font-bold text-slate-900 mb-1">
+                Shop responsibly
+              </h3>
+
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Always confirm that the product, quantity, and
+                account details are correct before making payment.
+                If you have any concerns, contact our support team
+                before completing your order.
               </p>
             </div>
           </div>
+        </div>
+
+        {/* CHECKLIST */}
+        <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-3">
+          {[
+            'Review your order',
+            'Confirm payment details',
+            'Keep your receipt',
+            'Contact support when needed',
+          ].map((item) => (
+            <div
+              key={item}
+              className="flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+
+              <span className="text-xs font-medium text-slate-600">
+                {item}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
