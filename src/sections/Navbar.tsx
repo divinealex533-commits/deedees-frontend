@@ -15,8 +15,18 @@ import type { User } from '@/hooks/useAuth';
 interface NavbarProps {
   cartCount: number;
   onCartClick: () => void;
-  view: 'store' | 'admin' | 'dashboard';
-  onViewChange: (view: 'store' | 'admin' | 'dashboard') => void;
+  view:
+    | 'store'
+    | 'admin'
+    | 'dashboard'
+    | 'affiliate';
+  onViewChange: (
+    view:
+      | 'store'
+      | 'admin'
+      | 'dashboard'
+      | 'affiliate'
+  ) => void;
   isAuthenticated: boolean;
   user: User | null;
   onLogout: () => void;
@@ -60,16 +70,19 @@ export function Navbar({
   onOpenAuth,
   onOpenAccountMenu,
 }: NavbarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
 
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] =
+    useState(false);
 
   const [marketTheme, setMarketTheme] =
     useState<MarketTheme>('blue');
 
   useEffect(() => {
     const savedDark =
-      localStorage.getItem('deedee-theme') === 'dark';
+      localStorage.getItem('deedee-theme') ===
+      'dark';
 
     const savedMarketTheme =
       localStorage.getItem(
@@ -156,9 +169,18 @@ export function Navbar({
     }, 50);
   };
 
+  const goAffiliate = () => {
+    onViewChange('affiliate');
+    setMobileOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
   return (
     <header className="marketplace-navbar">
-
       <div className="marketplace-nav-inner">
 
         {/* LEFT SIDE */}
@@ -190,7 +212,6 @@ export function Navbar({
               DEEDEE'S MARKETPLACE
             </span>
           </button>
-
         </div>
 
         {/* DESKTOP NAVIGATION */}
@@ -207,6 +228,14 @@ export function Navbar({
               {item.label}
             </button>
           ))}
+
+          {/* AFFILIATE PROGRAM */}
+          <button
+            type="button"
+            onClick={goAffiliate}
+          >
+            Affiliate
+          </button>
         </nav>
 
         {/* RIGHT SIDE ACTIONS */}
@@ -214,7 +243,6 @@ export function Navbar({
 
           {view === 'store' && (
             <>
-
               {/* THEME SWITCH */}
               <button
                 type="button"
@@ -304,7 +332,9 @@ export function Navbar({
                 type="button"
                 className="nav-icon-button mobile-menu-button"
                 onClick={() =>
-                  setMobileOpen((value) => !value)
+                  setMobileOpen(
+                    (value) => !value
+                  )
                 }
                 aria-label={
                   mobileOpen
@@ -319,7 +349,6 @@ export function Navbar({
                   <Menu size={23} />
                 )}
               </button>
-
             </>
           )}
 
@@ -351,6 +380,14 @@ export function Navbar({
               {item.label}
             </button>
           ))}
+
+          {/* AFFILIATE PROGRAM */}
+          <button
+            type="button"
+            onClick={goAffiliate}
+          >
+            Affiliate Program
+          </button>
 
           {/* DIVIDER */}
           <div className="my-2 h-px bg-slate-200/70 dark:bg-slate-700" />
@@ -390,7 +427,9 @@ export function Navbar({
                 type="button"
                 onClick={() => {
                   setMobileOpen(false);
-                  onViewChange('dashboard');
+                  onViewChange(
+                    'dashboard'
+                  );
                 }}
               >
                 <UserRound size={17} />
@@ -423,7 +462,8 @@ export function Navbar({
 
         </div>
       )}
-
     </header>
   );
 }
+
+export default Navbar;
