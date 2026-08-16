@@ -129,15 +129,17 @@ export const api = {
     return data.sellers || [];
   },
   unfreezeSeller: (
-    userId: string
-  ) =>
-    request(
-      `/api/admin/sellers/${userId}/unfreeze`,
-      {
-        method: "POST",
-      }
-    ),
-  
+  userId: string
+) =>
+  request(
+    `/api/admin/sellers/${userId}/unfreeze`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        paymentConfirmed: true,
+      }),
+    }
+  ),
 
   // ==========================================================
   // Tonyix Catalogue
