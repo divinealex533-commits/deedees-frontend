@@ -16,16 +16,8 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import type { User } from '@/hooks/useAuth';
-
-interface ReferralInfo {
-  referralCode: string;
-  totalReferred: number;
-  successfulReferrals: number;
-  totalEarned: number;
-}
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -38,11 +30,12 @@ interface AccountDrawerProps {
   onGoDeposit: () => void;
   onGoHistory: () => void;
   onGoContact: () => void;
+  onGoAffiliate: () => void;
   onLogout: () => void;
   onOpenAuth: () => void;
 }
 
-type SubPanel = 'affiliate' | 'blogs' | 'api' | null;
+type SubPanel = 'blogs' | 'api' | null;
 
 export function AccountDrawer({
   isOpen,
@@ -55,12 +48,11 @@ export function AccountDrawer({
   onGoDeposit,
   onGoHistory,
   onGoContact,
+  onGoAffiliate,
   onLogout,
   onOpenAuth,
 }: AccountDrawerProps) {
   const [subPanel, setSubPanel] = useState<SubPanel>(null);
-  const [referral, setReferral] = useState<ReferralInfo | null>(null);
-  const [loadingReferral, setLoadingReferral] = useState(false);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {
@@ -80,26 +72,8 @@ export function AccountDrawer({
       onOpenAuth();
       return;
     }
-    action();
-  };
 
-  const openAffiliate = async () => {
-    if (!isAuthenticated) {
-      handleClose();
-      onOpenAuth();
-      return;
-    }
-    setSubPanel('affiliate');
-    if (!referral) {
-      setLoadingReferral(true);
-      try {
-        setReferral(await api.getMyReferrals());
-      } catch (err) {
-        toast.error((err as Error).message || 'Could not load referral info');
-      } finally {
-        setLoadingReferral(false);
-      }
-    }
+    action();
   };
 
   if (!isOpen) return null;
@@ -119,13 +93,20 @@ export function AccountDrawer({
         <div className="flex items-center justify-between p-5 border-b border-blue-500/20">
           <div className="flex items-center gap-2">
             <div className="relative w-9 h-9">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg opacity-90"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg opacity-90" />
+
               <div className="absolute inset-0.5 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold text-xs">DM</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold text-xs">
+                  DM
+                </span>
               </div>
             </div>
-            <span className="text-white font-bold text-sm tracking-wide">DEEDEE'S MARKET</span>
+
+            <span className="text-white font-bold text-sm tracking-wide">
+              DEEDEE'S MARKET
+            </span>
           </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -136,6 +117,7 @@ export function AccountDrawer({
           </Button>
         </div>
 
+        {/* MAIN MENU */}
         {subPanel === null && (
           <>
             {/* User row */}
@@ -143,7 +125,10 @@ export function AccountDrawer({
               {isAuthenticated && user ? (
                 <div className="w-full bg-black rounded-lg px-4 py-3 flex items-center gap-2 border border-blue-500/20">
                   <UserRoundIcon className="h-4 w-4 text-blue-400" />
-                  <span className="text-white font-medium">{user.name}</span>
+
+                  <span className="text-white font-medium">
+                    {user.name}
+                  </span>
                 </div>
               ) : (
                 <Button
@@ -158,10 +143,14 @@ export function AccountDrawer({
               )}
             </div>
 
+            {/* Balance */}
             {isAuthenticated && (
               <div className="px-5 pb-4">
                 <p className="text-slate-400 text-sm text-center">
-                  My balance: <span className="text-white font-semibold">{formatPrice(balance)}</span>
+                  My balance:{' '}
+                  <span className="text-white font-semibold">
+                    {formatPrice(balance)}
+                  </span>
                 </p>
               </div>
             )}
@@ -178,6 +167,7 @@ export function AccountDrawer({
                   onGoHome();
                 }}
               />
+
               <DrawerItem
                 icon={ShoppingBag}
                 label="Product"
@@ -187,6 +177,7 @@ export function AccountDrawer({
                   onGoProduct();
                 }}
               />
+
               <DrawerItem
                 icon={Landmark}
                 label="Deposit money"
@@ -198,6 +189,7 @@ export function AccountDrawer({
                   })
                 }
               />
+
               <DrawerItem
                 icon={HistoryIcon}
                 label="History"
@@ -209,9 +201,41 @@ export function AccountDrawer({
                   })
                 }
               />
-              <DrawerItem icon={TrendingUp} label="Affiliate Program" hasArrow onClick={openAffiliate} />
-              <DrawerItem icon={Newspaper} label="Blogs" hasArrow onClick={() => setSubPanel('blogs')} />
-              <DrawerItem icon={FileCode} label="API documentation" hasArrow onClick={() => setSubPanel('api')} />
+
+              {/* AFFILIATE PROGRAM */}
+              <DrawerItem
+                icon={TrendingUp}
+                label="Affiliate Program"
+                hasArrow
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    handleClose();
+                    onOpenAuth();
+                    return;
+                  }
+
+                  handleClose();
+                  onGoAffiliate();
+                }}
+              />
+
+              {/* BLOGS */}
+              <DrawerItem
+                icon={Newspaper}
+                label="Blogs"
+                hasArrow
+                onClick={() => setSubPanel('blogs')}
+              />
+
+              {/* API */}
+              <DrawerItem
+                icon={FileCode}
+                label="API documentation"
+                hasArrow
+                onClick={() => setSubPanel('api')}
+              />
+
+              {/* LOGOUT */}
               {isAuthenticated && (
                 <DrawerItem
                   icon={LogOut}
@@ -224,6 +248,7 @@ export function AccountDrawer({
               )}
             </nav>
 
+            {/* SUPPORT */}
             <div className="border-t border-blue-500/20 mt-2 p-5 space-y-4">
               <a
                 href="https://t.me/deedeesmarketsupport"
@@ -232,9 +257,14 @@ export function AccountDrawer({
                 className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors"
               >
                 <Send className="h-5 w-5 text-blue-400" />
-                <span className="font-medium">Join us on Telegram</span>
+
+                <span className="font-medium">
+                  Join us on Telegram
+                </span>
               </a>
+
               <button
+                type="button"
                 onClick={() => {
                   handleClose();
                   onGoContact();
@@ -242,63 +272,54 @@ export function AccountDrawer({
                 className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors"
               >
                 <MessageCircle className="h-5 w-5 text-blue-400" />
-                <span className="font-medium">Contact Support</span>
+
+                <span className="font-medium">
+                  Contact Support
+                </span>
               </button>
             </div>
           </>
         )}
 
-        {subPanel === 'affiliate' && (
-          <div className="p-5">
-            <button onClick={() => setSubPanel(null)} className="text-slate-400 hover:text-white text-sm mb-4">
-              ← Back
-            </button>
-            <h3 className="text-white font-semibold text-lg mb-4">Affiliate Program</h3>
-            {loadingReferral ? (
-              <p className="text-slate-400 text-sm">Loading…</p>
-            ) : referral ? (
-              <div className="space-y-3">
-                <div className="bg-black rounded-lg p-4 border border-blue-500/20">
-                  <p className="text-slate-400 text-xs mb-1">Your referral code</p>
-                  <p className="text-white font-mono font-bold text-lg">{referral.referralCode}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-black rounded-lg p-4 border border-blue-500/20">
-                    <p className="text-slate-400 text-xs mb-1">Referred</p>
-                    <p className="text-white font-bold text-lg">{referral.totalReferred}</p>
-                  </div>
-                  <div className="bg-black rounded-lg p-4 border border-blue-500/20">
-                    <p className="text-slate-400 text-xs mb-1">Earned</p>
-                    <p className="text-white font-bold text-lg">{formatPrice(referral.totalEarned)}</p>
-                  </div>
-                </div>
-                <p className="text-slate-500 text-xs">
-                  Share your code — you both get rewarded on their first purchase.
-                </p>
-              </div>
-            ) : (
-              <p className="text-slate-400 text-sm">Could not load your referral info.</p>
-            )}
-          </div>
-        )}
-
+        {/* BLOGS */}
         {subPanel === 'blogs' && (
           <div className="p-5">
-            <button onClick={() => setSubPanel(null)} className="text-slate-400 hover:text-white text-sm mb-4">
+            <button
+              type="button"
+              onClick={() => setSubPanel(null)}
+              className="text-slate-400 hover:text-white text-sm mb-4"
+            >
               ← Back
             </button>
-            <h3 className="text-white font-semibold text-lg mb-2">Blogs</h3>
-            <p className="text-slate-400 text-sm">Coming soon — check back for updates, tips and guides.</p>
+
+            <h3 className="text-white font-semibold text-lg mb-2">
+              Blogs
+            </h3>
+
+            <p className="text-slate-400 text-sm">
+              Coming soon — check back for updates, tips and guides.
+            </p>
           </div>
         )}
 
+        {/* API */}
         {subPanel === 'api' && (
           <div className="p-5">
-            <button onClick={() => setSubPanel(null)} className="text-slate-400 hover:text-white text-sm mb-4">
+            <button
+              type="button"
+              onClick={() => setSubPanel(null)}
+              className="text-slate-400 hover:text-white text-sm mb-4"
+            >
               ← Back
             </button>
-            <h3 className="text-white font-semibold text-lg mb-2">API Documentation</h3>
-            <p className="text-slate-400 text-sm">Coming soon — API access and documentation for developers.</p>
+
+            <h3 className="text-white font-semibold text-lg mb-2">
+              API Documentation
+            </h3>
+
+            <p className="text-slate-400 text-sm">
+              Coming soon — API access and documentation for developers.
+            </p>
           </div>
         )}
       </div>
@@ -319,14 +340,21 @@ function DrawerItem({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="w-full flex items-center justify-between px-3 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-blue-500/10 transition-colors"
     >
       <span className="flex items-center gap-3">
         <Icon className="h-5 w-5 text-blue-400" />
-        <span className="font-medium">{label}</span>
+
+        <span className="font-medium">
+          {label}
+        </span>
       </span>
-      {hasArrow && <ChevronRight className="h-4 w-4 text-slate-500" />}
+
+      {hasArrow && (
+        <ChevronRight className="h-4 w-4 text-slate-500" />
+      )}
     </button>
   );
 }
