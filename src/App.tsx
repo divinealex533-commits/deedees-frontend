@@ -1,3 +1,4 @@
+import { AffiliateProgram } from '@/sections/AffiliateProgram';
 import { useState, useEffect } from 'react';
 import { ResetPassword } from '@/sections/ResetPassword';
 import { useStore } from '@/hooks/useStore';
@@ -24,7 +25,11 @@ import { AccountDrawer } from '@/sections/AccountDrawer';
 import { FloatingContactButtons } from '@/components/FloatingContactButtons';
 import { Toaster, toast } from 'sonner';
 
-type ViewType = 'store' | 'admin' | 'dashboard';
+type ViewType =
+  | 'store'
+  | 'admin'
+  | 'dashboard'
+  | 'affiliate';
 
 function App() {
   const [view, setView] = useState<ViewType>('store');
@@ -506,7 +511,20 @@ function App() {
             }
           />
         )}
+      {view === 'affiliate' && (
+  <AffiliateProgram
+    onBack={() => {
+      setView('store');
 
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+      }, 50);
+    }}
+  />
+)}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => {
