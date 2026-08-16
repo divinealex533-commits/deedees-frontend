@@ -1,4 +1,4 @@
-import { AffiliateProgram } from '@/sections/AffiliateProgram';
+import AffiliateProgram from '@/sections/AffiliateProgram';
 import { useState, useEffect } from 'react';
 import { ResetPassword } from '@/sections/ResetPassword';
 import { useStore } from '@/hooks/useStore';
