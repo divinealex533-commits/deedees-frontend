@@ -358,21 +358,24 @@ function App() {
           
           <TestimonialsSection />
 
-          <ProductCatalog
-            products={store.products}
-            categories={store.categories}
-            onAddToCart={
-              handleAddToCart
-            }
-            onBuyNow={
-              handleBuyNow
-            }
-          />
+<ProductCatalog
+  products={store.products}
+  categories={store.categories}
+  onAddToCart={handleAddToCart}
+  onBuyNow={handleBuyNow}
+/>
 
-          <SecuritySection />
-          <PolicySection />
-          <ContactSection />
-          <Footer />
+<HowItWorksSection />
+
+<SecuritySection />
+
+<PolicySection />
+
+<FAQSection />
+
+<ContactSection />
+
+<Footer />
 
           <CartDrawer
             isOpen={isCartOpen}
