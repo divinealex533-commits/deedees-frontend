@@ -34,11 +34,11 @@ function toProduct(item: any): Product {
 
     accessLink: item.accessLink,
     quantity:
-      item.stockCount != null
-        ? Number(item.stockCount)
-        : item.quantity != null
-          ? Number(item.quantity)
-          : undefined,
+  Number(item.stockCount ?? 0) > 0
+    ? Number(item.stockCount)
+    : item.quantity != null
+      ? Number(item.quantity)
+      : undefined,
 
     // Keep Tonyix ID available to the frontend.
     tonyixProductId:
