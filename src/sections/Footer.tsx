@@ -4,7 +4,6 @@ import {
   ShieldCheck,
   ArrowUp,
 } from 'lucide-react';
-
 export function Footer() {
   const scrollToTop = () => {
     window.scrollTo({
@@ -12,16 +11,19 @@ export function Footer() {
       behavior: 'smooth',
     });
   };
-
+  const scrollToSection = (id: string) => {
+    document
+      .getElementById(id)
+      ?.scrollIntoView({ behavior: 'smooth' });
+  };
   return (
     <footer className="relative overflow-hidden bg-slate-950 text-white">
       {/* Background glow */}
       <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[700px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[100px]" />
-
       <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-14 sm:px-6 sm:pt-16 lg:px-8">
-        {/* Main footer */}
+        {/* MAIN FOOTER */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand */}
+          {/* BRAND */}
           <div className="sm:col-span-2 lg:col-span-1">
             <button
               type="button"
@@ -35,115 +37,102 @@ export function Footer() {
                 </span>
               </h2>
             </button>
-
             <p className="mt-4 max-w-sm text-sm leading-6 text-slate-400">
               A simple and reliable marketplace built to make buying
               digital products and services easier.
             </p>
-
             <div className="mt-5 flex items-center gap-2 text-xs font-medium text-emerald-400">
               <ShieldCheck className="h-4 w-4" />
               Secure &amp; trusted marketplace
             </div>
           </div>
-
-          {/* Quick links */}
+          {/* MARKETPLACE */}
           <div>
             <h3 className="text-sm font-bold text-white">
               Marketplace
             </h3>
-
             <div className="mt-4 space-y-3">
               <button
                 type="button"
-                onClick={() =>
-                  document
-                    .getElementById('catalog')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }
+                onClick={() => scrollToSection('catalog')}
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 Browse Products
               </button>
-
               <button
                 type="button"
-                onClick={() =>
-                  document
-                    .getElementById('how-it-works')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }
+                onClick={() => scrollToSection('how-it-works')}
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 How It Works
-             <a
-  href="#how-it-works"
-  className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
->
-  How It Works
-</a>
-
+              </button>
               <button
                 type="button"
-                onClick={() =>
-                  document
-                    .getElementById('testimonials')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }
+                onClick={() => scrollToSection('testimonials')}
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 Customer Reviews
               </button>
-
               <button
                 type="button"
-                onClick={() =>
-                  document
-                    .getElementById('faq')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }
+                onClick={() => scrollToSection('faq')}
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 FAQ
-              <a
-  href="#faq"
-  className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
->
-  FAQ
-</a>
+              </button>
             </div>
           </div>
-
-          {/* Support */}
+          {/* SUPPORT */}
           <div>
             <h3 className="text-sm font-bold text-white">
               Support
             </h3>
-
-          h3>
-
-          {/* Trust */}
+            <div className="mt-4 space-y-3">
+              <a
+                href="https://wa.me/07046019436"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-green-400"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp Support
+              </a>
+              <a
+                href="https://t.me/deedeesmarketsupport"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-cyan-400"
+              >
+                <Send className="h-4 w-4" />
+                Telegram Support
+              </a>
+              <button
+                type="button"
+                onClick={() => scrollToSection('faq')}
+                className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
+              >
+                Frequently Asked Questions
+              </button>
+            </div>
+          </div>
+          {/* TRUST */}
           <div>
             <h3 className="text-sm font-bold text-white">
               Why DeeDee's?
             </h3>
-
             <div className="mt-4 space-y-3 text-sm text-slate-400">
               <p className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 Secure checkout
               </p>
-
               <p className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 Reliable service
               </p>
-
               <p className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 Fast processing
               </p>
-
               <p className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
                 Customer support
@@ -151,23 +140,19 @@ export function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Divider */}
+        {/* DIVIDER */}
         <div className="my-10 h-px bg-white/10" />
-
-        {/* Bottom */}
+        {/* BOTTOM */}
         <div className="flex flex-col items-center justify-between gap-5 sm:flex-row">
           <div className="text-center sm:text-left">
             <p className="text-xs text-slate-500 sm:text-sm">
               © {new Date().getFullYear()} DeeDee's Marketplace. All
               rights reserved.
             </p>
-
             <p className="mt-1 text-[11px] text-slate-600">
               Built for a simple, secure and reliable shopping experience.
             </p>
           </div>
-
           <button
             type="button"
             onClick={scrollToTop}
@@ -197,5 +182,4 @@ export function Footer() {
     </footer>
   );
 }
-
 export default Footer;
