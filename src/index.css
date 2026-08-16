@@ -417,3 +417,6 @@ select:focus-visible {
     font-size: 16px;
   }
 }
+html {
+  scroll-behavior: smooth;
+}
