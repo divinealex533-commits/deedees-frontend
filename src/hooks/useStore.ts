@@ -4,19 +4,46 @@ import type { Product, Category, CartItem } from '@/types';
 
 const CART_KEY = 'deedee_cart';
 
+// Refresh products frequently so newly synced Tonyix products
+// automatically appear on the DeeDee marketplace.
+const PRODUCT_REFRESH_INTERVAL = 30 * 1000;
+
 // Converts a backend item into the shape the rest of the UI expects.
 function toProduct(item: any): Product {
   return {
-    id: item.id,
+    id: String(item.id),
     name: item.name,
-    price: item.price,
-    imageUrl: item.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image',
+    price: Number(item.price || 0),
+    imageUrl:
+      item.imageUrl ||
+      item.image ||
+      'https://via.placeholder.com/400x300?text=No+Image',
     categoryId: item.categoryId || 'Other',
-    inStock: item.inStock !== false && !item.sold,
+
+    // IMPORTANT:
+    // The backend's stockCount is the source of truth.
+    // Tonyix-synced products will therefore show as available
+    // when the backend says they are in stock.
+    inStock:
+      item.inStock !== false &&
+      Number(item.stockCount ?? item.quantity ?? 0) > 0,
+
     description: item.description || '',
     createdAt: item.createdAt,
+
     accessLink: item.accessLink,
-    quantity: item.quantity,
+    quantity:
+      item.stockCount != null
+        ? Number(item.stockCount)
+        : item.quantity != null
+          ? Number(item.quantity)
+          : undefined,
+
+    // Keep Tonyix ID available to the frontend.
+    tonyixProductId:
+      item.tonyixProductId != null
+        ? Number(item.tonyixProductId)
+        : null,
   };
 }
 
@@ -26,51 +53,164 @@ export function useStore() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // ============================================================
+  // LOAD PRODUCTS
+  // ============================================================
+
   const loadProducts = useCallback(async () => {
     try {
       const items = await api.getItems();
-      setProducts(items.map(toProduct));
+
+      const mappedProducts = Array.isArray(items)
+        ? items.map(toProduct)
+        : [];
+
+      setProducts(mappedProducts);
+
+      console.log(
+        `DeeDee products refreshed: ${mappedProducts.length} products`
+      );
     } catch (err) {
       console.error('Could not load products:', err);
     }
   }, []);
 
-  // Categories are shared across every visitor — stored in the database,
-  // not per-device — so a category (and any product filed under it) shows
-  // up for everyone, not just the admin who added it.
+  // ============================================================
+  // LOAD CATEGORIES
+  // ============================================================
+
   const loadCategories = useCallback(async () => {
     try {
-      setCategories(await api.getCategories());
+      const result = await api.getCategories();
+      setCategories(Array.isArray(result) ? result : []);
     } catch (err) {
       console.error('Could not load categories:', err);
     }
   }, []);
 
-  // Load products + categories from the backend, cart from this device
+  // ============================================================
+  // INITIAL LOAD
+  // ============================================================
+
   useEffect(() => {
-    (async () => {
-      await Promise.all([loadProducts(), loadCategories()]);
+    let mounted = true;
+
+    const loadInitialData = async () => {
+      await Promise.all([
+        loadProducts(),
+        loadCategories(),
+      ]);
+
+      if (!mounted) return;
+
       if (typeof window !== 'undefined') {
         try {
           const savedCart = localStorage.getItem(CART_KEY);
-          if (savedCart) setCart(JSON.parse(savedCart));
+
+          if (savedCart) {
+            setCart(JSON.parse(savedCart));
+          }
         } catch (error) {
-          console.error('Error loading local data:', error);
+          console.error(
+            'Error loading local cart:',
+            error
+          );
         }
       }
+
       setIsLoaded(true);
-    })();
+    };
+
+    loadInitialData();
+
+    return () => {
+      mounted = false;
+    };
   }, [loadProducts, loadCategories]);
 
+  // ============================================================
+  // AUTOMATIC PRODUCT REFRESH
+  // ============================================================
+  //
+  // Backend:
+  // Tonyix API
+  //      ↓
+  // DeeDee backend sync
+  //      ↓
+  // /api/items
+  //      ↓
+  // This hook
+  //      ↓
+  // Products page
+  //
+  // The backend sync runs every 15 minutes.
+  // The frontend checks every 30 seconds.
+  // ============================================================
+
   useEffect(() => {
-    if (isLoaded && typeof window !== 'undefined') {
-      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    if (!isLoaded) return;
+
+    const refreshProducts = async () => {
+      await loadProducts();
+    };
+
+    const interval = window.setInterval(
+      refreshProducts,
+      PRODUCT_REFRESH_INTERVAL
+    );
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [isLoaded, loadProducts]);
+
+  // Also refresh when the customer returns to the browser/tab.
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadProducts();
+      }
+    };
+
+    document.addEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        'visibilitychange',
+        handleVisibilityChange
+      );
+    };
+  }, [isLoaded, loadProducts]);
+
+  // ============================================================
+  // SAVE CART
+  // ============================================================
+
+  useEffect(() => {
+    if (
+      isLoaded &&
+      typeof window !== 'undefined'
+    ) {
+      localStorage.setItem(
+        CART_KEY,
+        JSON.stringify(cart)
+      );
     }
   }, [cart, isLoaded]);
 
-  // ---- Product operations (admin) — these write to the real backend ----
+  // ============================================================
+  // PRODUCT OPERATIONS
+  // ============================================================
+
   const addProduct = useCallback(
-    async (product: Omit<Product, 'id' | 'createdAt'>) => {
+    async (
+      product: Omit<Product, 'id' | 'createdAt'>
+    ) => {
       await api.createItem({
         name: product.name,
         description: product.description,
@@ -80,14 +220,20 @@ export function useStore() {
         inStock: product.inStock,
         accessLink: product.accessLink,
         quantity: product.quantity,
+        tonyixProductId:
+          product.tonyixProductId,
       });
+
       await loadProducts();
     },
     [loadProducts]
   );
 
   const updateProduct = useCallback(
-    async (id: string, updates: Partial<Product>) => {
+    async (
+      id: string,
+      updates: Partial<Product>
+    ) => {
       await api.updateItem(id, {
         name: updates.name,
         description: updates.description,
@@ -97,7 +243,10 @@ export function useStore() {
         inStock: updates.inStock,
         accessLink: updates.accessLink,
         quantity: updates.quantity,
+        tonyixProductId:
+          updates.tonyixProductId,
       });
+
       await loadProducts();
     },
     [loadProducts]
@@ -119,18 +268,29 @@ export function useStore() {
     [loadProducts]
   );
 
-  // ---- Category operations (admin) — now backend-synced, visible to everyone ----
+  // ============================================================
+  // CATEGORY OPERATIONS
+  // ============================================================
+
   const addCategory = useCallback(
-    async (category: Omit<Category, 'id' | 'createdAt'>) => {
-      const newCategory = await api.createCategory(category);
+    async (
+      category: Omit<Category, 'id' | 'createdAt'>
+    ) => {
+      const newCategory =
+        await api.createCategory(category);
+
       await loadCategories();
+
       return newCategory;
     },
     [loadCategories]
   );
 
   const updateCategory = useCallback(
-    async (id: string, updates: Partial<Category>) => {
+    async (
+      id: string,
+      updates: Partial<Category>
+    ) => {
       await api.updateCategory(id, updates);
       await loadCategories();
     },
@@ -145,42 +305,95 @@ export function useStore() {
     [loadCategories]
   );
 
-  // ---- Cart operations (this device only, until checkout) ----
-  // Adds one unit of a product to the cart. If it's already there, bumps
-  // its quantity by 1 — capped at how many units the product actually has
-  // in stock (when the product tracks a quantity).
-  const addToCart = useCallback((product: Product) => {
-    setCart((prev) => {
-      const maxQty = product.quantity != null ? product.quantity : Infinity;
-      const existing = prev.find((item) => item.product.id === product.id);
-      if (existing) {
-        if (existing.quantity >= maxQty) return prev; // already at the max available
-        return prev.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+  // ============================================================
+  // CART
+  // ============================================================
+
+  const addToCart = useCallback(
+    (product: Product) => {
+      setCart((prev) => {
+        const maxQty =
+          product.quantity != null
+            ? product.quantity
+            : Infinity;
+
+        const existing = prev.find(
+          (item) =>
+            item.product.id === product.id
         );
-      }
-      return [...prev, { product, quantity: 1 }];
-    });
-  }, []);
 
-  const removeFromCart = useCallback((productId: string) => {
-    setCart((prev) => prev.filter((item) => item.product.id !== productId));
-  }, []);
+        if (existing) {
+          if (
+            existing.quantity >= maxQty
+          ) {
+            return prev;
+          }
 
-  // Sets a cart item's quantity directly (used by the +/- buttons in the
-  // cart drawer). Removes the item if it drops to 0, and won't let it go
-  // above the product's available stock.
+          return prev.map((item) =>
+            item.product.id === product.id
+              ? {
+                  ...item,
+                  quantity:
+                    item.quantity + 1,
+                }
+              : item
+          );
+        }
+
+        return [
+          ...prev,
+          {
+            product,
+            quantity: 1,
+          },
+        ];
+      });
+    },
+    []
+  );
+
+  const removeFromCart = useCallback(
+    (productId: string) => {
+      setCart((prev) =>
+        prev.filter(
+          (item) =>
+            item.product.id !== productId
+        )
+      );
+    },
+    []
+  );
+
   const updateCartQuantity = useCallback(
-    (productId: string, quantity: number) => {
+    (
+      productId: string,
+      quantity: number
+    ) => {
       if (quantity <= 0) {
         removeFromCart(productId);
         return;
       }
+
       setCart((prev) =>
         prev.map((item) => {
-          if (item.product.id !== productId) return item;
-          const maxQty = item.product.quantity != null ? item.product.quantity : Infinity;
-          return { ...item, quantity: Math.min(quantity, maxQty) };
+          if (
+            item.product.id !== productId
+          ) {
+            return item;
+          }
+
+          const maxQty =
+            item.product.quantity != null
+              ? item.product.quantity
+              : Infinity;
+
+          return {
+            ...item,
+            quantity: Math.min(
+              quantity,
+              maxQty
+            ),
+          };
         })
       );
     },
@@ -191,23 +404,58 @@ export function useStore() {
     setCart([]);
   }, []);
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartTotal = cart.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.product.price) *
+        item.quantity,
+    0
+  );
 
-  // Spends wallet balance to buy `quantity` units of a single item
-  // (backend enforces both the balance check and available stock).
+  const cartCount = cart.reduce(
+    (sum, item) =>
+      sum + item.quantity,
+    0
+  );
+
+  // ============================================================
+  // PURCHASE
+  // ============================================================
+
   const purchaseItem = useCallback(
-    async (itemId: string, quantity: number = 1) => {
-      await api.purchaseItem(itemId, quantity);
+    async (
+      itemId: string,
+      quantity: number = 1
+    ) => {
+      await api.purchaseItem(
+        itemId,
+        quantity
+      );
+
       await loadProducts();
     },
     [loadProducts]
   );
 
-  const getProductsByCategory = useCallback(
-    (categoryId: string) => products.filter((p) => p.categoryId === categoryId && p.inStock),
-    [products]
-  );
+  // ============================================================
+  // CATEGORY FILTER
+  // ============================================================
+
+  const getProductsByCategory =
+    useCallback(
+      (categoryId: string) =>
+        products.filter(
+          (product) =>
+            product.categoryId ===
+              categoryId &&
+            product.inStock
+        ),
+      [products]
+    );
+
+  // ============================================================
+  // RETURN
+  // ============================================================
 
   return {
     products,
@@ -228,11 +476,14 @@ export function useStore() {
     removeFromCart,
     updateCartQuantity,
     clearCart,
+
     cartTotal,
     cartCount,
 
     getProductsByCategory,
     purchaseItem,
+
+    // Manual refresh is still available.
     refresh: loadProducts,
   };
 }
