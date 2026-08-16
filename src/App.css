@@ -1055,3 +1055,394 @@ article,
     border-color 0.2s ease,
     color 0.2s ease;
 }
+/* =========================================================
+   DEEDEE'S MARKETPLACE — ORGANIZED RESPONSIVE HEADER
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   HEADER FOUNDATION
+   --------------------------------------------------------- */
+
+.marketplace-navbar {
+  width: 100%;
+  overflow: visible;
+}
+
+.marketplace-nav-inner {
+  box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   BRAND
+   --------------------------------------------------------- */
+
+.nav-brand {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.nav-brand-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ---------------------------------------------------------
+   NAVIGATION BUTTONS
+   --------------------------------------------------------- */
+
+.desktop-nav button {
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+   ========================================================= */
+
+@media (max-width: 1050px) {
+
+  .marketplace-nav-inner {
+    flex-wrap: wrap;
+    min-height: auto;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .nav-left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .nav-actions {
+    flex-shrink: 0;
+  }
+
+  /*
+   * Navigation gets its own clean row instead of being
+   * squeezed between the logo and action buttons.
+   */
+
+  .desktop-nav {
+    order: 3;
+    width: 100%;
+    flex: 0 0 100%;
+
+    justify-content: flex-start;
+
+    padding: 6px 0 2px;
+
+    border-top: 1px solid
+      var(--market-border-soft);
+
+    gap: 6px;
+
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .desktop-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .desktop-nav button {
+    flex-shrink: 0;
+    padding: 8px 12px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE HEADER
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .marketplace-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .marketplace-nav-inner {
+    display: grid;
+
+    grid-template-columns:
+      auto
+      minmax(0, 1fr)
+      auto;
+
+    align-items: center;
+
+    min-height: 62px;
+
+    padding: 8px 12px;
+
+    gap: 8px;
+  }
+
+
+  /* LEFT MENU BUTTON */
+
+  .nav-left {
+    display: contents;
+  }
+
+  .nav-left > .nav-icon-button {
+    grid-column: 1;
+    grid-row: 1;
+
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+  }
+
+
+  /* BRAND */
+
+  .nav-brand {
+    grid-column: 2;
+    grid-row: 1;
+
+    width: 100%;
+
+    justify-content: flex-start;
+
+    gap: 8px;
+
+    overflow: hidden;
+  }
+
+  .nav-brand-box {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    border-radius: 9px;
+  }
+
+  .nav-brand-text {
+    display: block;
+
+    min-width: 0;
+
+    font-size: 11px;
+    line-height: 1.1;
+
+    letter-spacing: 0.01em;
+
+    white-space: nowrap;
+  }
+
+
+  /* ACTIONS */
+
+  .nav-actions {
+    grid-column: 3;
+    grid-row: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 4px;
+  }
+
+  .nav-circle-button {
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+  }
+
+  .nav-circle-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nav-icon-button {
+    width: 36px;
+    height: 36px;
+  }
+
+
+  /*
+   * Hide the desktop navigation on phones.
+   * It will appear inside the menu instead.
+   */
+
+  .desktop-nav {
+    display: none !important;
+  }
+
+
+  /* MOBILE MENU */
+
+  .mobile-menu-button {
+    display: inline-flex !important;
+  }
+
+  .mobile-nav-panel {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 4px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 10px 12px 14px;
+
+    background: white;
+
+    border-top:
+      1px solid
+      var(--market-border-soft);
+
+    box-shadow:
+      0 12px 30px
+      rgba(15, 23, 42, 0.10);
+  }
+
+  .mobile-nav-panel button {
+    min-height: 44px;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 10px 14px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background: transparent;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-align: left;
+
+    text-transform: capitalize;
+
+    cursor: pointer;
+  }
+
+  .mobile-nav-panel button:hover,
+  .mobile-nav-panel button:active {
+    color: var(--market-primary);
+
+    background: var(--market-soft);
+  }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 430px) {
+
+  .marketplace-nav-inner {
+    grid-template-columns:
+      36px
+      minmax(0, 1fr)
+      auto;
+
+    padding-left: 8px;
+    padding-right: 8px;
+
+    gap: 5px;
+  }
+
+  .nav-brand-text {
+    font-size: 10px;
+  }
+
+  .nav-brand-box {
+    width: 32px;
+    height: 32px;
+  }
+
+  .nav-circle-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .nav-actions {
+    gap: 2px;
+  }
+}
+
+
+/* =========================================================
+   DARK MODE — ORGANIZED HEADER
+   ========================================================= */
+
+html.dark .mobile-nav-panel {
+  background: #020617;
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  box-shadow:
+    0 15px 35px
+    rgba(0, 0, 0, 0.35);
+}
+
+html.dark .mobile-nav-panel button {
+  color: #cbd5e1;
+}
+
+html.dark .mobile-nav-panel button:hover,
+html.dark .mobile-nav-panel button:active {
+  color: var(--market-primary);
+
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+
+/* =========================================================
+   DARK MODE — NAVIGATION ROW
+   ========================================================= */
+
+html.dark .desktop-nav {
+  border-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   THEME TRANSITION
+   ========================================================= */
+
+.marketplace-navbar,
+.marketplace-nav-inner,
+.nav-brand,
+.nav-brand-text,
+.nav-icon-button,
+.nav-circle-button,
+.desktop-nav,
+.mobile-nav-panel {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
