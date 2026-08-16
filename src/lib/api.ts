@@ -1,4 +1,4 @@
-// Talks to your deployed backend. Change this to your real Render URL.
+// Talks to your deployed backend.
 export const API_URL = "https://deedees-backend-1.onrender.com";
 
 const TOKEN_KEY = "deedee_token";
@@ -113,14 +113,26 @@ export const api = {
     request("/api/me"),
 
   // ==========================================================
+  // Tonyix Catalogue
+  // ==========================================================
+
+  /*
+   * Gets the Tonyix catalogue through the DeeDees backend.
+   *
+   * IMPORTANT:
+   * The Tonyix API key must stay on the backend.
+   * Never put the Tonyix API key in this frontend file.
+   */
+  getTonyixProducts: () =>
+    request("/api/tonyix/products"),
+
+  // ==========================================================
   // Items
   // ==========================================================
 
-  // Public items — backend hides credentials/access links.
   getItems: () =>
     request("/api/items"),
 
-  // Admin items — full item data.
   getAdminItems: () =>
     request("/api/admin/items"),
 
@@ -134,6 +146,10 @@ export const api = {
     accessLink?: string;
     quantity?: number;
     accessLinks?: string[];
+
+    // Tonyix product identifier.
+    // This fixes the TypeScript error in useStore.ts.
+    tonyixProductId?: string | number;
   }) =>
     request("/api/items", {
       method: "POST",
@@ -143,9 +159,6 @@ export const api = {
   // ----------------------------------------------------------
   // Credential Pool
   // ----------------------------------------------------------
-  // Each credential becomes one unit of stock.
-  // When a customer buys, the backend consumes credentials
-  // from the pool and assigns them to that purchase.
 
   addCredentials: (
     id: string,
@@ -203,8 +216,6 @@ export const api = {
   // Orders
   // ==========================================================
 
-  // Customer's own purchases.
-  // Assigned credentials are included by the backend.
   getMyOrders: () =>
     request("/api/my-orders"),
 
