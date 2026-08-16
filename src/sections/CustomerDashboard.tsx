@@ -72,9 +72,12 @@ interface Order {
 
   status?: string;
 
-  [key: string]: unknown;
+  details?: string;
+  url?: string | null;
+  link?: string | null;
+  accessLink?: string | null;
+  video?: string | null;
 }
-
 interface SellerSubscription {
   isSeller?: boolean;
   plan?: {
