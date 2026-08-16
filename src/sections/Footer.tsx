@@ -76,7 +76,12 @@ export function Footer() {
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 How It Works
-              </button>
+             <a
+  href="#how-it-works"
+  className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
+>
+  How It Works
+</a>
 
               <button
                 type="button"
@@ -100,7 +105,12 @@ export function Footer() {
                 className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
               >
                 FAQ
-              </button>
+              <a
+  href="#faq"
+  className="block text-sm text-slate-400 transition-colors hover:text-cyan-400"
+>
+  FAQ
+</a>
             </div>
           </div>
 
