@@ -1,104 +1,255 @@
-import { Shield, MessageCircle } from 'lucide-react';
+import {
+  MessageCircle,
+  Phone,
+  ShieldCheck,
+  ArrowUp,
+  Heart,
+  ShoppingBag,
+  Mail,
+} from 'lucide-react';
+
+const whatsappNumber = '07046019436';
+const supportNumber = '09035206681';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
-  const scrollToSection = (id: string) => {
+  const scrollTo = (id: string) => {
     const element = document.getElementById(id);
+
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({
+        behavior: 'smooth',
+      });
     }
   };
 
+  const goHome = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  const whatsappLink = `https://wa.me/${whatsappNumber.replace(
+    /^0/,
+    '234'
+  )}`;
+
   return (
-    <footer className="bg-black border-t border-blue-500/20 relative overflow-hidden">
-      {/* Background effect */}
+    <footer className="relative bg-slate-950 text-white overflow-hidden">
+
+      {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[200px] bg-blue-500/5 rounded-full blur-[100px]"></div>
+        <div className="absolute -top-24 left-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="relative w-10 h-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg opacity-75"></div>
-                <div className="absolute inset-0.5 bg-black rounded-lg flex items-center justify-center">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-cyan-400 font-bold">DM</span>
-                </div>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* MAIN FOOTER */}
+        <div className="py-10 sm:py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+
+          {/* BRAND */}
+          <div className="col-span-2 md:col-span-1">
+
+            <button
+              type="button"
+              onClick={goHome}
+              className="text-left group"
+            >
+              <div className="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:scale-[1.02] transition-transform">
+                DEEDEE'S
               </div>
-              <div>
-                <span className="text-white font-bold text-xl tracking-wide">DEEDEE'S</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400 font-bold text-xl"> MARKET</span>
+
+              <div className="text-sm sm:text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400">
+                MARKETPLACE
               </div>
-            </div>
-            <p className="text-slate-400 mb-4 max-w-md">
-              Real, reliable social media growth for Nigerian brands and influencers — secure wallet checkout, no middlemen.
+            </button>
+
+            <p className="mt-4 text-xs sm:text-sm leading-relaxed text-slate-400 max-w-xs">
+              Your trusted marketplace for digital products,
+              social media growth services and more.
             </p>
-            <div className="flex items-center gap-4">
-              <a 
-                href="https://wa.me/07046019436"
+
+            {/* Mini trust badge */}
+            <div className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+
+              <span className="text-[11px] text-slate-300">
+                Secure & Trusted
+              </span>
+            </div>
+          </div>
+
+          {/* QUICK LINKS */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Quick Links
+            </h3>
+
+            <div className="space-y-2.5">
+
+              <button
+                type="button"
+                onClick={goHome}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                Home
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollTo('catalog')}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                Products
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollTo('contact')}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                Contact
+              </button>
+
+              <button
+                type="button"
+                onClick={() => scrollTo('policy')}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                Policies
+              </button>
+            </div>
+          </div>
+
+          {/* SUPPORT */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Support
+            </h3>
+
+            <div className="space-y-3">
+
+              <a
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/30 transition-colors"
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-green-400 transition-colors"
               >
-                <MessageCircle className="h-5 w-5" />
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
               </a>
+
+              <a
+                href={`tel:${supportNumber}`}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-blue-400 transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                Call Support
+              </a>
+
+              <a
+                href={`mailto:support@deedeesmarketplace.com`}
+                className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-cyan-400 transition-colors"
+              >
+                <Mail className="w-4 h-4" />
+                Email Support
+              </a>
+
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* CONTACT */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              {[
-                { label: 'Services', id: 'services' },
-                { label: 'Shop', id: 'catalog' },
-                { label: 'Security', id: 'security' },
-                { label: 'Policy', id: 'policy' },
-                { label: 'Contact', id: 'contact' },
-              ].map((link) => (
-                <li key={link.id}>
-                  <button 
-                    onClick={() => scrollToSection(link.id)} 
-                    className="text-slate-400 hover:text-blue-400 transition-colors"
-                  >
-                    {link.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+              Contact Us
+            </h3>
 
-          {/* Contact Info */}
-          <div>
-            <h4 className="text-white font-semibold mb-4">Contact</h4>
-            <ul className="space-y-2 text-slate-400">
-              <li>WhatsApp: 07046019436</li>
-              <li>WhatsApp: 09035206681</li>
-              <li>Support: 09035206681</li>
-              <li>Support: 09139382082</li>
-            </ul>
-            <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
-              <p className="text-green-400 text-sm flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                Available 24/7
-              </p>
+            <div className="space-y-3">
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
+                  WhatsApp
+                </p>
+
+                <p className="text-xs sm:text-sm text-slate-300">
+                  {whatsappNumber}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
+                  Phone
+                </p>
+
+                <p className="text-xs sm:text-sm text-slate-300">
+                  {supportNumber}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
+                  Location
+                </p>
+
+                <p className="text-xs sm:text-sm text-slate-300">
+                  Nigeria 🇳🇬
+                </p>
+              </div>
+
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-blue-500/20 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-slate-500 text-sm">
-            ©️ {currentYear} DeeDee's Marketplace. All rights reserved.
+        {/* TRUST STRIP */}
+        <div className="border-y border-slate-800 py-4">
+
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Secure Checkout
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <ShoppingBag className="w-4 h-4 text-blue-400" />
+              Quality Products
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <MessageCircle className="w-4 h-4 text-cyan-400" />
+              Customer Support
+            </div>
+
+          </div>
+        </div>
+
+        {/* BOTTOM */}
+        <div className="py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+
+          <p className="text-[10px] sm:text-[11px] text-slate-500 text-center sm:text-left">
+            © {new Date().getFullYear()} DeeDee's Marketplace.
+            All rights reserved.
           </p>
-          <div className="flex items-center gap-2 text-slate-500 text-sm">
-            <Shield className="h-4 w-4 text-blue-400" />
-            <span>100% Secure & Verified</span>
+
+          <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500">
+            Made with
+            <Heart className="w-3 h-3 text-red-400 fill-red-400" />
+            for Nigerian customers 🇳🇬
           </div>
+
+          <button
+            type="button"
+            onClick={goHome}
+            className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 hover:text-cyan-400 transition-colors"
+          >
+            Back to top
+            <ArrowUp className="w-3.5 h-3.5" />
+          </button>
+
         </div>
+
       </div>
     </footer>
   );
