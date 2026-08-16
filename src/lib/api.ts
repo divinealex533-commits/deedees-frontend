@@ -111,6 +111,13 @@ export const api = {
 
   me: () =>
     request("/api/me"),
+    
+  // ==========================================================
+  // Seller Subscription
+  // ==========================================================
+
+  getSellerSubscription: () =>
+    request("/api/seller/subscription"),
 
   // ==========================================================
   // Tonyix Catalogue
