@@ -56,7 +56,7 @@ export function HowItWorksSection() {
 
           <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
             How It{' '}
-            <span className="bg-gradient-to-r from-blue-500 to-cyan-500 bg-clip-text text-transparent">
+            <span className="text-emerald-500">
               Works
             </span>
           </h2>
