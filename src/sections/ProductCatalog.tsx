@@ -23,15 +23,11 @@ interface ProductCatalogProps {
   products: Product[];
   categories: Category[];
 
-  // Kept for compatibility with the existing App.tsx.
-  // We will connect the direct Buy Now flow in App.tsx next.
   onAddToCart: (product: Product) => void;
 
-  // Direct purchase callback.
   onBuyNow?: (product: Product) => void;
 }
 
-// Categories that must appear first.
 const PRIORITY_ORDER = ['social media growth', 'shoes'];
 
 export function ProductCatalog({
@@ -43,17 +39,42 @@ export function ProductCatalog({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     null
   );
+
   const [searchQuery, setSearchQuery] = useState<string>('');
+
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
   const [categoryImageErrors, setCategoryImageErrors] = useState<
     Record<string, boolean>
   >({});
+
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
 
-  const inStockProducts = useMemo(
-    () => products.filter((p) => p.inStock),
-    [products]
-  );
+  /*
+   * IMPORTANT:
+   *
+   * Tonyix products can have quantity/stockCount even when the old
+   * inStock boolean was not populated correctly.
+   *
+   * Therefore:
+   * - quantity > 0  = available
+   * - stockCount > 0 = available
+   * - otherwise, if inStock is explicitly false = unavailable
+   * - if no stock field exists, don't hide the product
+   */
+  const inStockProducts = useMemo(() => {
+    return products.filter((p) => {
+      if (p.quantity != null) {
+        return Number(p.quantity) > 0;
+      }
+
+      if (p.stockCount != null) {
+        return Number(p.stockCount) > 0;
+      }
+
+      return p.inStock !== false;
+    });
+  }, [products]);
 
   const orderedCategories = useMemo(() => {
     const priorityCats: Category[] = [];
@@ -64,7 +85,9 @@ export function ProductCatalog({
         (c) => c.name.trim().toLowerCase() === name
       );
 
-      if (match) priorityCats.push(match);
+      if (match) {
+        priorityCats.push(match);
+      }
     });
 
     categories.forEach((c) => {
@@ -91,7 +114,9 @@ export function ProductCatalog({
   }, [inStockProducts]);
 
   const filteredCategories = useMemo(() => {
-    if (!searchQuery.trim()) return orderedCategories;
+    if (!searchQuery.trim()) {
+      return orderedCategories;
+    }
 
     const q = searchQuery.toLowerCase();
 
@@ -112,7 +137,9 @@ export function ProductCatalog({
           p.categoryId === selectedCategory
       )
       .filter((p) => {
-        if (!searchQuery.trim()) return true;
+        if (!searchQuery.trim()) {
+          return true;
+        }
 
         const q = searchQuery.toLowerCase();
 
@@ -123,11 +150,7 @@ export function ProductCatalog({
             : false)
         );
       });
-  }, [
-    inStockProducts,
-    selectedCategory,
-    searchQuery,
-  ]);
+  }, [inStockProducts, selectedCategory, searchQuery]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -162,15 +185,22 @@ export function ProductCatalog({
   };
 
   const handleBuyNow = (product: Product) => {
-    if (!product.inStock) return;
+    const available =
+      product.quantity != null
+        ? Number(product.quantity) > 0
+        : product.stockCount != null
+          ? Number(product.stockCount) > 0
+          : product.inStock !== false;
+
+    if (!available) {
+      return;
+    }
 
     if (onBuyNow) {
       onBuyNow(product);
       return;
     }
 
-    // Temporary compatibility fallback.
-    // App.tsx will be updated next so this opens checkout directly.
     onAddToCart(product);
   };
 
@@ -182,6 +212,7 @@ export function ProductCatalog({
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[100px]" />
       </div>
 
@@ -420,7 +451,9 @@ export function ProductCatalog({
 
                           {product.quantity != null
                             ? `${product.quantity} left`
-                            : 'In Stock'}
+                            : product.stockCount != null
+                              ? `${product.stockCount} left`
+                              : 'In Stock'}
                         </Badge>
                       </div>
                     </div>
@@ -474,7 +507,6 @@ export function ProductCatalog({
                     </CardContent>
                   </Card>
                 ))}
-
               </div>
             )}
           </div>
