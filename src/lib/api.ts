@@ -25,45 +25,45 @@ async function request(
   const token = getToken();
 
   const adminSellerTestPlan =
-  typeof window !== "undefined"
-    ? localStorage.getItem(
-        "deedee_admin_seller_test_plan"
-      )
-    : null;
+    typeof window !== "undefined"
+      ? localStorage.getItem(
+          "deedee_admin_seller_test_plan"
+        )
+      : null;
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-  "Content-Type": "application/json",
+      "Content-Type": "application/json",
 
-  ...(token
-    ? {
-        Authorization:
-          `Bearer ${token}`,
-      }
-    : {}),
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
 
-  ...(adminSellerTestPlan
-    ? {
-        "x-admin-seller-test-plan":
-          adminSellerTestPlan,
-      }
-    : {}),
+      ...(adminSellerTestPlan
+        ? {
+            "x-admin-seller-test-plan":
+              adminSellerTestPlan,
+          }
+        : {}),
 
-  ...(options.headers || {}),
-},
+      ...(options.headers || {}),
+    },
+  });
 
   const data = await res.json().catch(() => ({}));
 
-if (!res.ok) {
-  throw new Error(
-    data.error || `Request failed (${res.status})`
-  );
-}
+  if (!res.ok) {
+    throw new Error(
+      data.error ||
+        `Request failed (${res.status})`
+    );
+  }
 
-return data;
+  return data;
 }
-export const api = {
   // ==========================================================
   // AUTH
   // ==========================================================
