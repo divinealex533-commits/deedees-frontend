@@ -24,16 +24,34 @@ async function request(
 ) {
   const token = getToken();
 
+  const adminSellerTestPlan =
+  typeof window !== "undefined"
+    ? localStorage.getItem(
+        "deedee_admin_seller_test_plan"
+      )
+    : null;
+
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? { Authorization: `Bearer ${token}` }
-        : {}),
-      ...(options.headers || {}),
-    },
-  });
+  "Content-Type": "application/json",
+
+  ...(token
+    ? {
+        Authorization:
+          `Bearer ${token}`,
+      }
+    : {}),
+
+  ...(adminSellerTestPlan
+    ? {
+        "x-admin-seller-test-plan":
+          adminSellerTestPlan,
+      }
+    : {}),
+
+  ...(options.headers || {}),
+},
 
   const data = await res.json().catch(() => ({}));
 
