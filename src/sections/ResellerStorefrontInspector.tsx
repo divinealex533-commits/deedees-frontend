@@ -271,7 +271,7 @@ export default function ResellerStorefrontInspector() {
     try {
       const response =
         await fetch(
-          "/api/admin/sellers/frozen",
+          /api/admin/sellers
           {
             credentials: "include",
           }
