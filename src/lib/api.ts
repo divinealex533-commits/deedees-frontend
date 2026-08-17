@@ -112,6 +112,21 @@ export const api = {
 
   getSellerSubscription: () =>
     request("/api/seller/subscription"),
+  
+    getSellerPlans: () =>
+    request("/api/seller/plans"),
+
+  initializeSellerSubscription: (planId: string) =>
+    request("/api/seller/subscription/initialize", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    }),
+
+  verifySellerSubscription: (reference: string) =>
+    request("/api/seller/subscription/verify", {
+      method: "POST",
+      body: JSON.stringify({ reference }),
+    }),
 
   // ==========================================================
   // SELLER STOREFRONT
