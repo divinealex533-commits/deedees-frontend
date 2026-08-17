@@ -453,6 +453,9 @@ function App() {
           setView('affiliate');
           setIsAccountDrawerOpen(false);
         }}
+        onGoSellerDashboard={
+  handleSellerDashboard
+}
         onLogout={() => {
           auth.logout();
           setView('store');
