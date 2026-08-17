@@ -1,10 +1,14 @@
 import AffiliateProgram from '@/sections/AffiliateProgram';
 import ResellerStorefrontInspector from '@/sections/ResellerStorefrontInspector';
+import SellerDashboard from '@/sections/SellerDashboard';
+
 import { useState, useEffect } from 'react';
+
 import { ResetPassword } from '@/sections/ResetPassword';
 import { useStore } from '@/hooks/useStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useWallet } from '@/hooks/useWallet';
+
 import { HeroSection } from '@/sections/HeroSection';
 import { ServicesSection } from '@/sections/ServicesSection';
 import { TestimonialsSection } from '@/sections/TestimonialsSection';
@@ -15,15 +19,19 @@ import { HowItWorksSection } from '@/sections/HowItWorksSection';
 import { FAQSection } from '@/sections/FAQSection';
 import { CartDrawer } from '@/sections/CartDrawer';
 import { CheckoutModal } from '@/sections/CheckoutModal';
+
 import { AdminDashboard } from '@/sections/AdminDashboard';
 import { CustomerDashboard } from '@/sections/CustomerDashboard';
+
 import { ContactSection } from '@/sections/ContactSection';
 import { Footer } from '@/sections/Footer';
 import { Navbar } from '@/sections/Navbar';
 import { AuthModal } from '@/sections/AuthModal';
 import { AdminLoginModal } from '@/sections/AdminLoginModal';
 import { AccountDrawer } from '@/sections/AccountDrawer';
+
 import { FloatingContactButtons } from '@/components/FloatingContactButtons';
+
 import { Toaster, toast } from 'sonner';
 
 type ViewType =
@@ -31,6 +39,7 @@ type ViewType =
   | 'admin'
   | 'dashboard'
   | 'affiliate'
+  | 'seller-dashboard'
   | 'seller-inspector';
 
 function App() {
@@ -70,7 +79,9 @@ function App() {
 
   const store = useStore();
   const auth = useAuth();
-  const wallet = useWallet(auth.user?.id || null);
+  const wallet = useWallet(
+    auth.user?.id || null
+  );
 
   useEffect(() => {
     if (!auth.isLoaded) return;
@@ -79,7 +90,9 @@ function App() {
       window.location.search
     );
 
-    const reference = params.get('reference');
+    const reference = params.get(
+      'reference'
+    );
 
     if (
       !reference ||
@@ -100,7 +113,8 @@ function App() {
         if (cancelled) return;
 
         if (
-          result.paymentStatus === 'success'
+          result.paymentStatus ===
+          'success'
         ) {
           toast.success(
             'Payment received! Your balance has been updated.'
@@ -259,9 +273,11 @@ function App() {
     }
 
     setIsCartOpen(false);
+
     setSelectedProduct(
       firstCartItem.product
     );
+
     setIsCheckoutOpen(true);
   };
 
@@ -313,6 +329,28 @@ function App() {
     setView('dashboard');
   };
 
+  const handleSellerDashboard = () => {
+    if (!auth.isAuthenticated) {
+      setIsAuthModalOpen(true);
+
+      toast.info(
+        'Please login to access the seller dashboard'
+      );
+
+      return;
+    }
+
+    if (auth.user?.isAdmin) {
+      toast.info(
+        'Admin accounts should use the admin dashboard.'
+      );
+      return;
+    }
+
+    setIsAccountDrawerOpen(false);
+    setView('seller-dashboard');
+  };
+
   if (
     !store.isLoaded ||
     !auth.isLoaded
@@ -351,10 +389,11 @@ function App() {
         onViewChange={(nextView) => {
           /*
            * Navbar may still expose the original
-           * four-view navigation type.
+           * navigation views.
            *
-           * The reseller inspector is controlled
-           * separately from the admin area below.
+           * Seller dashboard is controlled
+           * separately so normal customers are
+           * not accidentally routed into it.
            */
           setView(
             nextView as ViewType
@@ -621,6 +660,31 @@ function App() {
           }}
         />
       )}
+
+      {view === 'seller-dashboard' &&
+        auth.user && (
+          <SellerDashboard
+            userId={auth.user.id}
+            onBack={() => {
+              setView('store');
+
+              setTimeout(() => {
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth',
+                });
+              }, 50);
+            }}
+            onLogout={() => {
+              auth.logout();
+              setView('store');
+
+              toast.success(
+                'Logged out successfully'
+              );
+            }}
+          />
+        )}
 
       {view === 'seller-inspector' &&
         auth.user?.isAdmin && (
