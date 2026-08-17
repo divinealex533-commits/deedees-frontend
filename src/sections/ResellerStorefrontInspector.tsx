@@ -166,23 +166,27 @@ function inspectionClasses(
 
 function getPlanName(
   seller: Seller
-) {
+): string {
+  const plan = seller.sellerPlan;
+
   if (
-    typeof seller.sellerPlan ===
-    "object" &&
-    seller.sellerPlan
+    typeof plan === "object" &&
+    plan !== null
   ) {
     return (
-      seller.sellerPlan.name ||
-      seller.sellerPlan.id ||
+      plan.name ||
+      plan.id ||
       "Unknown plan"
     );
   }
 
-  return (
-    seller.sellerPlan ||
-    "No plan"
-  );
+  if (
+    typeof plan === "string"
+  ) {
+    return plan;
+  }
+
+  return "No plan";
 }
 
 function getStoreName(
