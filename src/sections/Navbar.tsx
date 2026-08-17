@@ -17,6 +17,7 @@ type NavbarView =
   | 'admin'
   | 'dashboard'
   | 'affiliate'
+  | 'seller-dashboard'
   | 'seller-inspector';
 
 type MainNavbarView =
