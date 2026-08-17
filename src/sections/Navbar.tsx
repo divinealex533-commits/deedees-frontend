@@ -12,8 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import type { User } from '@/hooks/useAuth';
 
-interface NavbarProps {
-  type NavbarView =
+type NavbarView =
   | 'store'
   | 'admin'
   | 'dashboard'
