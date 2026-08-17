@@ -46,12 +46,10 @@ async function request(
   return data;
 }
 
-// ============================================================
-// API
-// ============================================================
-
 export const api = {
-  // ---------- Auth ----------
+  // ==========================================================
+  // AUTH
+  // ==========================================================
 
   signup: (
     name: string,
@@ -84,17 +82,13 @@ export const api = {
   forgotPassword: (email: string) =>
     request("/api/auth/forgot-password", {
       method: "POST",
-      body: JSON.stringify({
-        email,
-      }),
+      body: JSON.stringify({ email }),
     }),
 
   resendPasswordReset: (email: string) =>
     request("/api/auth/resend-password-reset", {
       method: "POST",
-      body: JSON.stringify({
-        email,
-      }),
+      body: JSON.stringify({ email }),
     }),
 
   resetPassword: (
@@ -111,52 +105,224 @@ export const api = {
 
   me: () =>
     request("/api/me"),
-    
+
   // ==========================================================
-  // Seller Subscription
+  // SELLER SUBSCRIPTION
   // ==========================================================
 
   getSellerSubscription: () =>
     request("/api/seller/subscription"),
 
-    // ==========================================================
-  // Admin Seller Subscription Management
   // ==========================================================
+  // SELLER STOREFRONT
+  // ==========================================================
+
+  getMySellerStorefront: () =>
+    request("/api/seller/storefront"),
+
+  createSellerStorefront: (data: {
+    storeName: string;
+    description?: string;
+    logoUrl?: string;
+    bannerUrl?: string;
+  }) =>
+    request("/api/seller/storefront", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateSellerStorefront: (
+    updates: Record<string, unknown>
+  ) =>
+    request("/api/seller/storefront", {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    }),
+
+  getSellerStorefrontBySlug: (
+    slug: string
+  ) =>
+    request(
+      `/api/seller/storefront/${encodeURIComponent(slug)}`
+    ),
+
+  // ==========================================================
+  // SELLER LISTINGS
+  // ==========================================================
+
+  getMySellerListings: () =>
+    request("/api/seller/listings"),
+
+  createSellerListing: (listing: {
+    title: string;
+    description?: string;
+    price: number;
+    imageUrl?: string;
+    categoryId?: string;
+    quantity?: number;
+    accessLinks?: string[];
+    tonyixProductId?: string | number;
+  }) =>
+    request("/api/seller/listings", {
+      method: "POST",
+      body: JSON.stringify(listing),
+    }),
+
+  updateSellerListing: (
+    id: string,
+    updates: Record<string, unknown>
+  ) =>
+    request(`/api/seller/listings/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    }),
+
+  deleteSellerListing: (id: string) =>
+    request(`/api/seller/listings/${id}`, {
+      method: "DELETE",
+    }),
+
+  toggleSellerListing: (id: string) =>
+    request(
+      `/api/seller/listings/${id}/toggle`,
+      {
+        method: "POST",
+      }
+    ),
+
+  addSellerCredentials: (
+    id: string,
+    credentials: string[]
+  ) =>
+    request(
+      `/api/seller/listings/${id}/add-access-links`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          credentials,
+        }),
+      }
+    ),
+
+  // ==========================================================
+  // PUBLIC SELLER MARKETPLACE
+  // ==========================================================
+
+  getSellerMarketplace: () =>
+    request("/api/marketplace/sellers"),
+
+  getPublicSellerListings: () =>
+    request("/api/marketplace/listings"),
+
+  getPublicSellerStorefront: (
+    slug: string
+  ) =>
+    request(
+      `/api/marketplace/storefront/${encodeURIComponent(slug)}`
+    ),
+
+  // ==========================================================
+  // SELLER ORDERS
+  // ==========================================================
+
+  getMySellerOrders: () =>
+    request("/api/seller/orders"),
+
+  getSellerOrder: (id: string) =>
+    request(`/api/seller/orders/${id}`),
+
+  // ==========================================================
+  // SELLER WITHDRAWALS
+  // ==========================================================
+
+  getMySellerWithdrawals: () =>
+    request("/api/seller/withdrawals"),
+
+  requestSellerWithdrawal: (
+    amount: number,
+    bankDetails: {
+      bankName: string;
+      accountName: string;
+      accountNumber: string;
+    }
+  ) =>
+    request("/api/seller/withdrawals", {
+      method: "POST",
+      body: JSON.stringify({
+        amount,
+        bankDetails,
+      }),
+    }),
+
+  // ==========================================================
+  // ADMIN SELLER MANAGEMENT
+  // ==========================================================
+
   getFrozenSellers: async () => {
     const data = await request(
       "/api/admin/sellers/frozen"
     );
+
     return data.sellers || [];
   },
+
   unfreezeSeller: (
-  userId: string
-) =>
-  request(
-    `/api/admin/sellers/${userId}/unfreeze`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        paymentConfirmed: true,
-      }),
-    }
-  ),
+    userId: string
+  ) =>
+    request(
+      `/api/admin/sellers/${userId}/unfreeze`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          paymentConfirmed: true,
+        }),
+      }
+    ),
+
+  getAdminSellerSubscriptions: () =>
+    request(
+      "/api/admin/sellers/subscriptions"
+    ),
+
+  getAdminSellerOrders: () =>
+    request("/api/admin/sellers/orders"),
+
+  getAdminSellerWithdrawals: () =>
+    request("/api/admin/sellers/withdrawals"),
+
+  approveSellerWithdrawal: (
+    id: string
+  ) =>
+    request(
+      `/api/admin/sellers/withdrawals/${id}/approve`,
+      {
+        method: "POST",
+      }
+    ),
+
+  rejectSellerWithdrawal: (
+    id: string,
+    reason?: string
+  ) =>
+    request(
+      `/api/admin/sellers/withdrawals/${id}/reject`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          reason,
+        }),
+      }
+    ),
 
   // ==========================================================
-  // Tonyix Catalogue
+  // TONYIX CATALOGUE
   // ==========================================================
 
-  /*
-   * Gets the Tonyix catalogue through the DeeDees backend.
-   *
-   * IMPORTANT:
-   * The Tonyix API key must stay on the backend.
-   * Never put the Tonyix API key in this frontend file.
-   */
   getTonyixProducts: () =>
     request("/api/tonyix/products"),
 
   // ==========================================================
-  // Items
+  // ITEMS
   // ==========================================================
 
   getItems: () =>
@@ -175,19 +341,12 @@ export const api = {
     accessLink?: string;
     quantity?: number;
     accessLinks?: string[];
-
-    // Tonyix product identifier.
-    // This fixes the TypeScript error in useStore.ts.
     tonyixProductId?: string | number;
   }) =>
     request("/api/items", {
       method: "POST",
       body: JSON.stringify(item),
     }),
-
-  // ----------------------------------------------------------
-  // Credential Pool
-  // ----------------------------------------------------------
 
   addCredentials: (
     id: string,
@@ -226,7 +385,7 @@ export const api = {
     }),
 
   // ==========================================================
-  // Purchase
+  // PURCHASE
   // ==========================================================
 
   purchaseItem: (
@@ -242,21 +401,21 @@ export const api = {
     }),
 
   // ==========================================================
-  // Orders
+  // ORDERS
   // ==========================================================
 
   getMyOrders: () =>
     request("/api/my-orders"),
 
   // ==========================================================
-  // Referrals / Affiliate
+  // REFERRALS / AFFILIATE
   // ==========================================================
 
   getMyReferrals: () =>
     request("/api/my-referrals"),
 
   // ==========================================================
-  // Wallet — Instant Paystack
+  // WALLET — INSTANT PAYSTACK
   // ==========================================================
 
   initializeInstantDeposit: (
@@ -280,7 +439,7 @@ export const api = {
     ),
 
   // ==========================================================
-  // Wallet — Manual Deposit
+  // WALLET — MANUAL DEPOSIT
   // ==========================================================
 
   submitManualDeposit: async (
@@ -332,7 +491,7 @@ export const api = {
     request("/api/wallet/deposits"),
 
   // ==========================================================
-  // Admin Deposits
+  // ADMIN DEPOSITS
   // ==========================================================
 
   getAdminDeposits: (
@@ -363,14 +522,14 @@ export const api = {
     ),
 
   // ==========================================================
-  // Admin Sales
+  // ADMIN SALES
   // ==========================================================
 
   getSales: () =>
     request("/api/admin/sales"),
 
   // ==========================================================
-  // Categories
+  // CATEGORIES
   // ==========================================================
 
   getCategories: () =>
@@ -401,7 +560,7 @@ export const api = {
     }),
 
   // ==========================================================
-  // Support Tickets
+  // SUPPORT TICKETS
   // ==========================================================
 
   createTicket: (
