@@ -251,6 +251,15 @@ export default function SellerDashboard({
   const [refreshing, setRefreshing] =
     useState(false);
 
+    const [sellerPlans, setSellerPlans] =
+    useState<any[]>([]);
+
+  const [loadingPlans, setLoadingPlans] =
+    useState(false);
+
+  const [payingPlan, setPayingPlan] =
+    useState<string | null>(null);
+
   const [activeTab, setActiveTab] =
     useState<
       | "overview"
@@ -458,6 +467,144 @@ export default function SellerDashboard({
       ),
     [orders]
   );
+
+    async function loadSellerPlans() {
+    setLoadingPlans(true);
+
+    try {
+      const response =
+        await api.getSellerPlans();
+
+      const plans =
+        Array.isArray(response)
+          ? response
+          : response?.plans ||
+            response?.data ||
+            [];
+
+      setSellerPlans(plans);
+    } catch (error) {
+      console.error(
+        "Seller plans error:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not load seller plans"
+      );
+    } finally {
+      setLoadingPlans(false);
+    }
+  }
+
+  async function startSellerSubscription(
+    planId: string
+  ) {
+    setPayingPlan(planId);
+
+    try {
+      const response =
+        await api.initializeSellerSubscription(
+          planId
+        );
+
+      const authorizationUrl =
+        response?.authorization_url ||
+        response?.authorizationUrl ||
+        response?.data?.authorization_url ||
+        response?.data?.authorizationUrl;
+
+      if (!authorizationUrl) {
+        throw new Error(
+          "Payment authorization URL was not returned"
+        );
+      }
+
+      window.location.href =
+        authorizationUrl;
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not start seller payment"
+      );
+
+      setPayingPlan(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!isSubscriptionActive) {
+      loadSellerPlans();
+    }
+  }, [isSubscriptionActive]);
+
+  useEffect(() => {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const reference =
+      params.get("reference");
+
+    if (!reference) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function verifyPayment() {
+      try {
+        toast.loading(
+          "Verifying your seller payment...",
+          {
+            id: "seller-payment",
+          }
+        );
+
+        await api.verifySellerSubscription(
+          reference
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        toast.success(
+          "Seller subscription activated!",
+          {
+            id: "seller-payment",
+          }
+        );
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        await loadDashboard();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Seller payment verification failed",
+          {
+            id: "seller-payment",
+          }
+        );
+      }
+    }
+
+    verifyPayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadDashboard, isSubscriptionActive]);
 
   const pendingOrders = useMemo(
     () =>
@@ -977,28 +1124,124 @@ export default function SellerDashboard({
 
         {/* LOCKED */}
 
+               {/* LOCKED / SELLER PLAN */}
+
         {!isSubscriptionActive ? (
           <Card className="border-slate-800 bg-slate-950">
-            <CardContent className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/10">
-                <Store className="h-8 w-8 text-red-400" />
+            <CardContent className="p-8">
+
+              <div className="mx-auto max-w-4xl text-center">
+
+                <div className="mb-5 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-500/10">
+                  <Store className="h-8 w-8 text-red-400" />
+                </div>
+
+                <h2 className="text-2xl font-bold">
+                  Activate your seller marketplace
+                </h2>
+
+                <p className="mt-3 text-slate-400">
+                  Choose a seller plan to unlock your
+                  storefront, products, orders and
+                  withdrawals.
+                </p>
+
+                {loadingPlans ? (
+                  <div className="mt-8 flex justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+                  </div>
+                ) : sellerPlans.length === 0 ? (
+                  <div className="mt-8 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5 text-yellow-200">
+                    No seller plans are currently
+                    available. Please refresh and try
+                    again.
+                  </div>
+                ) : (
+                  <div className="mt-8 grid gap-5 md:grid-cols-3">
+                    {sellerPlans.map((plan: any) => {
+                      const planId =
+                        String(
+                          plan.id ??
+                          plan.planId ??
+                          plan.code ??
+                          ""
+                        );
+
+                      const planName =
+                        plan.name ??
+                        plan.title ??
+                        planId;
+
+                      const price =
+                        Number(
+                          plan.price ??
+                          plan.amount ??
+                          0
+                        );
+
+                      const billing =
+                        plan.billing ??
+                        plan.interval ??
+                        "";
+
+                      return (
+                        <Card
+                          key={planId}
+                          className="border-slate-800 bg-slate-900"
+                        >
+                          <CardContent className="p-6">
+
+                            <h3 className="text-lg font-bold text-white">
+                              {planName}
+                            </h3>
+
+                            <div className="mt-4 text-2xl font-bold text-cyan-300">
+                              ₦
+                              {price.toLocaleString()}
+                            </div>
+
+                            {billing && (
+                              <p className="mt-1 text-sm text-slate-500">
+                                {billing}
+                              </p>
+                            )}
+
+                            <Button
+                              className="mt-6 w-full bg-cyan-600 hover:bg-cyan-500"
+                              disabled={
+                                !planId ||
+                                payingPlan ===
+                                  planId
+                              }
+                              onClick={() =>
+                                startSellerSubscription(
+                                  planId
+                                )
+                              }
+                            >
+                              {payingPlan ===
+                              planId ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Opening payment...
+                                </>
+                              ) : (
+                                "Choose Plan"
+                              )}
+                            </Button>
+
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+
               </div>
 
-              <h2 className="text-2xl font-bold">
-                Seller marketplace is locked
-              </h2>
-
-              <p className="mt-3 max-w-lg text-slate-400">
-                Your account is not currently on an
-                active seller subscription. Your
-                customer account remains available,
-                but reseller tools cannot be used until
-                the subscription is active.
-              </p>
             </CardContent>
           </Card>
         ) : (
-          <>
             {/* OVERVIEW */}
 
             {activeTab === "overview" && (
