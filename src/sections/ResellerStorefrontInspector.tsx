@@ -759,7 +759,7 @@ export default function ResellerStorefrontInspector() {
                         </Badge>
 
                         <Badge>
-                        {getPlanName(selectedSeller)}
+                       {getPlanName(selectedSeller)}
                             "inactive"}
                         </Badge>
                       </div>
