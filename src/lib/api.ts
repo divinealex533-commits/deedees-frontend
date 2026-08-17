@@ -33,6 +33,7 @@ async function request(
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
+
     headers: {
       "Content-Type": "application/json",
 
@@ -64,6 +65,8 @@ async function request(
 
   return data;
 }
+
+export const api = {
   // ==========================================================
   // AUTH
   // ==========================================================
@@ -103,10 +106,13 @@ async function request(
     }),
 
   resendPasswordReset: (email: string) =>
-    request("/api/auth/resend-password-reset", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    }),
+    request(
+      "/api/auth/resend-password-reset",
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }
+    ),
 
   resetPassword: (
     token: string,
@@ -129,21 +135,31 @@ async function request(
 
   getSellerSubscription: () =>
     request("/api/seller/subscription"),
-  
-    getSellerPlans: () =>
+
+  getSellerPlans: () =>
     request("/api/seller/plans"),
 
-  initializeSellerSubscription: (planId: string) =>
-    request("/api/seller/subscription/initialize", {
-      method: "POST",
-      body: JSON.stringify({ planId }),
-    }),
+  initializeSellerSubscription: (
+    planId: string
+  ) =>
+    request(
+      "/api/seller/subscription/initialize",
+      {
+        method: "POST",
+        body: JSON.stringify({ planId }),
+      }
+    ),
 
-  verifySellerSubscription: (reference: string) =>
-    request("/api/seller/subscription/verify", {
-      method: "POST",
-      body: JSON.stringify({ reference }),
-    }),
+  verifySellerSubscription: (
+    reference: string
+  ) =>
+    request(
+      "/api/seller/subscription/verify",
+      {
+        method: "POST",
+        body: JSON.stringify({ reference }),
+      }
+    ),
 
   // ==========================================================
   // SELLER STOREFRONT
@@ -175,7 +191,9 @@ async function request(
     slug: string
   ) =>
     request(
-      `/api/seller/storefront/${encodeURIComponent(slug)}`
+      `/api/seller/storefront/${encodeURIComponent(
+        slug
+      )}`
     ),
 
   // ==========================================================
@@ -250,7 +268,9 @@ async function request(
     slug: string
   ) =>
     request(
-      `/api/marketplace/storefront/${encodeURIComponent(slug)}`
+      `/api/marketplace/storefront/${encodeURIComponent(
+        slug
+      )}`
     ),
 
   // ==========================================================
