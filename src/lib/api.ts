@@ -55,15 +55,14 @@ async function request(
 
   const data = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    throw new Error(
-      data.error || `Request failed (${res.status})`
-    );
-  }
-
-  return data;
+if (!res.ok) {
+  throw new Error(
+    data.error || `Request failed (${res.status})`
+  );
 }
 
+return data;
+}
 export const api = {
   // ==========================================================
   // AUTH
