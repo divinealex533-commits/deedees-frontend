@@ -3,7 +3,7 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react';
+} from "react";
 
 import {
   BarChart3,
@@ -18,16 +18,16 @@ import {
   Trash2,
   Wallet,
   XCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 type SellerDashboardProps = {
   userId: string;
@@ -37,13 +37,16 @@ type SellerDashboardProps = {
 
 type Subscription = {
   status?: string;
-  plan?: string | {
-    id?: string;
-    name?: string;
-    price?: number;
-    currency?: string;
-    billing?: string;
-  } | null;
+  plan?:
+    | string
+    | {
+        id?: string;
+        name?: string;
+        price?: number;
+        currency?: string;
+        billing?: string;
+      }
+    | null;
   expiresAt?: string | null;
   sellerPlan?: string | null;
   sellerPlanStatus?: string | null;
@@ -106,46 +109,59 @@ type Withdrawal = {
   };
 };
 
-function getPlanName(
-  subscription: Subscription | null
-): string {
+function formatMoney(amount: number) {
+  return `₦${Number(amount || 0).toLocaleString()}`;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString();
+}
+
+function getPlanName(subscription: Subscription | null) {
   if (!subscription) {
-    return 'No plan';
+    return "No plan";
   }
 
   const plan =
     subscription.plan ??
     subscription.sellerPlan;
 
-  if (
-    typeof plan === 'object' &&
-    plan !== null
-  ) {
+  if (typeof plan === "object" && plan !== null) {
     return (
       plan.name ||
       plan.id ||
-      'Seller Plan'
+      "Seller Plan"
     );
   }
 
-  return String(plan || 'Seller Plan');
+  return String(
+    plan || "Seller Plan"
+  );
 }
 
 function getSubscriptionStatus(
   subscription: Subscription | null
-): string {
+) {
   if (!subscription) {
-    return 'inactive';
+    return "inactive";
   }
 
   return String(
     subscription.status ||
       subscription.sellerPlanStatus ||
-      'inactive'
+      "inactive"
   ).toLowerCase();
 }
 
-function getExpiry(
+function getSubscriptionExpiry(
   subscription: Subscription | null
 ) {
   if (!subscription) {
@@ -159,34 +175,6 @@ function getExpiry(
   );
 }
 
-function formatMoney(
-  amount: number
-) {
-  return `₦${Number(
-    amount || 0
-  ).toLocaleString()}`;
-}
-
-function formatDate(
-  value?: string | null
-) {
-  if (!value) {
-    return '—';
-  }
-
-  const date = new Date(value);
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return value;
-  }
-
-  return date.toLocaleDateString();
-}
-
 function normalizeListings(
   response: any
 ): Listing[] {
@@ -194,15 +182,11 @@ function normalizeListings(
     return response;
   }
 
-  if (
-    Array.isArray(response?.listings)
-  ) {
+  if (Array.isArray(response?.listings)) {
     return response.listings;
   }
 
-  if (
-    Array.isArray(response?.items)
-  ) {
+  if (Array.isArray(response?.items)) {
     return response.items;
   }
 
@@ -216,9 +200,7 @@ function normalizeOrders(
     return response;
   }
 
-  if (
-    Array.isArray(response?.orders)
-  ) {
+  if (Array.isArray(response?.orders)) {
     return response.orders;
   }
 
@@ -271,12 +253,12 @@ export default function SellerDashboard({
 
   const [activeTab, setActiveTab] =
     useState<
-      'overview' |
-      'storefront' |
-      'products' |
-      'orders' |
-      'withdrawals'
-    >('overview');
+      | "overview"
+      | "storefront"
+      | "products"
+      | "orders"
+      | "withdrawals"
+    >("overview");
 
   const [savingStore, setSavingStore] =
     useState(false);
@@ -291,62 +273,62 @@ export default function SellerDashboard({
     useState(false);
 
   const [storeName, setStoreName] =
-    useState('');
+    useState("");
 
   const [storeDescription, setStoreDescription] =
-    useState('');
+    useState("");
 
   const [storeLogoUrl, setStoreLogoUrl] =
-    useState('');
+    useState("");
 
   const [storeBannerUrl, setStoreBannerUrl] =
-    useState('');
+    useState("");
 
   const [listingTitle, setListingTitle] =
-    useState('');
+    useState("");
 
   const [listingDescription, setListingDescription] =
-    useState('');
+    useState("");
 
   const [listingPrice, setListingPrice] =
-    useState('');
+    useState("");
 
   const [listingImageUrl, setListingImageUrl] =
-    useState('');
+    useState("");
 
   const [listingCategoryId, setListingCategoryId] =
-    useState('');
+    useState("");
 
   const [listingQuantity, setListingQuantity] =
-    useState('1');
+    useState("1");
 
   const [listingTonyixId, setListingTonyixId] =
-    useState('');
+    useState("");
 
   const subscriptionStatus =
-    getSubscriptionStatus(
-      subscription
-    );
+    getSubscriptionStatus(subscription);
 
   const isSubscriptionActive =
-    subscriptionStatus === 'active';
+    subscriptionStatus === "active";
 
   const planName =
     getPlanName(subscription);
 
-  const expiry =
-    getExpiry(subscription);
+  const subscriptionExpiry =
+    getSubscriptionExpiry(
+      subscription
+    );
 
   const storefrontUrl =
     storefront?.storefrontUrl ||
     storefront?.sellerStoreUrl ||
-    '';
+    "";
 
   const storefrontSlug =
     storefront?.slug ||
     storefront?.storeSlug ||
     storefront?.sellerStoreSlug ||
-    '';
+    "";
 
   const loadDashboard =
     useCallback(async () => {
@@ -360,19 +342,25 @@ export default function SellerDashboard({
           ordersData,
           withdrawalsData,
         ] = await Promise.all([
-          api.getSellerSubscription(),
-          api.getMySellerStorefront().catch(
-            () => null
-          ),
-          api.getMySellerListings().catch(
-            () => []
-          ),
-          api.getMySellerOrders().catch(
-            () => []
-          ),
-          api.getMySellerWithdrawals().catch(
-            () => []
-          ),
+          api
+            .getSellerSubscription()
+            .catch(() => null),
+
+          api
+            .getMySellerStorefront()
+            .catch(() => null),
+
+          api
+            .getMySellerListings()
+            .catch(() => []),
+
+          api
+            .getMySellerOrders()
+            .catch(() => []),
+
+          api
+            .getMySellerWithdrawals()
+            .catch(() => []),
         ]);
 
         setSubscription(
@@ -406,31 +394,31 @@ export default function SellerDashboard({
 
         if (nextStore) {
           setStoreName(
-            nextStore.storeName || ''
+            nextStore.storeName || ""
           );
 
           setStoreDescription(
-            nextStore.description || ''
+            nextStore.description || ""
           );
 
           setStoreLogoUrl(
-            nextStore.logoUrl || ''
+            nextStore.logoUrl || ""
           );
 
           setStoreBannerUrl(
-            nextStore.bannerUrl || ''
+            nextStore.bannerUrl || ""
           );
         }
       } catch (error) {
         console.error(
-          'Seller dashboard error:',
+          "Seller dashboard error:",
           error
         );
 
         toast.error(
           error instanceof Error
             ? error.message
-            : 'Could not load seller dashboard'
+            : "Could not load seller dashboard"
         );
       } finally {
         setLoading(false);
@@ -447,93 +435,116 @@ export default function SellerDashboard({
 
       try {
         await loadDashboard();
+
         toast.success(
-          'Seller dashboard refreshed'
+          "Seller dashboard refreshed"
         );
       } finally {
         setRefreshing(false);
       }
     };
 
-  const totalSales =
-    orders.reduce(
-      (sum, order) =>
-        sum +
-        Number(
-          order.totalAmount ??
-            order.amount ??
-            0
-        ),
-      0
-    );
-
-  const pendingOrders =
-    orders.filter(
-      (order) =>
-        String(
-          order.status || ''
-        ).toLowerCase() ===
-        'pending'
-    ).length;
-
-  const availableBalance =
-    totalSales;
-
-  const approvedWithdrawals =
-    withdrawals
-      .filter(
-        (withdrawal) =>
-          String(
-            withdrawal.status || ''
-          ).toLowerCase() ===
-          'approved'
-      )
-      .reduce(
-        (sum, withdrawal) =>
+  const totalSales = useMemo(
+    () =>
+      orders.reduce(
+        (sum, order) =>
           sum +
           Number(
-            withdrawal.amount || 0
+            order.totalAmount ??
+              order.amount ??
+              0
           ),
         0
-      );
+      ),
+    [orders]
+  );
 
+  const pendingOrders = useMemo(
+    () =>
+      orders.filter(
+        (order) =>
+          String(
+            order.status || ""
+          ).toLowerCase() ===
+          "pending"
+      ).length,
+    [orders]
+  );
+
+  const approvedWithdrawals =
+    useMemo(
+      () =>
+        withdrawals
+          .filter(
+            (withdrawal) =>
+              String(
+                withdrawal.status || ""
+              ).toLowerCase() ===
+              "approved"
+          )
+          .reduce(
+            (sum, withdrawal) =>
+              sum +
+              Number(
+                withdrawal.amount || 0
+              ),
+            0
+          ),
+      [withdrawals]
+    );
+
+  /*
+   * This is the current seller-side balance estimate.
+   * The backend remains the source of truth for actual
+   * withdrawal eligibility.
+   */
   const withdrawableBalance =
     Math.max(
       0,
-      availableBalance -
+      totalSales -
         approvedWithdrawals
     );
 
   const activeListings =
-    listings.filter(
-      (listing) =>
-        listing.inStock !== false &&
-        Number(
-          listing.quantity ??
-            listing.stockCount ??
-            0
-        ) > 0
-    ).length;
+    useMemo(
+      () =>
+        listings.filter(
+          (listing) => {
+            const quantity =
+              Number(
+                listing.quantity ??
+                  listing.stockCount ??
+                  0
+              );
+
+            return (
+              listing.inStock !== false &&
+              quantity > 0
+            );
+          }
+        ).length,
+      [listings]
+    );
 
   const sellerStats = useMemo(
     () => [
       {
-        label: 'Products',
+        label: "Products",
         value: listings.length,
         icon: Package,
       },
       {
-        label: 'Active listings',
+        label: "Active listings",
         value: activeListings,
         icon: CheckCircle2,
       },
       {
-        label: 'Orders',
+        label: "Orders",
         value: orders.length,
         icon: BarChart3,
       },
       {
-        label: 'Sales',
+        label: "Sales",
         value: formatMoney(totalSales),
         icon: Wallet,
       },
@@ -547,13 +558,13 @@ export default function SellerDashboard({
   );
 
   function resetListingForm() {
-    setListingTitle('');
-    setListingDescription('');
-    setListingPrice('');
-    setListingImageUrl('');
-    setListingCategoryId('');
-    setListingQuantity('1');
-    setListingTonyixId('');
+    setListingTitle("");
+    setListingDescription("");
+    setListingPrice("");
+    setListingImageUrl("");
+    setListingCategoryId("");
+    setListingQuantity("1");
+    setListingTonyixId("");
     setEditingListingId(null);
     setShowListingForm(false);
   }
@@ -568,26 +579,26 @@ export default function SellerDashboard({
     setListingTitle(
       listing.title ||
         listing.name ||
-        ''
+        ""
     );
 
     setListingDescription(
       listing.description ||
-        ''
+        ""
     );
 
     setListingPrice(
       String(
-        listing.price || ''
+        listing.price ?? ""
       )
     );
 
     setListingImageUrl(
-      listing.imageUrl || ''
+      listing.imageUrl || ""
     );
 
     setListingCategoryId(
-      listing.categoryId || ''
+      listing.categoryId || ""
     );
 
     setListingQuantity(
@@ -599,21 +610,21 @@ export default function SellerDashboard({
     );
 
     setListingTonyixId(
-      listing.tonyixProductId
+      listing.tonyixProductId != null
         ? String(
             listing.tonyixProductId
           )
-        : ''
+        : ""
     );
 
     setShowListingForm(true);
-    setActiveTab('products');
+    setActiveTab("products");
   }
 
   async function saveStorefront() {
     if (!storeName.trim()) {
       toast.error(
-        'Enter a store name'
+        "Enter a store name"
       );
       return;
     }
@@ -624,10 +635,13 @@ export default function SellerDashboard({
       const data = {
         storeName:
           storeName.trim(),
+
         description:
           storeDescription.trim(),
+
         logoUrl:
           storeLogoUrl.trim(),
+
         bannerUrl:
           storeBannerUrl.trim(),
       };
@@ -645,13 +659,13 @@ export default function SellerDashboard({
       await loadDashboard();
 
       toast.success(
-        'Storefront saved successfully'
+        "Storefront saved successfully"
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not save storefront'
+          : "Could not save storefront"
       );
     } finally {
       setSavingStore(false);
@@ -661,7 +675,7 @@ export default function SellerDashboard({
   async function saveListing() {
     if (!listingTitle.trim()) {
       toast.error(
-        'Enter a product title'
+        "Enter a product title"
       );
       return;
     }
@@ -674,7 +688,7 @@ export default function SellerDashboard({
       price <= 0
     ) {
       toast.error(
-        'Enter a valid product price'
+        "Enter a valid product price"
       );
       return;
     }
@@ -693,15 +707,21 @@ export default function SellerDashboard({
       const data = {
         title:
           listingTitle.trim(),
+
         description:
           listingDescription.trim(),
+
         price,
+
         imageUrl:
           listingImageUrl.trim(),
+
         categoryId:
           listingCategoryId.trim() ||
           undefined,
+
         quantity,
+
         tonyixProductId:
           listingTonyixId.trim() ||
           undefined,
@@ -724,14 +744,14 @@ export default function SellerDashboard({
 
       toast.success(
         editingListingId
-          ? 'Product updated'
-          : 'Product added to your store'
+          ? "Product updated"
+          : "Product added to your store"
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not save product'
+          : "Could not save product"
       );
     } finally {
       setSavingListing(false);
@@ -743,7 +763,7 @@ export default function SellerDashboard({
   ) {
     const confirmed =
       window.confirm(
-        'Delete this product from your reseller store?'
+        "Delete this product from your reseller store?"
       );
 
     if (!confirmed) {
@@ -758,13 +778,13 @@ export default function SellerDashboard({
       await loadDashboard();
 
       toast.success(
-        'Product deleted'
+        "Product deleted"
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not delete product'
+          : "Could not delete product"
       );
     }
   }
@@ -780,13 +800,13 @@ export default function SellerDashboard({
       await loadDashboard();
 
       toast.success(
-        'Product availability updated'
+        "Product availability updated"
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not update product'
+          : "Could not update product"
       );
     }
   }
@@ -849,8 +869,8 @@ export default function SellerDashboard({
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${
                   refreshing
-                    ? 'animate-spin'
-                    : ''
+                    ? "animate-spin"
+                    : ""
                 }`}
               />
               Refresh
@@ -868,7 +888,7 @@ export default function SellerDashboard({
           </div>
         </div>
 
-        {/* SUBSCRIPTION STATUS */}
+        {/* SUBSCRIPTION */}
 
         <Card className="mb-6 border-slate-800 bg-slate-950">
           <CardContent className="p-5">
@@ -888,8 +908,8 @@ export default function SellerDashboard({
                   <Badge
                     className={
                       isSubscriptionActive
-                        ? 'bg-emerald-500/10 text-emerald-300'
-                        : 'bg-red-500/10 text-red-300'
+                        ? "bg-emerald-500/10 text-emerald-300"
+                        : "bg-red-500/10 text-red-300"
                     }
                   >
                     {subscriptionStatus}
@@ -897,16 +917,18 @@ export default function SellerDashboard({
                 </div>
 
                 <p className="text-sm text-slate-400">
-                  Plan:{' '}
+                  Plan:{" "}
                   <span className="text-white">
                     {planName}
                   </span>
                 </p>
 
-                {expiry && (
+                {subscriptionExpiry && (
                   <p className="mt-1 text-sm text-slate-500">
-                    Expires:{' '}
-                    {formatDate(expiry)}
+                    Expires:{" "}
+                    {formatDate(
+                      subscriptionExpiry
+                    )}
                   </p>
                 )}
               </div>
@@ -928,11 +950,11 @@ export default function SellerDashboard({
 
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
           {[
-            ['overview', 'Overview'],
-            ['storefront', 'My Store'],
-            ['products', 'Products'],
-            ['orders', 'Orders'],
-            ['withdrawals', 'Withdrawals'],
+            ["overview", "Overview"],
+            ["storefront", "My Store"],
+            ["products", "Products"],
+            ["orders", "Orders"],
+            ["withdrawals", "Withdrawals"],
           ].map(([id, label]) => (
             <Button
               key={id}
@@ -944,8 +966,8 @@ export default function SellerDashboard({
               }
               className={
                 activeTab === id
-                  ? 'bg-cyan-500/10 text-cyan-300'
-                  : 'text-slate-400 hover:bg-slate-900 hover:text-white'
+                  ? "bg-cyan-500/10 text-cyan-300"
+                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
               }
             >
               {label}
@@ -953,7 +975,7 @@ export default function SellerDashboard({
           ))}
         </div>
 
-        {/* LOCKED SELLER AREA */}
+        {/* LOCKED */}
 
         {!isSubscriptionActive ? (
           <Card className="border-slate-800 bg-slate-950">
@@ -979,7 +1001,7 @@ export default function SellerDashboard({
           <>
             {/* OVERVIEW */}
 
-            {activeTab === 'overview' && (
+            {activeTab === "overview" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {sellerStats.map(
@@ -1020,14 +1042,14 @@ export default function SellerDashboard({
 
                       <p className="mt-2 text-sm text-slate-400">
                         {storefront?.description ||
-                          'Configure your reseller storefront identity.'}
+                          "Configure your reseller storefront identity."}
                       </p>
 
                       <div className="mt-5 flex flex-wrap gap-2">
                         <Button
                           onClick={() =>
                             setActiveTab(
-                              'storefront'
+                              "storefront"
                             )
                           }
                           className="bg-cyan-600 hover:bg-cyan-500"
@@ -1058,7 +1080,7 @@ export default function SellerDashboard({
 
                       {storefrontSlug && (
                         <p className="mt-4 text-xs text-slate-500">
-                          Store slug:{' '}
+                          Store slug:{" "}
                           {storefrontSlug}
                         </p>
                       )}
@@ -1097,7 +1119,7 @@ export default function SellerDashboard({
                         variant="outline"
                         onClick={() =>
                           setActiveTab(
-                            'orders'
+                            "orders"
                           )
                         }
                         className="mt-5 border-slate-700 bg-slate-900 text-white"
@@ -1112,7 +1134,7 @@ export default function SellerDashboard({
 
             {/* STOREFRONT */}
 
-            {activeTab === 'storefront' && (
+            {activeTab === "storefront" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
                   <div className="mb-6">
@@ -1128,7 +1150,9 @@ export default function SellerDashboard({
 
                   <div className="grid gap-5 lg:grid-cols-2">
                     <div>
-                      <Label>Store name</Label>
+                      <Label>
+                        Store name
+                      </Label>
 
                       <Input
                         value={storeName}
@@ -1143,7 +1167,9 @@ export default function SellerDashboard({
                     </div>
 
                     <div>
-                      <Label>Logo URL</Label>
+                      <Label>
+                        Logo URL
+                      </Label>
 
                       <Input
                         value={storeLogoUrl}
@@ -1158,7 +1184,9 @@ export default function SellerDashboard({
                     </div>
 
                     <div className="lg:col-span-2">
-                      <Label>Description</Label>
+                      <Label>
+                        Description
+                      </Label>
 
                       <textarea
                         value={
@@ -1210,6 +1238,7 @@ export default function SellerDashboard({
                       ) : (
                         <Store className="mr-2 h-4 w-4" />
                       )}
+
                       Save Storefront
                     </Button>
 
@@ -1238,7 +1267,7 @@ export default function SellerDashboard({
 
             {/* PRODUCTS */}
 
-            {activeTab === 'products' && (
+            {activeTab === "products" && (
               <div>
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -1254,7 +1283,9 @@ export default function SellerDashboard({
                   <Button
                     onClick={() => {
                       resetListingForm();
-                      setShowListingForm(true);
+                      setShowListingForm(
+                        true
+                      );
                     }}
                     className="bg-cyan-600 hover:bg-cyan-500"
                   >
@@ -1269,8 +1300,8 @@ export default function SellerDashboard({
                       <div className="mb-5 flex items-center justify-between">
                         <h3 className="font-semibold">
                           {editingListingId
-                            ? 'Edit Product'
-                            : 'Add Product'}
+                            ? "Edit Product"
+                            : "Add Product"}
                         </h3>
 
                         <Button
@@ -1296,10 +1327,10 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingTitle(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
+                            placeholder="Product name"
                             className="mt-2 border-slate-700 bg-black text-white"
                           />
                         </div>
@@ -1317,10 +1348,10 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingPrice(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
+                            placeholder="0"
                             className="mt-2 border-slate-700 bg-black text-white"
                           />
                         </div>
@@ -1336,11 +1367,10 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingCategoryId(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
-                            placeholder="Category ID or name"
+                            placeholder="Category ID"
                             className="mt-2 border-slate-700 bg-black text-white"
                           />
                         </div>
@@ -1358,8 +1388,7 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingQuantity(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
                             className="mt-2 border-slate-700 bg-black text-white"
@@ -1377,8 +1406,7 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingImageUrl(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
                             placeholder="https://..."
@@ -1397,12 +1425,12 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingDescription(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
                             rows={4}
-                            className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                            placeholder="Describe this product..."
+                            className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
                           />
                         </div>
 
@@ -1417,8 +1445,7 @@ export default function SellerDashboard({
                             }
                             onChange={(event) =>
                               setListingTonyixId(
-                                event.target
-                                  .value
+                                event.target.value
                               )
                             }
                             placeholder="Optional"
@@ -1440,6 +1467,7 @@ export default function SellerDashboard({
                           {savingListing && (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           )}
+
                           Save Product
                         </Button>
 
@@ -1501,7 +1529,7 @@ export default function SellerDashboard({
                                 alt={
                                   listing.title ||
                                   listing.name ||
-                                  'Product'
+                                  "Product"
                                 }
                                 className="h-44 w-full object-cover"
                               />
@@ -1512,25 +1540,25 @@ export default function SellerDashboard({
                                 <h3 className="font-semibold">
                                   {listing.title ||
                                     listing.name ||
-                                    'Untitled Product'}
+                                    "Untitled Product"}
                                 </h3>
 
                                 <Badge
                                   className={
                                     active
-                                      ? 'bg-emerald-500/10 text-emerald-300'
-                                      : 'bg-red-500/10 text-red-300'
+                                      ? "bg-emerald-500/10 text-emerald-300"
+                                      : "bg-red-500/10 text-red-300"
                                   }
                                 >
                                   {active
-                                    ? 'Active'
-                                    : 'Unavailable'}
+                                    ? "Active"
+                                    : "Unavailable"}
                                 </Badge>
                               </div>
 
                               <p className="mt-2 line-clamp-2 text-sm text-slate-400">
                                 {listing.description ||
-                                  'No description'}
+                                  "No description"}
                               </p>
 
                               <div className="mt-4 flex items-center justify-between">
@@ -1544,7 +1572,7 @@ export default function SellerDashboard({
                                 </span>
 
                                 <span className="text-xs text-slate-500">
-                                  Stock:{' '}
+                                  Stock:{" "}
                                   {quantity}
                                 </span>
                               </div>
@@ -1573,8 +1601,8 @@ export default function SellerDashboard({
                                   className="border-slate-700 bg-slate-900 text-white"
                                 >
                                   {active
-                                    ? 'Disable'
-                                    : 'Enable'}
+                                    ? "Disable"
+                                    : "Enable"}
                                 </Button>
                               </div>
 
@@ -1602,7 +1630,7 @@ export default function SellerDashboard({
 
             {/* ORDERS */}
 
-            {activeTab === 'orders' && (
+            {activeTab === "orders" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
                   <div className="mb-6">
@@ -1635,10 +1663,11 @@ export default function SellerDashboard({
 
                                 <p className="mt-1 text-sm text-slate-400">
                                   {order.customerName ||
-                                    'Customer'}{' '}
+                                    "Customer"}
+
                                   {order.customerEmail
-                                    ? `• ${order.customerEmail}`
-                                    : ''}
+                                    ? ` • ${order.customerEmail}`
+                                    : ""}
                                 </p>
 
                                 <p className="mt-1 text-xs text-slate-600">
@@ -1661,7 +1690,7 @@ export default function SellerDashboard({
 
                                 <Badge className="mt-2 bg-slate-800 text-slate-300">
                                   {order.status ||
-                                    'pending'}
+                                    "pending"}
                                 </Badge>
                               </div>
                             </div>
@@ -1684,11 +1713,11 @@ export default function SellerDashboard({
                                         <span>
                                           {item.title ||
                                             item.name ||
-                                            'Product'}
+                                            "Product"}
                                         </span>
 
                                         <span>
-                                          ×{' '}
+                                          ×{" "}
                                           {item.quantity ||
                                             1}
                                         </span>
@@ -1708,7 +1737,8 @@ export default function SellerDashboard({
 
             {/* WITHDRAWALS */}
 
-            {activeTab === 'withdrawals' && (
+            {activeTab ===
+              "withdrawals" && (
               <div className="space-y-6">
                 <Card className="border-slate-800 bg-slate-950">
                   <CardContent className="p-6">
@@ -1723,12 +1753,17 @@ export default function SellerDashboard({
                             withdrawableBalance
                           )}
                         </p>
+
+                        <p className="mt-2 text-xs text-slate-500">
+                          Final withdrawal eligibility
+                          is validated by the backend.
+                        </p>
                       </div>
 
                       <Button
                         onClick={() =>
                           toast.info(
-                            'Withdrawal form will be opened after the seller withdrawal flow is connected.'
+                            "Withdrawal form will be connected to your seller withdrawal API next."
                           )
                         }
                         className="bg-emerald-600 hover:bg-emerald-500"
@@ -1777,11 +1812,17 @@ export default function SellerDashboard({
                                     withdrawal.createdAt
                                   )}
                                 </p>
+
+                                {withdrawal.reason && (
+                                  <p className="mt-1 text-xs text-red-400">
+                                    {withdrawal.reason}
+                                  </p>
+                                )}
                               </div>
 
                               <Badge className="w-fit bg-slate-800 text-slate-300">
                                 {withdrawal.status ||
-                                  'pending'}
+                                  "pending"}
                               </Badge>
                             </div>
                           )
