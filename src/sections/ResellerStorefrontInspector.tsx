@@ -862,10 +862,10 @@ After pasting: commit → deploy → send me the build result.
     {/* 7F — PLAN DIAGNOSTIC OVERVIEW */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {planOverview.map((item) => (
-          <Card
-            key={item.plan}
-            className={`border bg-slate-950 ${inspectionClasses(
-              item.status
+         <Card
+  key={item.plan}
+  className={inspectionClasses(item.status)}
+>
             )}`}
           >
             <CardContent className="p-5">
