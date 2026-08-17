@@ -272,10 +272,10 @@ export default function ResellerStorefrontInspector() {
       const response =
         await fetch(
         "/api/admin/sellers",
-{
-          {
-            credentials: "include",
-          }
+
+        {
+         credentials: "include",
+        }
         );
 
       if (!response.ok) {
