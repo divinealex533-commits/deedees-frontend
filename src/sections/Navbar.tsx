@@ -13,8 +13,6 @@ import { useEffect, useState } from 'react';
 import type { User } from '@/hooks/useAuth';
 
 interface NavbarProps {
-  cartCount: number;
-  onCartClick: () => void;
   type NavbarView =
   | 'store'
   | 'admin'
@@ -42,7 +40,6 @@ interface NavbarProps {
   onAdminClick: () => void;
   onOpenAccountMenu: () => void;
 }
-
 type MarketTheme = 'blue' | 'emerald';
 
 const navigationItems = [
