@@ -15,17 +15,25 @@ import type { User } from '@/hooks/useAuth';
 interface NavbarProps {
   cartCount: number;
   onCartClick: () => void;
-  view:
-    | 'store'
-    | 'admin'
-    | 'dashboard'
-    | 'affiliate';
+  type NavbarView =
+  | 'store'
+  | 'admin'
+  | 'dashboard'
+  | 'affiliate'
+  | 'seller-inspector';
+
+type MainNavbarView =
+  | 'store'
+  | 'admin'
+  | 'dashboard'
+  | 'affiliate';
+
+interface NavbarProps {
+  cartCount: number;
+  onCartClick: () => void;
+  view: NavbarView;
   onViewChange: (
-    view:
-      | 'store'
-      | 'admin'
-      | 'dashboard'
-      | 'affiliate'
+    view: MainNavbarView
   ) => void;
   isAuthenticated: boolean;
   user: User | null;
