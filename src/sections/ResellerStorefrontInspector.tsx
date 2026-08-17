@@ -485,6 +485,185 @@ export default function ResellerStorefrontInspector() {
     ];
   }
 
+    function normalizePlanName(
+    seller: Seller
+  ): string {
+    const plan = getPlanName(seller)
+      .trim()
+      .toLowerCase();
+    if (
+      plan.includes("premium") &&
+      plan.includes("month")
+    ) {
+      return "Premium Monthly";
+    }
+    if (
+      plan.includes("premium") &&
+      plan.includes("year")
+    ) {
+      return "Premium Yearly";
+    }
+    if (plan.includes("premium")) {
+      return "Premium";
+    }
+    if (plan.includes("seller")) {
+      return "Seller";
+    }
+    if (plan.includes("standard")) {
+      return "Standard";
+    }
+    return "Other";
+  }
+  function getPlanOverview() {
+    const plans = [
+      "Standard",
+      "Seller",
+      "Premium Monthly",
+      "Premium Yearly",
+    ];
+    return plans.map((plan) => {
+      const planSellers = sellers.filter(
+        (seller) =>
+          normalizePlanName(seller) === plan
+      );
+      let healthy = 0;
+      let warning = 0;
+      let broken = 0;
+      let untested = 0;
+      for (const seller of planSellers) {
+        const checks = buildInspections(seller);
+        for (const check of checks) {
+          if (check.status === "healthy") {
+            healthy++;
+          } else if (
+            check.status === "warning"
+          ) {
+            warning++;
+          } else if (
+            check.status === "broken"
+          ) {
+            broken++;
+          } else {
+            untested++;
+          }
+        }
+      }
+      let status: InspectionStatus = "untested";
+      if (broken > 0) {
+        status = "broken";
+      } else if (warning > 0) {
+        status = "warning";
+      } else if (
+        planSellers.length > 0 &&
+        untested === 0
+      ) {
+        status = "healthy";
+      }
+      return {
+        plan,
+        sellers: planSellers.length,
+        healthy,
+        warning,
+        broken,
+        untested,
+        status,
+      };
+    });
+  }
+  const planOverview =
+    getPlanOverview();
+
+Then find this section:
+
+      {/* SELLER SEARCH */}
+
+and paste this immediately BEFORE it:
+
+      {/* 7F — PLAN DIAGNOSTIC OVERVIEW */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {planOverview.map((item) => (
+          <Card
+            key={item.plan}
+            className={`border bg-slate-950 ${inspectionClasses(
+              item.status
+            )}`}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    Reseller Plan
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-white">
+                    {item.plan}
+                  </h3>
+                </div>
+                {inspectionIcon(item.status)}
+              </div>
+              <p className="mt-3 text-2xl font-bold text-white">
+                {item.sellers}
+              </p>
+              <p className="text-xs text-slate-500">
+                reseller{item.sellers === 1 ? "" : "s"}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-emerald-500/10 p-2">
+                  <span className="text-emerald-400">
+                    Healthy
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.healthy}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-yellow-500/10 p-2">
+                  <span className="text-yellow-400">
+                    Warning
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.warning}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-red-500/10 p-2">
+                  <span className="text-red-400">
+                    Broken
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.broken}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-800 p-2">
+                  <span className="text-slate-400">
+                    Untested
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.untested}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+What 7F gives you
+
+You will now have four admin cards:
+
+Standard | Seller | Premium Monthly | Premium Yearly
+
+And each shows:
+
+* 🟢 Healthy checks
+* 🟡 Warnings
+* 🔴 Broken checks
+* ⚪ Untested checks
+* Number of resellers on that plan
+
+This is frontend-only, so there is no /api/admin/sellers/frozen or new route to create for 7F. It works with the seller data you already loaded in 7E.
+
+After pasting: commit → deploy → send me the build result.
+  
+  
   async function inspectStorefront() {
     if (!selectedSeller) {
       return;
@@ -592,6 +771,162 @@ export default function ResellerStorefrontInspector() {
         </CardContent>
       </Card>
 
+        function normalizePlanName(
+    seller: Seller
+  ): string {
+    const plan = getPlanName(seller)
+      .trim()
+      .toLowerCase();
+    if (
+      plan.includes("premium") &&
+      plan.includes("month")
+    ) {
+      return "Premium Monthly";
+    }
+    if (
+      plan.includes("premium") &&
+      plan.includes("year")
+    ) {
+      return "Premium Yearly";
+    }
+    if (plan.includes("premium")) {
+      return "Premium";
+    }
+    if (plan.includes("seller")) {
+      return "Seller";
+    }
+    if (plan.includes("standard")) {
+      return "Standard";
+    }
+    return "Other";
+  }
+  function getPlanOverview() {
+    const plans = [
+      "Standard",
+      "Seller",
+      "Premium Monthly",
+      "Premium Yearly",
+    ];
+    return plans.map((plan) => {
+      const planSellers = sellers.filter(
+        (seller) =>
+          normalizePlanName(seller) === plan
+      );
+      let healthy = 0;
+      let warning = 0;
+      let broken = 0;
+      let untested = 0;
+      for (const seller of planSellers) {
+        const checks = buildInspections(seller);
+        for (const check of checks) {
+          if (check.status === "healthy") {
+            healthy++;
+          } else if (
+            check.status === "warning"
+          ) {
+            warning++;
+          } else if (
+            check.status === "broken"
+          ) {
+            broken++;
+          } else {
+            untested++;
+          }
+        }
+      }
+      let status: InspectionStatus = "untested";
+      if (broken > 0) {
+        status = "broken";
+      } else if (warning > 0) {
+        status = "warning";
+      } else if (
+        planSellers.length > 0 &&
+        untested === 0
+      ) {
+        status = "healthy";
+      }
+      return {
+        plan,
+        sellers: planSellers.length,
+        healthy,
+        warning,
+        broken,
+        untested,
+        status,
+      };
+    });
+  }
+  const planOverview =
+    getPlanOverview();
+
+    {/* 7F — PLAN DIAGNOSTIC OVERVIEW */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {planOverview.map((item) => (
+          <Card
+            key={item.plan}
+            className={`border bg-slate-950 ${inspectionClasses(
+              item.status
+            )}`}
+          >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    Reseller Plan
+                  </p>
+                  <h3 className="mt-1 text-lg font-bold text-white">
+                    {item.plan}
+                  </h3>
+                </div>
+                {inspectionIcon(item.status)}
+              </div>
+              <p className="mt-3 text-2xl font-bold text-white">
+                {item.sellers}
+              </p>
+              <p className="text-xs text-slate-500">
+                reseller{item.sellers === 1 ? "" : "s"}
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg bg-emerald-500/10 p-2">
+                  <span className="text-emerald-400">
+                    Healthy
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.healthy}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-yellow-500/10 p-2">
+                  <span className="text-yellow-400">
+                    Warning
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.warning}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-red-500/10 p-2">
+                  <span className="text-red-400">
+                    Broken
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.broken}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-slate-800 p-2">
+                  <span className="text-slate-400">
+                    Untested
+                  </span>
+                  <p className="mt-1 font-bold text-white">
+                    {item.untested}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+
+      
       {/* SELLER SEARCH */}
       <Card className="border-slate-700 bg-slate-950">
         <CardContent className="p-5">
