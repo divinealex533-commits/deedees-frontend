@@ -398,9 +398,9 @@ function App() {
           setIsCartOpen(true)
         }
         view={view}
-        onViewChange={(nextView) =>
-          setView(nextView)
-        }
+        onViewChange={(nextView) => {
+  setView(nextView);
+}}
         isAuthenticated={
           auth.isAuthenticated
         }
