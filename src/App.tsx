@@ -1,5 +1,5 @@
 import AffiliateProgram from '@/sections/AffiliateProgram';
-import ResellerStorefrontInspector from '@/sections/ResellerStorefrontInspector';
+import ResellerSystemDiagnostic from "./sections/ResellerSystemDiagnostic";
 import SellerDashboard from '@/sections/SellerDashboard';
 
 import { useState, useEffect } from 'react';
@@ -689,10 +689,10 @@ function App() {
           />
         )}
 
-      {view === 'seller-inspector' &&
-        auth.user?.isAdmin && (
-          <ResellerStorefrontInspector />
-        )}
+     {view === 'seller-inspector' &&
+  auth.user?.isAdmin && (
+    <ResellerSystemDiagnostic />
+  )}
 
       <AuthModal
         isOpen={
