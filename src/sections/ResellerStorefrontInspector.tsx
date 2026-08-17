@@ -21,6 +21,11 @@ import { Button } from "@/components/ui/button";
 
 import { Badge } from "@/components/ui/badge";
 
+import {
+  API_URL,
+  getToken,
+} from "@/lib/api";
+
 type SellerPlan = {
   id?: string;
   name?: string;
@@ -228,10 +233,7 @@ function formatExpiry(
     return "No expiry date";
   }
 
-  const date =
-    typeof value === "number"
-      ? new Date(value)
-      : new Date(value);
+  const date = new Date(value);
 
   if (
     Number.isNaN(
@@ -257,31 +259,52 @@ export default function ResellerStorefrontInspector() {
   const [checkingStorefront, setCheckingStorefront] =
     useState(false);
 
+  const [unfreezingSeller, setUnfreezingSeller] =
+    useState(false);
+
   const [search, setSearch] =
     useState("");
 
   const [storefrontMessage, setStorefrontMessage] =
     useState("");
 
+  const [actionMessage, setActionMessage] =
+    useState("");
+
   async function loadSellers() {
     setLoading(true);
+    setActionMessage("");
 
     try {
+      const token = getToken();
+
       const response = await fetch(
-        "/api/admin/sellers",
+        `${API_URL}/api/admin/sellers`,
         {
           credentials: "include",
+          headers: {
+            ...(token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {}),
+          },
         }
       );
 
+      const data =
+        (await response.json().catch(
+          () => ({})
+        )) as FrozenSellerResponse & {
+          error?: string;
+        };
+
       if (!response.ok) {
         throw new Error(
-          `Unable to load sellers. HTTP ${response.status}`
+          data.error ||
+            `Unable to load sellers. HTTP ${response.status}`
         );
       }
-
-      const data =
-        (await response.json()) as FrozenSellerResponse;
 
       setSellers(
         Array.isArray(data.sellers)
@@ -295,6 +318,12 @@ export default function ResellerStorefrontInspector() {
       );
 
       setSellers([]);
+
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to load sellers."
+      );
     } finally {
       setLoading(false);
     }
@@ -406,9 +435,7 @@ export default function ResellerStorefrontInspector() {
             ? "healthy"
             : "warning",
         details:
-          getStoreName(
-            seller
-          ),
+          getStoreName(seller),
         recommendation:
           getStoreName(
             seller
@@ -480,10 +507,6 @@ export default function ResellerStorefrontInspector() {
       },
     ];
   }
-
-  // ============================================================
-  // 7F — PLAN DIAGNOSTIC OVERVIEW
-  // ============================================================
 
   function normalizePlanName(
     seller: Seller
@@ -622,11 +645,10 @@ export default function ResellerStorefrontInspector() {
       const started =
         performance.now();
 
-      const response =
-        await fetch(url, {
-          method: "GET",
-          mode: "no-cors",
-        });
+      await fetch(url, {
+        method: "GET",
+        mode: "no-cors",
+      });
 
       const elapsed =
         Math.round(
@@ -636,11 +658,6 @@ export default function ResellerStorefrontInspector() {
 
       setStorefrontMessage(
         `Storefront request completed in approximately ${elapsed}ms. Open the storefront below for a full visual and customer-flow inspection.`
-      );
-
-      console.log(
-        "Storefront inspection response:",
-        response
       );
     } catch (error) {
       setStorefrontMessage(
@@ -653,6 +670,99 @@ export default function ResellerStorefrontInspector() {
     }
   }
 
+  async function unfreezeSeller() {
+    if (!selectedSeller) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        `Unfreeze ${selectedSeller.name || selectedSeller.email || "this seller"}?`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setUnfreezingSeller(true);
+    setActionMessage("");
+
+    try {
+      const token = getToken();
+
+      const response = await fetch(
+        `${API_URL}/api/admin/sellers/${selectedSeller.id}/unfreeze`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type":
+              "application/json",
+            ...(token
+              ? {
+                  Authorization: `Bearer ${token}`,
+                }
+              : {}),
+          },
+          body: JSON.stringify({
+            paymentConfirmed: true,
+          }),
+        }
+      );
+
+      const data =
+        (await response.json().catch(
+          () => ({})
+        )) as {
+          error?: string;
+          seller?: Seller;
+        };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            `Unable to unfreeze seller. HTTP ${response.status}`
+        );
+      }
+
+      setSellers(
+        (current) =>
+          current.map(
+            (seller) =>
+              String(seller.id) ===
+              String(selectedSeller.id)
+                ? {
+                    ...seller,
+                    sellerPlanStatus:
+                      "active",
+                    sellerFreezeReason:
+                      null,
+                    sellerFrozenAt:
+                      null,
+                  }
+                : seller
+          )
+      );
+
+      setActionMessage(
+        "Seller has been successfully unfrozen."
+      );
+    } catch (error) {
+      console.error(
+        "Unfreeze seller error:",
+        error
+      );
+
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to unfreeze seller."
+      );
+    } finally {
+      setUnfreezingSeller(false);
+    }
+  }
+
   const inspections =
     selectedSeller
       ? buildInspections(
@@ -662,7 +772,6 @@ export default function ResellerStorefrontInspector() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
       <Card className="border-blue-500/30 bg-slate-950">
         <CardContent className="p-6">
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
@@ -700,10 +809,15 @@ export default function ResellerStorefrontInspector() {
               Refresh sellers
             </Button>
           </div>
+
+          {actionMessage && (
+            <div className="mt-5 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-sm text-blue-200">
+              {actionMessage}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 7F — PLAN DIAGNOSTIC OVERVIEW */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {planOverview.map(
           (item) => (
@@ -746,7 +860,6 @@ export default function ResellerStorefrontInspector() {
                     <span className="text-emerald-400">
                       Healthy
                     </span>
-
                     <p className="mt-1 font-bold text-white">
                       {item.healthy}
                     </p>
@@ -756,7 +869,6 @@ export default function ResellerStorefrontInspector() {
                     <span className="text-yellow-400">
                       Warning
                     </span>
-
                     <p className="mt-1 font-bold text-white">
                       {item.warning}
                     </p>
@@ -766,7 +878,6 @@ export default function ResellerStorefrontInspector() {
                     <span className="text-red-400">
                       Broken
                     </span>
-
                     <p className="mt-1 font-bold text-white">
                       {item.broken}
                     </p>
@@ -776,7 +887,6 @@ export default function ResellerStorefrontInspector() {
                     <span className="text-slate-400">
                       Untested
                     </span>
-
                     <p className="mt-1 font-bold text-white">
                       {item.untested}
                     </p>
@@ -788,7 +898,6 @@ export default function ResellerStorefrontInspector() {
         )}
       </div>
 
-      {/* SELLER SEARCH */}
       <Card className="border-slate-700 bg-slate-950">
         <CardContent className="p-5">
           <div className="relative">
@@ -808,7 +917,6 @@ export default function ResellerStorefrontInspector() {
         </CardContent>
       </Card>
 
-      {/* SELLER LIST */}
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <Card className="border-slate-700 bg-slate-950">
           <CardContent className="p-4">
@@ -834,13 +942,6 @@ export default function ResellerStorefrontInspector() {
                 <p className="mt-3 text-sm text-slate-400">
                   No sellers were returned by the
                   current admin seller endpoint.
-                </p>
-
-                <p className="mt-2 text-xs text-slate-600">
-                  Once the admin seller-list endpoint
-                  exposes all active sellers, this
-                  inspector will automatically be able
-                  to inspect them here.
                 </p>
               </div>
             ) : (
@@ -908,7 +1009,6 @@ export default function ResellerStorefrontInspector() {
           </CardContent>
         </Card>
 
-        {/* INSPECTOR */}
         <div className="space-y-6">
           {!selectedSeller ? (
             <Card className="border-slate-700 bg-slate-950">
@@ -928,7 +1028,6 @@ export default function ResellerStorefrontInspector() {
             </Card>
           ) : (
             <>
-              {/* SELLER PROFILE */}
               <Card className="border-slate-700 bg-slate-950">
                 <CardContent className="p-6">
                   <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
@@ -1015,7 +1114,6 @@ export default function ResellerStorefrontInspector() {
                 </CardContent>
               </Card>
 
-              {/* STORE DETAILS */}
               <Card className="border-slate-700 bg-slate-950">
                 <CardContent className="p-6">
                   <h3 className="mb-5 text-lg font-semibold text-white">
@@ -1027,7 +1125,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Seller
                       </p>
-
                       <p className="mt-2 text-sm text-white">
                         {selectedSeller.name ||
                           "Not configured"}
@@ -1038,7 +1135,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Email
                       </p>
-
                       <p className="mt-2 break-all text-sm text-white">
                         {selectedSeller.email ||
                           "Not configured"}
@@ -1049,7 +1145,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Store slug
                       </p>
-
                       <p className="mt-2 text-sm text-white">
                         {getStoreSlug(
                           selectedSeller
@@ -1062,7 +1157,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Storefront URL
                       </p>
-
                       <p className="mt-2 break-all text-sm text-blue-300">
                         {getStoreUrl(
                           selectedSeller
@@ -1075,7 +1169,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Subscription expires
                       </p>
-
                       <p className="mt-2 text-sm text-white">
                         {formatExpiry(
                           selectedSeller.sellerPlanExpiresAt
@@ -1087,7 +1180,6 @@ export default function ResellerStorefrontInspector() {
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         Payment reference
                       </p>
-
                       <p className="mt-2 break-all font-mono text-xs text-slate-300">
                         {selectedSeller.sellerSubscriptionReference ||
                           "No payment reference"}
@@ -1097,7 +1189,6 @@ export default function ResellerStorefrontInspector() {
                 </CardContent>
               </Card>
 
-              {/* INSPECTIONS */}
               <Card className="border-slate-700 bg-slate-950">
                 <CardContent className="p-6">
                   <div className="mb-5 flex items-center gap-3">
@@ -1172,34 +1263,49 @@ export default function ResellerStorefrontInspector() {
                 </CardContent>
               </Card>
 
-              {/* FROZEN SELLER CONTROL */}
               {selectedSeller.sellerPlanStatus ===
                 "frozen" && (
                 <Card className="border-red-500/30 bg-red-500/5">
                   <CardContent className="p-6">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-6 w-6 text-red-400" />
+                    <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                      <div className="flex items-start gap-3">
+                        <AlertTriangle className="h-6 w-6 text-red-400" />
 
-                      <div>
-                        <h3 className="font-semibold text-white">
-                          Seller is frozen
-                        </h3>
+                        <div>
+                          <h3 className="font-semibold text-white">
+                            Seller is frozen
+                          </h3>
 
-                        <p className="mt-1 text-sm text-slate-400">
-                          This seller should remain frozen
-                          until the required renewal/payment
-                          confirmation has been completed.
-                        </p>
-
-                        {selectedSeller.sellerFreezeReason && (
-                          <p className="mt-3 text-sm text-yellow-300">
-                            Reason:{" "}
-                            {
-                              selectedSeller.sellerFreezeReason
-                            }
+                          <p className="mt-1 text-sm text-slate-400">
+                            This seller should remain frozen
+                            until the required renewal/payment
+                            confirmation has been completed.
                           </p>
-                        )}
+
+                          {selectedSeller.sellerFreezeReason && (
+                            <p className="mt-3 text-sm text-yellow-300">
+                              Reason:{" "}
+                              {
+                                selectedSeller.sellerFreezeReason
+                              }
+                            </p>
+                          )}
+                        </div>
                       </div>
+
+                      <Button
+                        onClick={
+                          unfreezeSeller
+                        }
+                        disabled={
+                          unfreezingSeller
+                        }
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        {unfreezingSeller
+                          ? "Unfreezing..."
+                          : "Confirm Payment & Unfreeze"}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
