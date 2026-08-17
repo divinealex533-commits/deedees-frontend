@@ -12,20 +12,13 @@ import {
   Send,
   MessageCircle,
   User as UserRoundIcon,
+  Store,
   ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import type { User } from '@/hooks/useAuth';
-
-interface ReferralInfo {
-  referralCode: string;
-  totalReferred: number;
-  successfulReferrals: number;
-  totalEarned: number;
-}
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -33,12 +26,17 @@ interface AccountDrawerProps {
   isAuthenticated: boolean;
   user: User | null;
   balance: number;
+
   onGoHome: () => void;
   onGoProduct: () => void;
   onGoDeposit: () => void;
   onGoHistory: () => void;
   onGoContact: () => void;
   onGoAffiliate: () => void;
+
+  // Seller marketplace
+  onGoSellerDashboard?: () => void;
+
   onLogout: () => void;
   onOpenAuth: () => void;
 }
@@ -57,10 +55,12 @@ export function AccountDrawer({
   onGoHistory,
   onGoContact,
   onGoAffiliate,
+  onGoSellerDashboard,
   onLogout,
   onOpenAuth,
 }: AccountDrawerProps) {
-  const [subPanel, setSubPanel] = useState<SubPanel>(null);
+  const [subPanel, setSubPanel] =
+    useState<SubPanel>(null);
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('en-NG', {
@@ -74,7 +74,9 @@ export function AccountDrawer({
     onClose();
   };
 
-  const requireAuthThen = (action: () => void) => {
+  const requireAuthThen = (
+    action: () => void
+  ) => {
     if (!isAuthenticated) {
       handleClose();
       onOpenAuth();
@@ -82,6 +84,29 @@ export function AccountDrawer({
     }
 
     action();
+  };
+
+  const handleSellerDashboard = () => {
+    if (!isAuthenticated) {
+      handleClose();
+      onOpenAuth();
+
+      toast.info(
+        'Please login to access the seller marketplace.'
+      );
+
+      return;
+    }
+
+    if (!onGoSellerDashboard) {
+      toast.info(
+        'Seller marketplace is currently unavailable.'
+      );
+      return;
+    }
+
+    handleClose();
+    onGoSellerDashboard();
   };
 
   if (!isOpen) return null;
@@ -227,12 +252,24 @@ export function AccountDrawer({
                 }}
               />
 
+              {/* SELLER MARKETPLACE */}
+              {isAuthenticated && (
+                <DrawerItem
+                  icon={Store}
+                  label="Seller Marketplace"
+                  hasArrow
+                  onClick={handleSellerDashboard}
+                />
+              )}
+
               {/* BLOGS */}
               <DrawerItem
                 icon={Newspaper}
                 label="Blogs"
                 hasArrow
-                onClick={() => setSubPanel('blogs')}
+                onClick={() =>
+                  setSubPanel('blogs')
+                }
               />
 
               {/* API */}
@@ -240,7 +277,9 @@ export function AccountDrawer({
                 icon={FileCode}
                 label="API documentation"
                 hasArrow
-                onClick={() => setSubPanel('api')}
+                onClick={() =>
+                  setSubPanel('api')
+                }
               />
 
               {/* LOGOUT */}
@@ -305,7 +344,8 @@ export function AccountDrawer({
             </h3>
 
             <p className="text-sm text-slate-400">
-              Coming soon — check back for updates, tips and guides.
+              Coming soon — check back for updates,
+              tips and guides.
             </p>
           </div>
         )}
@@ -326,7 +366,8 @@ export function AccountDrawer({
             </h3>
 
             <p className="text-sm text-slate-400">
-              Coming soon — API access and documentation for developers.
+              Coming soon — API access and documentation
+              for developers.
             </p>
           </div>
         )}
