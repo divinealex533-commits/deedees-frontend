@@ -1124,7 +1124,7 @@ export default function SellerDashboard({
 
         {/* LOCKED */}
 
-               {/* LOCKED / SELLER PLAN */}
+       {/* LOCKED / SELLER PLAN */}
 
         {!isSubscriptionActive ? (
           <Card className="border-slate-800 bg-slate-950">
@@ -1242,8 +1242,8 @@ export default function SellerDashboard({
             </CardContent>
           </Card>
         ) : (
+          <>
             {/* OVERVIEW */}
-
             {activeTab === "overview" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
