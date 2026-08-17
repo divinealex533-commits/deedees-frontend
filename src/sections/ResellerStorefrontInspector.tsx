@@ -762,10 +762,9 @@ export default function ResellerStorefrontInspector() {
                           )}
                         </Badge>
 
-                        <Badge>
-                       {getPlanName(selectedSeller)}
-                            "inactive"}
-                        </Badge>
+                       <Badge>
+  {selectedSeller.sellerPlanStatus || "inactive"}
+</Badge>
                       </div>
                     </div>
 
