@@ -12,96 +12,195 @@ export interface User {
   createdAt: string;
 }
 
-// Phone numbers aren't stored on the backend (accounts are just
-// name/email/password). We keep an optional phone per-email locally on this
-// device just so contact-detail fields aren't blank; it's not shared with
-// admin and won't follow the customer to another device.
+// The backend currently stores name/email/password but not phone.
+// Keep phone locally on this device so customer contact fields
+// are still populated without pretending the backend stores it.
 const PHONE_KEY = 'deedee_local_phone';
 
-// If someone arrives via a referral link (?ref=CODE), we remember the code
-// here until they sign up, so it can travel with them across pages.
+// Referral code received through:
+// https://your-site.com/?ref=CODE
 const REFERRAL_KEY = 'deedee_pending_referral';
 
 function getLocalPhone(email: string): string {
-  if (typeof window === 'undefined') return '';
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
   try {
-    const map = JSON.parse(localStorage.getItem(PHONE_KEY) || '{}');
+    const map = JSON.parse(
+      localStorage.getItem(PHONE_KEY) || '{}'
+    );
+
     return map[email.toLowerCase()] || '';
   } catch {
     return '';
   }
 }
 
-function setLocalPhone(email: string, phone: string) {
-  if (typeof window === 'undefined') return;
+function setLocalPhone(
+  email: string,
+  phone: string
+) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
-    const map = JSON.parse(localStorage.getItem(PHONE_KEY) || '{}');
+    const map = JSON.parse(
+      localStorage.getItem(PHONE_KEY) || '{}'
+    );
+
     map[email.toLowerCase()] = phone;
-    localStorage.setItem(PHONE_KEY, JSON.stringify(map));
+
+    localStorage.setItem(
+      PHONE_KEY,
+      JSON.stringify(map)
+    );
   } catch {
-    // ignore
+    // Ignore local-storage errors.
   }
 }
 
 function toUser(apiUser: any): User {
   return {
-    id: apiUser.id,
-    name: apiUser.name,
-    email: apiUser.email,
-    phone: getLocalPhone(apiUser.email),
+    id: String(apiUser.id),
+    name: apiUser.name || '',
+    email: apiUser.email || '',
+    phone: getLocalPhone(apiUser.email || ''),
     isAdmin: !!apiUser.isAdmin,
-    walletBalance: apiUser.walletBalance || 0,
-    purchasedItemIds: apiUser.purchasedItemIds || [],
-    createdAt: apiUser.createdAt,
+    walletBalance: Number(
+      apiUser.walletBalance || 0
+    ),
+    purchasedItemIds:
+      apiUser.purchasedItemIds || [],
+    createdAt: apiUser.createdAt || '',
   };
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [pendingReferralCode, setPendingReferralCode] = useState<string | null>(null);
+  const [user, setUser] =
+    useState<User | null>(null);
 
-  // On mount: check for a saved login token, AND check the URL for a
-  // referral code (?ref=CODE) to remember until the person signs up.
+  const [isLoaded, setIsLoaded] =
+    useState(false);
+
+  const [pendingReferralCode, setPendingReferralCode] =
+    useState<string | null>(null);
+
+  // ============================================================
+  // INITIAL AUTH + REFERRAL CHECK
+  // ============================================================
+
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const refFromUrl = params.get('ref');
-      if (refFromUrl) {
-        localStorage.setItem(REFERRAL_KEY, refFromUrl.toUpperCase());
-        // Clean the URL so refreshing/sharing doesn't keep re-triggering this
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-      const stored = localStorage.getItem(REFERRAL_KEY);
-      if (stored) setPendingReferralCode(stored);
-    }
+    let mounted = true;
 
-    (async () => {
+    const initializeAuth = async () => {
+      if (typeof window !== 'undefined') {
+        const params =
+          new URLSearchParams(
+            window.location.search
+          );
+
+        const refFromUrl =
+          params.get('ref');
+
+        if (refFromUrl) {
+          const normalizedCode =
+            refFromUrl.trim().toUpperCase();
+
+          if (normalizedCode) {
+            localStorage.setItem(
+              REFERRAL_KEY,
+              normalizedCode
+            );
+
+            setPendingReferralCode(
+              normalizedCode
+            );
+          }
+
+          // Remove ?ref=... from the visible URL.
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+        } else {
+          const storedReferral =
+            localStorage.getItem(
+              REFERRAL_KEY
+            );
+
+          if (storedReferral) {
+            setPendingReferralCode(
+              storedReferral
+            );
+          }
+        }
+      }
+
       const token = getToken();
+
       if (!token) {
-        setIsLoaded(true);
+        if (mounted) {
+          setIsLoaded(true);
+        }
+
         return;
       }
+
       try {
         const me = await api.me();
+
+        if (!mounted) {
+          return;
+        }
+
         setUser(toUser(me));
       } catch {
-        // token expired or invalid
+        // Token is expired or invalid.
         setToken(null);
+
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setIsLoaded(true);
+        if (mounted) {
+          setIsLoaded(true);
+        }
       }
-    })();
+    };
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const refresh = useCallback(async () => {
-    try {
-      const me = await api.me();
-      setUser(toUser(me));
-    } catch {
-      // ignore — leave existing state
-    }
-  }, []);
+  // ============================================================
+  // REFRESH CURRENT USER
+  // ============================================================
+
+  const refresh = useCallback(
+    async () => {
+      try {
+        const me = await api.me();
+
+        setUser(toUser(me));
+
+        return toUser(me);
+      } catch {
+        // Keep the current user if refresh fails.
+        return null;
+      }
+    },
+    []
+  );
+
+  // ============================================================
+  // SIGN UP
+  // ============================================================
 
   const signup = useCallback(
     async (
@@ -109,70 +208,197 @@ export function useAuth() {
       email: string,
       phone: string,
       password: string
-    ): Promise<{ success: boolean; message: string }> => {
+    ): Promise<{
+      success: boolean;
+      message: string;
+      user?: User;
+    }> => {
       try {
+        const normalizedEmail =
+          email.trim().toLowerCase();
+
         const referralCode =
-          typeof window !== 'undefined' ? localStorage.getItem(REFERRAL_KEY) || undefined : undefined;
-        const data = await api.signup(name, email, password, referralCode);
+          typeof window !== 'undefined'
+            ? localStorage.getItem(
+                REFERRAL_KEY
+              ) || undefined
+            : undefined;
+
+        const data =
+          await api.signup(
+            name.trim(),
+            normalizedEmail,
+            password,
+            referralCode
+          );
+
+        if (!data?.token) {
+          throw new Error(
+            'Account was created but no login token was returned'
+          );
+        }
+
         setToken(data.token);
-        setLocalPhone(email, phone);
-        setUser(toUser(data.user));
-        // The code has done its job — clear it so it doesn't linger for
-        // a future, unrelated signup on this device.
-        if (typeof window !== 'undefined') localStorage.removeItem(REFERRAL_KEY);
+
+        setLocalPhone(
+          normalizedEmail,
+          phone.trim()
+        );
+
+        const newUser =
+          toUser(data.user);
+
+        setUser(newUser);
+
+        // Referral code has now been used.
+        if (
+          typeof window !== 'undefined'
+        ) {
+          localStorage.removeItem(
+            REFERRAL_KEY
+          );
+        }
+
         setPendingReferralCode(null);
-        return { success: true, message: 'Account created successfully!' };
+
+        return {
+          success: true,
+          message:
+            'Account created successfully!',
+          user: newUser,
+        };
       } catch (err) {
-        return { success: false, message: (err as Error).message };
+        return {
+          success: false,
+          message:
+            err instanceof Error
+              ? err.message
+              : 'Could not create account',
+        };
       }
     },
     []
   );
 
+  // ============================================================
+  // LOGIN
+  // ============================================================
+
   const login = useCallback(
     async (
       email: string,
       password: string
-    ): Promise<{ success: boolean; message: string; user?: User }> => {
+    ): Promise<{
+      success: boolean;
+      message: string;
+      user?: User;
+    }> => {
       try {
-        const data = await api.login(email, password);
+        const normalizedEmail =
+          email.trim().toLowerCase();
+
+        const data =
+          await api.login(
+            normalizedEmail,
+            password
+          );
+
+        if (!data?.token) {
+          throw new Error(
+            'Login succeeded but no authentication token was returned'
+          );
+        }
+
         setToken(data.token);
-        const loggedInUser = toUser(data.user);
+
+        const loggedInUser =
+          toUser(data.user);
+
         setUser(loggedInUser);
-        return { success: true, message: 'Login successful!', user: loggedInUser };
+
+        return {
+          success: true,
+          message: 'Login successful!',
+          user: loggedInUser,
+        };
       } catch (err) {
-        return { success: false, message: (err as Error).message };
+        return {
+          success: false,
+          message:
+            err instanceof Error
+              ? err.message
+              : 'Login failed',
+        };
       }
     },
     []
   );
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
   }, []);
 
+  // ============================================================
+  // LOCAL PROFILE UPDATE
+  // ============================================================
+
   const updateProfile = useCallback(
     (updates: Partial<User>) => {
-      if (!user) return;
-      if (updates.phone !== undefined) {
-        setLocalPhone(user.email, updates.phone);
+      if (!user) {
+        return;
       }
-      setUser({ ...user, ...updates });
-      // Note: only phone is saved (locally); name/email changes aren't sent
-      // to the backend yet since there's no "update profile" endpoint there.
+
+      if (
+        updates.phone !== undefined
+      ) {
+        setLocalPhone(
+          user.email,
+          updates.phone
+        );
+      }
+
+      setUser({
+        ...user,
+        ...updates,
+      });
+
+      /*
+       * IMPORTANT:
+       *
+       * The backend currently has no profile-update
+       * endpoint for name/email/phone.
+       *
+       * Therefore only phone is persisted locally.
+       *
+       * We should NOT pretend that changing the name/email
+       * here updates the backend.
+       */
     },
     [user]
   );
 
+  // ============================================================
+  // RETURN
+  // ============================================================
+
   return {
     user,
     isLoaded,
-    isAuthenticated: !!user,
+
+    isAuthenticated:
+      !!user,
+
     pendingReferralCode,
+
     signup,
     login,
     logout,
+
     updateProfile,
     refresh,
   };
