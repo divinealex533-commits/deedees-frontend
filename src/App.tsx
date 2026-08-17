@@ -62,24 +62,15 @@ function App() {
     useState(false);
 
   const resetToken =
-    new URLSearchParams(window.location.search).get(
-      'token'
-    );
+    new URLSearchParams(window.location.search).get('token');
 
   const isResetPasswordPage =
-    window.location.pathname ===
-      '/reset-password' &&
+    window.location.pathname === '/reset-password' &&
     !!resetToken;
 
   const store = useStore();
   const auth = useAuth();
-  const wallet = useWallet(
-    auth.user?.id || null
-  );
-
-  // ============================================================
-  // PAYSTACK RETURN HANDLING
-  // ============================================================
+  const wallet = useWallet(auth.user?.id || null);
 
   useEffect(() => {
     if (!auth.isLoaded) return;
@@ -88,8 +79,7 @@ function App() {
       window.location.search
     );
 
-    const reference =
-      params.get('reference');
+    const reference = params.get('reference');
 
     if (
       !reference ||
@@ -110,8 +100,7 @@ function App() {
         if (cancelled) return;
 
         if (
-          result.paymentStatus ===
-          'success'
+          result.paymentStatus === 'success'
         ) {
           toast.success(
             'Payment received! Your balance has been updated.'
@@ -146,10 +135,6 @@ function App() {
     wallet.confirmInstantDeposit,
   ]);
 
-  // ============================================================
-  // RESET PASSWORD
-  // ============================================================
-
   if (
     isResetPasswordPage &&
     resetToken
@@ -177,10 +162,6 @@ function App() {
     );
   }
 
-  // ============================================================
-  // NAVIGATION HELPERS
-  // ============================================================
-
   const scrollToSection = (
     id: string
   ) => {
@@ -206,10 +187,6 @@ function App() {
     }
   };
 
-  // ============================================================
-  // CART
-  // ============================================================
-
   const handleAddToCart = (
     product: typeof store.products[0]
   ) => {
@@ -226,10 +203,6 @@ function App() {
       `${product.name} added to cart`
     );
   };
-
-  // ============================================================
-  // BUY NOW
-  // ============================================================
 
   const handleBuyNow = (
     product: typeof store.products[0]
@@ -255,10 +228,6 @@ function App() {
     setSelectedProduct(product);
     setIsCheckoutOpen(true);
   };
-
-  // ============================================================
-  // CART CHECKOUT
-  // ============================================================
 
   const handleCheckout = () => {
     if (store.cart.length === 0) {
@@ -296,10 +265,6 @@ function App() {
     setIsCheckoutOpen(true);
   };
 
-  // ============================================================
-  // ADMIN ACCESS
-  // ============================================================
-
   const handleAdminAccess = () => {
     if (auth.user?.isAdmin) {
       setView('admin');
@@ -307,10 +272,6 @@ function App() {
       setIsAdminLoginOpen(true);
     }
   };
-
-  // ============================================================
-  // ACCOUNT DRAWER NAVIGATION
-  // ============================================================
 
   const handleDrawerGoHome = () => {
     setView('store');
@@ -352,10 +313,6 @@ function App() {
     setView('dashboard');
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (
     !store.isLoaded ||
     !auth.isLoaded
@@ -368,18 +325,13 @@ function App() {
           <div
             className="absolute inset-0 w-16 h-16 border-4 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"
             style={{
-              animationDuration:
-                '1.5s',
+              animationDuration: '1.5s',
             }}
           />
         </div>
       </div>
     );
   }
-
-  // ============================================================
-  // MAIN APP
-  // ============================================================
 
   return (
     <div className="min-h-screen bg-black">
@@ -391,16 +343,23 @@ function App() {
       <FloatingContactButtons />
 
       <Navbar
-        cartCount={
-          store.cartCount
-        }
+        cartCount={store.cartCount}
         onCartClick={() =>
           setIsCartOpen(true)
         }
         view={view}
         onViewChange={(nextView) => {
-  setView(nextView);
-}}
+          /*
+           * Navbar may still expose the original
+           * four-view navigation type.
+           *
+           * The reseller inspector is controlled
+           * separately from the admin area below.
+           */
+          setView(
+            nextView as ViewType
+          );
+        }}
         isAuthenticated={
           auth.isAuthenticated
         }
@@ -420,24 +379,16 @@ function App() {
           handleAdminAccess
         }
         onOpenAccountMenu={() =>
-          setIsAccountDrawerOpen(
-            true
-          )
+          setIsAccountDrawerOpen(true)
         }
       />
-
-      {/* ========================================================
-          ACCOUNT DRAWER
-      ======================================================== */}
 
       <AccountDrawer
         isOpen={
           isAccountDrawerOpen
         }
         onClose={() =>
-          setIsAccountDrawerOpen(
-            false
-          )
+          setIsAccountDrawerOpen(false)
         }
         isAuthenticated={
           auth.isAuthenticated
@@ -461,9 +412,7 @@ function App() {
         }
         onGoAffiliate={() => {
           setView('affiliate');
-          setIsAccountDrawerOpen(
-            false
-          );
+          setIsAccountDrawerOpen(false);
         }}
         onLogout={() => {
           auth.logout();
@@ -477,10 +426,6 @@ function App() {
           setIsAuthModalOpen(true)
         }
       />
-
-      {/* ========================================================
-          STORE
-      ======================================================== */}
 
       {view === 'store' && (
         <>
@@ -525,12 +470,8 @@ function App() {
 
           <Footer />
 
-          {/* CART */}
-
           <CartDrawer
-            isOpen={
-              isCartOpen
-            }
+            isOpen={isCartOpen}
             onClose={() =>
               setIsCartOpen(false)
             }
@@ -549,20 +490,13 @@ function App() {
             }
           />
 
-          {/* PRODUCT CHECKOUT */}
-
           <CheckoutModal
             isOpen={
               isCheckoutOpen
             }
             onClose={() => {
-              setIsCheckoutOpen(
-                false
-              );
-
-              setSelectedProduct(
-                null
-              );
+              setIsCheckoutOpen(false);
+              setSelectedProduct(null);
             }}
             product={
               selectedProduct
@@ -588,35 +522,20 @@ function App() {
               await wallet.refresh();
               await auth.refresh();
 
-              setIsCheckoutOpen(
-                false
-              );
+              setIsCheckoutOpen(false);
+              setSelectedProduct(null);
 
-              setSelectedProduct(
-                null
-              );
-
-              setView(
-                'dashboard'
-              );
+              setView('dashboard');
             }}
           />
         </>
       )}
 
-      {/* ========================================================
-          ADMIN
-      ======================================================== */}
-
       {view === 'admin' &&
         auth.user?.isAdmin && (
           <AdminDashboard
-            admin={
-              auth.user
-            }
-            products={
-              store.products
-            }
+            admin={auth.user}
+            products={store.products}
             categories={
               store.categories
             }
@@ -652,10 +571,6 @@ function App() {
           />
         )}
 
-      {/* ========================================================
-          CUSTOMER DASHBOARD
-      ======================================================== */}
-
       {view === 'dashboard' &&
         auth.user && (
           <CustomerDashboard
@@ -667,8 +582,7 @@ function App() {
               wallet.deposits
             }
             purchasedItemIds={
-              auth.user
-                .purchasedItemIds
+              auth.user.purchasedItemIds
             }
             products={
               store.products
@@ -693,10 +607,6 @@ function App() {
           />
         )}
 
-      {/* ========================================================
-          AFFILIATE
-      ======================================================== */}
-
       {view === 'affiliate' && (
         <AffiliateProgram
           onBack={() => {
@@ -712,35 +622,19 @@ function App() {
         />
       )}
 
-      {/* ========================================================
-          SELLER STOREFRONT INSPECTOR
-      ======================================================== */}
-
-      {view ===
-        'seller-inspector' && (
-        <ResellerStorefrontInspector />
-      )}
-
-      {/* ========================================================
-          AUTH MODAL
-      ======================================================== */}
+      {view === 'seller-inspector' &&
+        auth.user?.isAdmin && (
+          <ResellerStorefrontInspector />
+        )}
 
       <AuthModal
         isOpen={
           isAuthModalOpen
         }
         onClose={() => {
-          setIsAuthModalOpen(
-            false
-          );
-
-          setPendingCatalogScroll(
-            false
-          );
-
-          setPendingBuyProduct(
-            null
-          );
+          setIsAuthModalOpen(false);
+          setPendingCatalogScroll(false);
+          setPendingBuyProduct(null);
         }}
         onLogin={async (
           email,
@@ -764,17 +658,9 @@ function App() {
                 pendingBuyProduct
               );
 
-              setPendingBuyProduct(
-                null
-              );
-
-              setIsAuthModalOpen(
-                false
-              );
-
-              setIsCheckoutOpen(
-                true
-              );
+              setPendingBuyProduct(null);
+              setIsAuthModalOpen(false);
+              setIsCheckoutOpen(true);
             } else if (
               pendingCatalogScroll
             ) {
@@ -785,32 +671,22 @@ function App() {
             }
           }
 
-          setPendingCatalogScroll(
-            false
-          );
+          setPendingCatalogScroll(false);
 
           return result;
         }}
-        onSignup={
-          auth.signup
-        }
+        onSignup={auth.signup}
         pendingReferralCode={
           auth.pendingReferralCode
         }
       />
-
-      {/* ========================================================
-          ADMIN LOGIN
-      ======================================================== */}
 
       <AdminLoginModal
         isOpen={
           isAdminLoginOpen
         }
         onClose={() =>
-          setIsAdminLoginOpen(
-            false
-          )
+          setIsAdminLoginOpen(false)
         }
         onLogin={async (
           email,
