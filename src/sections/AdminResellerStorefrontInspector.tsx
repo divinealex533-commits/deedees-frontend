@@ -80,11 +80,6 @@ async function loadAdminSellers(): Promise<Seller[]> {
     : [];
 }
 
-  return Array.isArray(data.sellers)
-    ? data.sellers
-    : [];
-}
-
 export default function AdminResellerStorefrontInspector() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [items, setItems] = useState<Listing[]>([]);
