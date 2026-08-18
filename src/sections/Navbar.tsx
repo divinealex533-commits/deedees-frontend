@@ -8,31 +8,30 @@ import {
   UserRound,
   X,
   Palette,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import type { User } from '@/hooks/useAuth';
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import type { User } from "@/hooks/useAuth";
 
 type NavbarView =
-  | 'store'
-  | 'admin'
-  | 'dashboard'
-  | 'affiliate'
-  | 'seller-dashboard'
-  | 'seller-inspector';
+  | "store"
+  | "admin"
+  | "dashboard"
+  | "affiliate"
+  | "seller-dashboard"
+  | "seller-inspector"
+  | "public-seller-storefront";
 
 type MainNavbarView =
-  | 'store'
-  | 'admin'
-  | 'dashboard'
-  | 'affiliate';
+  | "store"
+  | "admin"
+  | "dashboard"
+  | "affiliate";
 
 interface NavbarProps {
   cartCount: number;
   onCartClick: () => void;
   view: NavbarView;
-  onViewChange: (
-    view: MainNavbarView
-  ) => void;
+  onViewChange: (view: MainNavbarView) => void;
   isAuthenticated: boolean;
   user: User | null;
   onLogout: () => void;
@@ -40,29 +39,15 @@ interface NavbarProps {
   onAdminClick: () => void;
   onOpenAccountMenu: () => void;
 }
-type MarketTheme = 'blue' | 'emerald';
+
+type MarketTheme = "blue" | "emerald";
 
 const navigationItems = [
-  {
-    id: 'services',
-    label: 'Services',
-  },
-  {
-    id: 'catalog',
-    label: 'Products',
-  },
-  {
-    id: 'security',
-    label: 'Security',
-  },
-  {
-    id: 'policy',
-    label: 'Policies',
-  },
-  {
-    id: 'contact',
-    label: 'Contact',
-  },
+  { id: "services", label: "Services" },
+  { id: "catalog", label: "Products" },
+  { id: "security", label: "Security" },
+  { id: "policy", label: "Policies" },
+  { id: "contact", label: "Contact" },
 ];
 
 export function Navbar({
@@ -75,40 +60,35 @@ export function Navbar({
   onOpenAuth,
   onOpenAccountMenu,
 }: NavbarProps) {
-  const [mobileOpen, setMobileOpen] =
-    useState(false);
-
-  const [dark, setDark] =
-    useState(false);
-
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [dark, setDark] = useState(false);
   const [marketTheme, setMarketTheme] =
-    useState<MarketTheme>('blue');
+    useState<MarketTheme>("blue");
 
   useEffect(() => {
     const savedDark =
-      localStorage.getItem('deedee-theme') ===
-      'dark';
+      localStorage.getItem("deedee-theme") === "dark";
 
     const savedMarketTheme =
-      localStorage.getItem(
-        'deedee-market-theme'
-      ) as MarketTheme | null;
+      localStorage.getItem("deedee-market-theme") as
+        | MarketTheme
+        | null;
 
     const theme =
-      savedMarketTheme === 'emerald'
-        ? 'emerald'
-        : 'blue';
+      savedMarketTheme === "emerald"
+        ? "emerald"
+        : "blue";
 
     setDark(savedDark);
     setMarketTheme(theme);
 
     document.documentElement.classList.toggle(
-      'dark',
+      "dark",
       savedDark
     );
 
     document.documentElement.setAttribute(
-      'data-market-theme',
+      "data-market-theme",
       theme
     );
   }, []);
@@ -119,79 +99,73 @@ export function Navbar({
     setDark(next);
 
     document.documentElement.classList.toggle(
-      'dark',
+      "dark",
       next
     );
 
     localStorage.setItem(
-      'deedee-theme',
-      next ? 'dark' : 'light'
+      "deedee-theme",
+      next ? "dark" : "light"
     );
   };
 
   const toggleMarketTheme = () => {
     const next: MarketTheme =
-      marketTheme === 'blue'
-        ? 'emerald'
-        : 'blue';
+      marketTheme === "blue"
+        ? "emerald"
+        : "blue";
 
     setMarketTheme(next);
 
     document.documentElement.setAttribute(
-      'data-market-theme',
+      "data-market-theme",
       next
     );
 
     localStorage.setItem(
-      'deedee-market-theme',
+      "deedee-market-theme",
       next
     );
   };
 
   const goHome = () => {
-    onViewChange('store');
-
+    onViewChange("store");
     setMobileOpen(false);
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
   };
 
   const go = (id: string) => {
-    onViewChange('store');
-
+    onViewChange("store");
     setMobileOpen(false);
 
     setTimeout(() => {
       document
         .getElementById(id)
         ?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
+          behavior: "smooth",
+          block: "start",
         });
     }, 50);
   };
 
   const goAffiliate = () => {
-    onViewChange('affiliate');
+    onViewChange("affiliate");
     setMobileOpen(false);
 
     window.scrollTo({
       top: 0,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
   };
 
   return (
     <header className="marketplace-navbar">
       <div className="marketplace-nav-inner">
-
-        {/* LEFT SIDE */}
         <div className="nav-left">
-
-          {/* ACCOUNT / SIDEBAR */}
           <button
             type="button"
             className="nav-icon-button"
@@ -202,7 +176,6 @@ export function Navbar({
             <AlignLeft size={23} />
           </button>
 
-          {/* BRAND */}
           <button
             type="button"
             className="nav-brand"
@@ -219,7 +192,6 @@ export function Navbar({
           </button>
         </div>
 
-        {/* DESKTOP NAVIGATION */}
         <nav
           className="desktop-nav"
           aria-label="Main navigation"
@@ -234,7 +206,6 @@ export function Navbar({
             </button>
           ))}
 
-          {/* AFFILIATE PROGRAM */}
           <button
             type="button"
             onClick={goAffiliate}
@@ -243,31 +214,27 @@ export function Navbar({
           </button>
         </nav>
 
-        {/* RIGHT SIDE ACTIONS */}
         <div className="nav-actions">
-
-          {view === 'store' && (
+          {view === "store" && (
             <>
-              {/* THEME SWITCH */}
               <button
                 type="button"
                 className="nav-circle-button theme-switch-button"
                 onClick={toggleMarketTheme}
                 aria-label={
-                  marketTheme === 'blue'
-                    ? 'Switch to Emerald theme'
-                    : 'Switch to Blue theme'
+                  marketTheme === "blue"
+                    ? "Switch to Emerald theme"
+                    : "Switch to Blue theme"
                 }
                 title={
-                  marketTheme === 'blue'
-                    ? 'Switch to Emerald'
-                    : 'Switch to Blue'
+                  marketTheme === "blue"
+                    ? "Switch to Emerald"
+                    : "Switch to Blue"
                 }
               >
                 <Palette size={20} />
               </button>
 
-              {/* DARK MODE */}
               <button
                 type="button"
                 className="nav-circle-button"
@@ -275,8 +242,8 @@ export function Navbar({
                 aria-label="Toggle dark mode"
                 title={
                   dark
-                    ? 'Switch to light mode'
-                    : 'Switch to dark mode'
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
                 }
               >
                 {dark ? (
@@ -286,7 +253,6 @@ export function Navbar({
                 )}
               </button>
 
-              {/* CART */}
               <button
                 type="button"
                 className="nav-circle-button cart-button"
@@ -294,7 +260,7 @@ export function Navbar({
                 aria-label={`Shopping cart${
                   cartCount > 0
                     ? `, ${cartCount} items`
-                    : ''
+                    : ""
                 }`}
                 title="Shopping cart"
               >
@@ -303,13 +269,12 @@ export function Navbar({
                 {cartCount > 0 && (
                   <span className="cart-badge">
                     {cartCount > 99
-                      ? '99+'
+                      ? "99+"
                       : cartCount}
                   </span>
                 )}
               </button>
 
-              {/* ACCOUNT */}
               {isAuthenticated ? (
                 <button
                   type="button"
@@ -332,19 +297,16 @@ export function Navbar({
                 </button>
               )}
 
-              {/* MOBILE MENU */}
               <button
                 type="button"
                 className="nav-icon-button mobile-menu-button"
                 onClick={() =>
-                  setMobileOpen(
-                    (value) => !value
-                  )
+                  setMobileOpen((value) => !value)
                 }
                 aria-label={
                   mobileOpen
-                    ? 'Close menu'
-                    : 'Open menu'
+                    ? "Close menu"
+                    : "Open menu"
                 }
                 aria-expanded={mobileOpen}
               >
@@ -356,18 +318,14 @@ export function Navbar({
               </button>
             </>
           )}
-
         </div>
       </div>
 
-      {/* MOBILE MENU */}
-      {mobileOpen && view === 'store' && (
+      {mobileOpen && view === "store" && (
         <div
           className="mobile-nav-panel"
           aria-label="Mobile navigation"
         >
-
-          {/* HOME */}
           <button
             type="button"
             onClick={goHome}
@@ -375,7 +333,6 @@ export function Navbar({
             Home
           </button>
 
-          {/* NAVIGATION */}
           {navigationItems.map((item) => (
             <button
               type="button"
@@ -386,7 +343,6 @@ export function Navbar({
             </button>
           ))}
 
-          {/* AFFILIATE PROGRAM */}
           <button
             type="button"
             onClick={goAffiliate}
@@ -394,22 +350,19 @@ export function Navbar({
             Affiliate Program
           </button>
 
-          {/* DIVIDER */}
           <div className="my-2 h-px bg-slate-200/70 dark:bg-slate-700" />
 
-          {/* THEME */}
           <button
             type="button"
             onClick={toggleMarketTheme}
           >
             <Palette size={17} />
 
-            {marketTheme === 'blue'
-              ? 'Switch to Emerald'
-              : 'Switch to Blue'}
+            {marketTheme === "blue"
+              ? "Switch to Emerald"
+              : "Switch to Blue"}
           </button>
 
-          {/* DARK MODE */}
           <button
             type="button"
             onClick={toggleDarkMode}
@@ -421,20 +374,17 @@ export function Navbar({
             )}
 
             {dark
-              ? 'Light Mode'
-              : 'Dark Mode'}
+              ? "Light Mode"
+              : "Dark Mode"}
           </button>
 
-          {/* ACCOUNT */}
           {isAuthenticated ? (
             <>
               <button
                 type="button"
                 onClick={() => {
                   setMobileOpen(false);
-                  onViewChange(
-                    'dashboard'
-                  );
+                  onViewChange("dashboard");
                 }}
               >
                 <UserRound size={17} />
@@ -464,7 +414,6 @@ export function Navbar({
               Login / Sign Up
             </button>
           )}
-
         </div>
       )}
     </header>
