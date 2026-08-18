@@ -940,6 +940,11 @@ const handleUnfreezeSeller = async (
   label: 'Frozen Sellers',
   icon: Shield,
 },
+{
+  id: 'diagnostics',
+  label: 'System Diagnostics',
+  icon: Shield,
+},
    
        ].map((tab) => (
             <button
@@ -1071,6 +1076,12 @@ const handleUnfreezeSeller = async (
         ))}
       </div>
     )}
+  </div>
+)}
+        {/* System Diagnostics */}
+{activeTab === 'diagnostics' && (
+  <div className="space-y-4">
+    <ResellerSystemDiagnostic />
   </div>
 )}
         
