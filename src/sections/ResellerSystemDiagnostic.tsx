@@ -410,44 +410,45 @@ export default function ResellerSystemDiagnostic() {
   }
 
   async function testPlan(plan: string) {
-    setSelectedPlan(plan);
+  setSelectedPlan(plan);
 
-    try {
-      setPlanResults((current) => ({
-        ...current,
-        [plan]: "running",
-      }));
+  try {
+    setPlanResults((current) => ({
+      ...current,
+      [plan]: "running",
+    }));
 
-      /*
-       * The SellerDashboard reads this value and api.ts
-       * sends it as x-admin-seller-test-plan.
-       *
-       * The backend only accepts this for an authenticated
-       * admin account.
-       */
-      localStorage.setItem(
-        "deedee_admin_seller_test_plan",
-        plan
-      );
+    // Keep the selected plan available to api.ts
+    // for the admin seller simulation.
+    localStorage.setItem(
+      "deedee_admin_seller_test_plan",
+      plan
+    );
 
-      /*
-       * Reload the page so the existing application/auth
-       * lifecycle creates the admin seller simulation.
-       */
-      window.location.reload();
-    } catch (error) {
-      setPlanResults((current) => ({
-        ...current,
-        [plan]: "fail",
-      }));
+    toast.success(
+      "Seller test mode enabled"
+    );
 
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not start seller test mode"
-      );
-    }
+    // Do NOT reload the page.
+    // The parent App controls navigation.
+    window.dispatchEvent(
+      new CustomEvent("deedee-admin-seller-test", {
+        detail: { plan },
+      })
+    );
+  } catch (error) {
+    setPlanResults((current) => ({
+      ...current,
+      [plan]: "fail",
+    }));
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Could not start seller test mode"
+    );
   }
+}
 
   function clearTestMode() {
     localStorage.removeItem(
