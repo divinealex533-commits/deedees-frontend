@@ -104,10 +104,22 @@ function App() {
     auth.user?.id || null
   );
 
+   const publicSellerMatch =
+    window.location.pathname.match(
+      /^\/(?:store|seller)\/([^/]+)\/?$/
+    );
+
+  const publicSellerSlug =
+    publicSellerMatch
+      ? decodeURIComponent(
+          publicSellerMatch[1]
+        )
+      : null;
+
   useEffect(() => {
     if (publicSellerSlug) {
       setView(
-        "public-seller-storefront"
+        'public-seller-storefront'
       );
     }
   }, [publicSellerSlug]);
@@ -225,8 +237,9 @@ function App() {
     );
   }
 
-  if (
-    publicSellerSlug
+    if (
+    publicSellerSlug &&
+    view === 'public-seller-storefront'
   ) {
     return (
       <>
@@ -241,10 +254,10 @@ function App() {
             window.history.pushState(
               {},
               document.title,
-              "/"
+              '/'
             );
 
-            window.location.href = "/";
+            window.location.href = '/';
           }}
         />
       </>
