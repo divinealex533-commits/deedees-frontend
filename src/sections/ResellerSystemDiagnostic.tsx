@@ -37,15 +37,15 @@ type PlanResult = {
 
 const PLAN_TESTS = [
   {
-    id: "standard",
+    id: "standard_seller",
     name: "Standard Seller Plan",
   },
   {
-    id: "monthly",
+    id: "premium_monthly",
     name: "Premium Monthly",
   },
   {
-    id: "yearly",
+    id: "premium_yearly",
     name: "Premium Yearly",
   },
 ];
