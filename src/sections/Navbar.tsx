@@ -26,7 +26,11 @@ type MainNavbarView =
   | "store"
   | "admin"
   | "dashboard"
-  | "affiliate";
+  | "affiliate"
+  | "seller-dashboard"
+  | "seller-inspector"
+  | "seller-marketplace"
+  | "public-seller-storefront";
 
 interface NavbarProps {
   cartCount: number;
