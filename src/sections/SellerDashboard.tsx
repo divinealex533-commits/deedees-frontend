@@ -126,33 +126,23 @@ function formatDate(value?: string | null) {
 }
 
 function getPlanName(subscription: Subscription | null) {
-  if (!subscription) {
-    return "No plan";
-  }
+  if (!subscription) return "No plan";
 
   const plan =
     subscription.plan ??
     subscription.sellerPlan;
 
   if (typeof plan === "object" && plan !== null) {
-    return (
-      plan.name ||
-      plan.id ||
-      "Seller Plan"
-    );
+    return plan.name || plan.id || "Seller Plan";
   }
 
-  return String(
-    plan || "Seller Plan"
-  );
+  return String(plan || "Seller Plan");
 }
 
 function getSubscriptionStatus(
   subscription: Subscription | null
 ) {
-  if (!subscription) {
-    return "inactive";
-  }
+  if (!subscription) return "inactive";
 
   return String(
     subscription.status ||
@@ -164,9 +154,7 @@ function getSubscriptionStatus(
 function getSubscriptionExpiry(
   subscription: Subscription | null
 ) {
-  if (!subscription) {
-    return null;
-  }
+  if (!subscription) return null;
 
   return (
     subscription.expiresAt ||
@@ -175,50 +163,23 @@ function getSubscriptionExpiry(
   );
 }
 
-function normalizeListings(
-  response: any
-): Listing[] {
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (Array.isArray(response?.listings)) {
-    return response.listings;
-  }
-
-  if (Array.isArray(response?.items)) {
-    return response.items;
-  }
-
+function normalizeListings(response: any): Listing[] {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.listings)) return response.listings;
+  if (Array.isArray(response?.items)) return response.items;
   return [];
 }
 
-function normalizeOrders(
-  response: any
-): SellerOrder[] {
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (Array.isArray(response?.orders)) {
-    return response.orders;
-  }
-
+function normalizeOrders(response: any): SellerOrder[] {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.orders)) return response.orders;
   return [];
 }
 
-function normalizeWithdrawals(
-  response: any
-): Withdrawal[] {
-  if (Array.isArray(response)) {
-    return response;
-  }
+function normalizeWithdrawals(response: any): Withdrawal[] {
+  if (Array.isArray(response)) return response;
 
-  if (
-    Array.isArray(
-      response?.withdrawals
-    )
-  ) {
+  if (Array.isArray(response?.withdrawals)) {
     return response.withdrawals;
   }
 
@@ -251,7 +212,7 @@ export default function SellerDashboard({
   const [refreshing, setRefreshing] =
     useState(false);
 
-    const [sellerPlans, setSellerPlans] =
+  const [sellerPlans, setSellerPlans] =
     useState<any[]>([]);
 
   const [loadingPlans, setLoadingPlans] =
@@ -324,9 +285,7 @@ export default function SellerDashboard({
     getPlanName(subscription);
 
   const subscriptionExpiry =
-    getSubscriptionExpiry(
-      subscription
-    );
+    getSubscriptionExpiry(subscription);
 
   const storefrontUrl =
     storefront?.storefrontUrl ||
@@ -351,30 +310,14 @@ export default function SellerDashboard({
           ordersData,
           withdrawalsData,
         ] = await Promise.all([
-          api
-            .getSellerSubscription()
-            .catch(() => null),
-
-          api
-            .getMySellerStorefront()
-            .catch(() => null),
-
-          api
-            .getMySellerListings()
-            .catch(() => []),
-
-          api
-            .getMySellerOrders()
-            .catch(() => []),
-
-          api
-            .getMySellerWithdrawals()
-            .catch(() => []),
+          api.getSellerSubscription().catch(() => null),
+          api.getMySellerStorefront().catch(() => null),
+          api.getMySellerListings().catch(() => []),
+          api.getMySellerOrders().catch(() => []),
+          api.getMySellerWithdrawals().catch(() => []),
         ]);
 
-        setSubscription(
-          subscriptionData || null
-        );
+        setSubscription(subscriptionData || null);
 
         const nextStore =
           storefrontData?.storefront ||
@@ -383,37 +326,18 @@ export default function SellerDashboard({
 
         setStorefront(nextStore);
 
-        setListings(
-          normalizeListings(
-            listingsData
-          )
-        );
-
-        setOrders(
-          normalizeOrders(
-            ordersData
-          )
-        );
-
+        setListings(normalizeListings(listingsData));
+        setOrders(normalizeOrders(ordersData));
         setWithdrawals(
-          normalizeWithdrawals(
-            withdrawalsData
-          )
+          normalizeWithdrawals(withdrawalsData)
         );
 
         if (nextStore) {
-          setStoreName(
-            nextStore.storeName || ""
-          );
-
+          setStoreName(nextStore.storeName || "");
           setStoreDescription(
             nextStore.description || ""
           );
-
-          setStoreLogoUrl(
-            nextStore.logoUrl || ""
-          );
-
+          setStoreLogoUrl(nextStore.logoUrl || "");
           setStoreBannerUrl(
             nextStore.bannerUrl || ""
           );
@@ -438,20 +362,19 @@ export default function SellerDashboard({
     loadDashboard();
   }, [loadDashboard]);
 
-  const refreshDashboard =
-    async () => {
-      setRefreshing(true);
+  const refreshDashboard = async () => {
+    setRefreshing(true);
 
-      try {
-        await loadDashboard();
+    try {
+      await loadDashboard();
 
-        toast.success(
-          "Seller dashboard refreshed"
-        );
-      } finally {
-        setRefreshing(false);
-      }
-    };
+      toast.success(
+        "Seller dashboard refreshed"
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const totalSales = useMemo(
     () =>
@@ -468,7 +391,7 @@ export default function SellerDashboard({
     [orders]
   );
 
-    async function loadSellerPlans() {
+  async function loadSellerPlans() {
     setLoadingPlans(true);
 
     try {
@@ -550,9 +473,7 @@ export default function SellerDashboard({
     const reference =
       params.get("reference");
 
-    if (!reference) {
-      return;
-    }
+    if (!reference) return;
 
     let cancelled = false;
 
@@ -569,9 +490,7 @@ export default function SellerDashboard({
           reference
         );
 
-        if (cancelled) {
-          return;
-        }
+        if (cancelled) return;
 
         toast.success(
           "Seller subscription activated!",
@@ -604,15 +523,13 @@ export default function SellerDashboard({
     return () => {
       cancelled = true;
     };
-  }, [loadDashboard, isSubscriptionActive]);
+  }, [loadDashboard]);
 
   const pendingOrders = useMemo(
     () =>
       orders.filter(
         (order) =>
-          String(
-            order.status || ""
-          ).toLowerCase() ===
+          String(order.status || "").toLowerCase() ===
           "pending"
       ).length,
     [orders]
@@ -640,11 +557,6 @@ export default function SellerDashboard({
       [withdrawals]
     );
 
-  /*
-   * This is the current seller-side balance estimate.
-   * The backend remains the source of truth for actual
-   * withdrawal eligibility.
-   */
   const withdrawableBalance =
     Math.max(
       0,
@@ -716,9 +628,7 @@ export default function SellerDashboard({
     setShowListingForm(false);
   }
 
-  function editListing(
-    listing: Listing
-  ) {
+  function editListing(listing: Listing) {
     setEditingListingId(
       String(listing.id)
     );
@@ -730,14 +640,11 @@ export default function SellerDashboard({
     );
 
     setListingDescription(
-      listing.description ||
-        ""
+      listing.description || ""
     );
 
     setListingPrice(
-      String(
-        listing.price ?? ""
-      )
+      String(listing.price ?? "")
     );
 
     setListingImageUrl(
@@ -770,9 +677,7 @@ export default function SellerDashboard({
 
   async function saveStorefront() {
     if (!storeName.trim()) {
-      toast.error(
-        "Enter a store name"
-      );
+      toast.error("Enter a store name");
       return;
     }
 
@@ -780,15 +685,10 @@ export default function SellerDashboard({
 
     try {
       const data = {
-        storeName:
-          storeName.trim(),
-
+        storeName: storeName.trim(),
         description:
           storeDescription.trim(),
-
-        logoUrl:
-          storeLogoUrl.trim(),
-
+        logoUrl: storeLogoUrl.trim(),
         bannerUrl:
           storeBannerUrl.trim(),
       };
@@ -854,21 +754,15 @@ export default function SellerDashboard({
       const data = {
         title:
           listingTitle.trim(),
-
         description:
           listingDescription.trim(),
-
         price,
-
         imageUrl:
           listingImageUrl.trim(),
-
         categoryId:
           listingCategoryId.trim() ||
           undefined,
-
         quantity,
-
         tonyixProductId:
           listingTonyixId.trim() ||
           undefined,
@@ -885,12 +779,15 @@ export default function SellerDashboard({
         );
       }
 
+      const wasEditing =
+        !!editingListingId;
+
       resetListingForm();
 
       await loadDashboard();
 
       toast.success(
-        editingListingId
+        wasEditing
           ? "Product updated"
           : "Product added to your store"
       );
@@ -905,28 +802,20 @@ export default function SellerDashboard({
     }
   }
 
-  async function deleteListing(
-    id: string
-  ) {
+  async function deleteListing(id: string) {
     const confirmed =
       window.confirm(
         "Delete this product from your reseller store?"
       );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
-      await api.deleteSellerListing(
-        id
-      );
+      await api.deleteSellerListing(id);
 
       await loadDashboard();
 
-      toast.success(
-        "Product deleted"
-      );
+      toast.success("Product deleted");
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -936,13 +825,9 @@ export default function SellerDashboard({
     }
   }
 
-  async function toggleListing(
-    id: string
-  ) {
+  async function toggleListing(id: string) {
     try {
-      await api.toggleSellerListing(
-        id
-      );
+      await api.toggleSellerListing(id);
 
       await loadDashboard();
 
@@ -976,25 +861,21 @@ export default function SellerDashboard({
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
-        {/* HEADER */}
-
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10">
-                <Store className="h-6 w-6 text-cyan-400" />
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10">
+              <Store className="h-6 w-6 text-cyan-400" />
+            </div>
 
-              <div>
-                <h1 className="text-2xl font-bold sm:text-3xl">
-                  Reseller Marketplace
-                </h1>
+            <div>
+              <h1 className="text-2xl font-bold sm:text-3xl">
+                Reseller Marketplace
+              </h1>
 
-                <p className="text-sm text-slate-400">
-                  Manage your DeeDee-powered store,
-                  products, orders and earnings.
-                </p>
-              </div>
+              <p className="text-sm text-slate-400">
+                Manage your DeeDee-powered store,
+                products, orders and earnings.
+              </p>
             </div>
           </div>
 
@@ -1034,8 +915,6 @@ export default function SellerDashboard({
             )}
           </div>
         </div>
-
-        {/* SUBSCRIPTION */}
 
         <Card className="mb-6 border-slate-800 bg-slate-950">
           <CardContent className="p-5">
@@ -1093,8 +972,6 @@ export default function SellerDashboard({
           </CardContent>
         </Card>
 
-        {/* NAVIGATION */}
-
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
           {[
             ["overview", "Overview"],
@@ -1122,17 +999,11 @@ export default function SellerDashboard({
           ))}
         </div>
 
-        {/* LOCKED */}
-
-       {/* LOCKED / SELLER PLAN */}
-
         {!isSubscriptionActive ? (
           <Card className="border-slate-800 bg-slate-950">
             <CardContent className="p-8">
-
               <div className="mx-auto max-w-4xl text-center">
-
-                <div className="mb-5 flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-red-500/10">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/10">
                   <Store className="h-8 w-8 text-red-400" />
                 </div>
 
@@ -1158,92 +1029,89 @@ export default function SellerDashboard({
                   </div>
                 ) : (
                   <div className="mt-8 grid gap-5 md:grid-cols-3">
-                    {sellerPlans.map((plan: any) => {
-                      const planId =
-                        String(
-                          plan.id ??
-                          plan.planId ??
-                          plan.code ??
-                          ""
-                        );
+                    {sellerPlans.map(
+                      (plan: any) => {
+                        const planId =
+                          String(
+                            plan.id ??
+                              plan.planId ??
+                              plan.code ??
+                              ""
+                          );
 
-                      const planName =
-                        plan.name ??
-                        plan.title ??
-                        planId;
+                        const planName =
+                          plan.name ??
+                          plan.title ??
+                          planId;
 
-                      const price =
-                        Number(
-                          plan.price ??
-                          plan.amount ??
-                          0
-                        );
+                        const price =
+                          Number(
+                            plan.price ??
+                              plan.amount ??
+                              0
+                          );
 
-                      const billing =
-                        plan.billing ??
-                        plan.interval ??
-                        "";
+                        const billing =
+                          plan.billing ??
+                          plan.interval ??
+                          "";
 
-                      return (
-                        <Card
-                          key={planId}
-                          className="border-slate-800 bg-slate-900"
-                        >
-                          <CardContent className="p-6">
+                        return (
+                          <Card
+                            key={planId}
+                            className="border-slate-800 bg-slate-900"
+                          >
+                            <CardContent className="p-6">
+                              <h3 className="text-lg font-bold text-white">
+                                {planName}
+                              </h3>
 
-                            <h3 className="text-lg font-bold text-white">
-                              {planName}
-                            </h3>
+                              <div className="mt-4 text-2xl font-bold text-cyan-300">
+                                ₦
+                                {price.toLocaleString()}
+                              </div>
 
-                            <div className="mt-4 text-2xl font-bold text-cyan-300">
-                              ₦
-                              {price.toLocaleString()}
-                            </div>
-
-                            {billing && (
-                              <p className="mt-1 text-sm text-slate-500">
-                                {billing}
-                              </p>
-                            )}
-
-                            <Button
-                              className="mt-6 w-full bg-cyan-600 hover:bg-cyan-500"
-                              disabled={
-                                !planId ||
-                                payingPlan ===
-                                  planId
-                              }
-                              onClick={() =>
-                                startSellerSubscription(
-                                  planId
-                                )
-                              }
-                            >
-                              {payingPlan ===
-                              planId ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Opening payment...
-                                </>
-                              ) : (
-                                "Choose Plan"
+                              {billing && (
+                                <p className="mt-1 text-sm text-slate-500">
+                                  {billing}
+                                </p>
                               )}
-                            </Button>
 
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                              <Button
+                                className="mt-6 w-full bg-cyan-600 hover:bg-cyan-500"
+                                disabled={
+                                  !planId ||
+                                  payingPlan ===
+                                    planId
+                                }
+                                onClick={() =>
+                                  startSellerSubscription(
+                                    planId
+                                  )
+                                }
+                              >
+                                {payingPlan ===
+                                planId ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Opening payment...
+                                  </>
+                                ) : (
+                                  "Choose Plan"
+                                )}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+                      }
+                    )}
                   </div>
                 )}
-
               </div>
-
             </CardContent>
           </Card>
         ) : (
           <>
-            {/* OVERVIEW */}
             {activeTab === "overview" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1375,8 +1243,6 @@ export default function SellerDashboard({
               </>
             )}
 
-            {/* STOREFRONT */}
-
             {activeTab === "storefront" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
@@ -1393,9 +1259,7 @@ export default function SellerDashboard({
 
                   <div className="grid gap-5 lg:grid-cols-2">
                     <div>
-                      <Label>
-                        Store name
-                      </Label>
+                      <Label>Store name</Label>
 
                       <Input
                         value={storeName}
@@ -1410,9 +1274,7 @@ export default function SellerDashboard({
                     </div>
 
                     <div>
-                      <Label>
-                        Logo URL
-                      </Label>
+                      <Label>Logo URL</Label>
 
                       <Input
                         value={storeLogoUrl}
@@ -1427,9 +1289,7 @@ export default function SellerDashboard({
                     </div>
 
                     <div className="lg:col-span-2">
-                      <Label>
-                        Description
-                      </Label>
+                      <Label>Description</Label>
 
                       <textarea
                         value={
@@ -1508,8 +1368,6 @@ export default function SellerDashboard({
               </Card>
             )}
 
-            {/* PRODUCTS */}
-
             {activeTab === "products" && (
               <div>
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1526,9 +1384,7 @@ export default function SellerDashboard({
                   <Button
                     onClick={() => {
                       resetListingForm();
-                      setShowListingForm(
-                        true
-                      );
+                      setShowListingForm(true);
                     }}
                     className="bg-cyan-600 hover:bg-cyan-500"
                   >
@@ -1600,9 +1456,7 @@ export default function SellerDashboard({
                         </div>
 
                         <div>
-                          <Label>
-                            Category
-                          </Label>
+                          <Label>Category</Label>
 
                           <Input
                             value={
@@ -1619,9 +1473,7 @@ export default function SellerDashboard({
                         </div>
 
                         <div>
-                          <Label>
-                            Quantity
-                          </Label>
+                          <Label>Quantity</Label>
 
                           <Input
                             type="number"
@@ -1871,8 +1723,6 @@ export default function SellerDashboard({
               </div>
             )}
 
-            {/* ORDERS */}
-
             {activeTab === "orders" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
@@ -1978,10 +1828,7 @@ export default function SellerDashboard({
               </Card>
             )}
 
-            {/* WITHDRAWALS */}
-
-            {activeTab ===
-              "withdrawals" && (
+            {activeTab === "withdrawals" && (
               <div className="space-y-6">
                 <Card className="border-slate-800 bg-slate-950">
                   <CardContent className="p-6">
@@ -2031,9 +1878,7 @@ export default function SellerDashboard({
                     ) : (
                       <div className="mt-5 space-y-3">
                         {withdrawals.map(
-                          (
-                            withdrawal
-                          ) => (
+                          (withdrawal) => (
                             <div
                               key={
                                 withdrawal.id
