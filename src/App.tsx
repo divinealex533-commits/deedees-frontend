@@ -1,5 +1,5 @@
 import AffiliateProgram from '@/sections/AffiliateProgram';
-import ResellerSystemDiagnostic from './sections/ResellerSystemDiagnostic';
+import ResellerSystemDiagnostic from "./sections/ResellerSystemDiagnostic";
 import SellerDashboard from '@/sections/SellerDashboard';
 
 import { useState, useEffect } from 'react';
@@ -71,14 +71,18 @@ function App() {
     useState(false);
 
   const resetToken =
-    new URLSearchParams(window.location.search).get('token');
+    new URLSearchParams(window.location.search).get(
+      'token'
+    );
 
   const isResetPasswordPage =
     window.location.pathname === '/reset-password' &&
     !!resetToken;
 
   const store = useStore();
+
   const auth = useAuth();
+
   const wallet = useWallet(
     auth.user?.id || null
   );
@@ -90,9 +94,8 @@ function App() {
       window.location.search
     );
 
-    const reference = params.get(
-      'reference'
-    );
+    const reference =
+      params.get('reference');
 
     if (
       !reference ||
@@ -149,11 +152,15 @@ function App() {
     wallet.confirmInstantDeposit,
   ]);
 
-  // ==========================================================
-  // ADMIN SELLER TEST MODE
-  // ==========================================================
-
-  
+  /*
+   * IMPORTANT:
+   *
+   * There is intentionally NO admin seller
+   * test-mode useEffect here.
+   *
+   * Admin login must always go to the normal
+   * admin dashboard.
+   */
 
   if (
     isResetPasswordPage &&
@@ -298,14 +305,12 @@ function App() {
   const handleDrawerGoHome = () => {
     setView('store');
 
-    setTimeout(
-      () =>
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth',
-        }),
-      50
-    );
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }, 50);
   };
 
   const handleDrawerGoProduct = () => {
@@ -354,6 +359,7 @@ function App() {
     }
 
     setIsAccountDrawerOpen(false);
+
     setView('seller-dashboard');
   };
 
@@ -403,6 +409,7 @@ function App() {
         user={auth.user}
         onLogout={() => {
           auth.logout();
+
           setView('store');
 
           toast.success(
@@ -456,6 +463,7 @@ function App() {
         }
         onLogout={() => {
           auth.logout();
+
           setView('store');
 
           toast.success(
@@ -560,9 +568,11 @@ function App() {
               );
 
               await wallet.refresh();
+
               await auth.refresh();
 
               setIsCheckoutOpen(false);
+
               setSelectedProduct(null);
 
               setView('dashboard');
@@ -602,6 +612,7 @@ function App() {
             }
             onLogout={() => {
               auth.logout();
+
               setView('store');
 
               toast.success(
@@ -635,6 +646,7 @@ function App() {
             }
             onLogout={() => {
               auth.logout();
+
               setView('store');
 
               toast.success(
@@ -663,7 +675,8 @@ function App() {
       )}
 
       {view === 'seller-dashboard' &&
-        auth.user && (
+        auth.user &&
+        !auth.user.isAdmin && (
           <SellerDashboard
             userId={auth.user.id}
             onBack={() => {
@@ -678,6 +691,7 @@ function App() {
             }}
             onLogout={() => {
               auth.logout();
+
               setView('store');
 
               toast.success(
@@ -698,7 +712,9 @@ function App() {
         }
         onClose={() => {
           setIsAuthModalOpen(false);
+
           setPendingCatalogScroll(false);
+
           setPendingBuyProduct(null);
         }}
         onLogin={async (
@@ -712,9 +728,19 @@ function App() {
             );
 
           if (result.success) {
+            /*
+             * ADMIN ALWAYS GOES TO ADMIN DASHBOARD.
+             * Never redirect admin to seller marketplace.
+             */
             if (
               result.user?.isAdmin
             ) {
+              setIsAuthModalOpen(false);
+
+              setPendingBuyProduct(null);
+
+              setPendingCatalogScroll(false);
+
               setView('admin');
             } else if (
               pendingBuyProduct
@@ -724,15 +750,23 @@ function App() {
               );
 
               setPendingBuyProduct(null);
+
               setIsAuthModalOpen(false);
+
               setIsCheckoutOpen(true);
             } else if (
               pendingCatalogScroll
             ) {
+              setIsAuthModalOpen(false);
+
               setTimeout(
                 scrollToCatalog,
                 300
               );
+            } else {
+              setIsAuthModalOpen(false);
+
+              setView('store');
             }
           }
 
@@ -778,6 +812,8 @@ function App() {
                 'This account does not have admin access',
             };
           }
+
+          setIsAdminLoginOpen(false);
 
           setView('admin');
 
