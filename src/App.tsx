@@ -159,6 +159,35 @@ function App() {
           position="top-right"
           richColors
         />
+  // ==========================================================
+  // ADMIN SELLER TEST MODE
+  // ==========================================================
+
+  useEffect(() => {
+    if (!auth.isLoaded) return;
+
+    const testPlan = localStorage.getItem(
+      "deedee_admin_seller_test_plan"
+    );
+
+    const validTestPlans = [
+      "standard_seller",
+      "premium_monthly",
+      "premium_yearly",
+    ];
+
+    if (
+      auth.user?.isAdmin &&
+      testPlan &&
+      validTestPlans.includes(testPlan)
+    ) {
+      setView("seller-dashboard");
+    }
+  }, [
+    auth.isLoaded,
+    auth.user?.isAdmin,
+  ]);
+        
 
         <ResetPassword
           token={resetToken}
