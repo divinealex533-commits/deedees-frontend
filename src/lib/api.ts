@@ -26,14 +26,11 @@ async function request(
 
   const adminSellerTestPlan =
     typeof window !== "undefined"
-      ? localStorage.getItem(
-          "deedee_admin_seller_test_plan"
-        )
+      ? localStorage.getItem("deedee_admin_seller_test_plan")
       : null;
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
-
     headers: {
       "Content-Type": "application/json",
 
@@ -45,8 +42,7 @@ async function request(
 
       ...(adminSellerTestPlan
         ? {
-            "x-admin-seller-test-plan":
-              adminSellerTestPlan,
+            "x-admin-seller-test-plan": adminSellerTestPlan,
           }
         : {}),
 
@@ -59,6 +55,7 @@ async function request(
   if (!res.ok) {
     throw new Error(
       data.error ||
+        data.message ||
         `Request failed (${res.status})`
     );
   }
@@ -106,13 +103,10 @@ export const api = {
     }),
 
   resendPasswordReset: (email: string) =>
-    request(
-      "/api/auth/resend-password-reset",
-      {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      }
-    ),
+    request("/api/auth/resend-password-reset", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
 
   resetPassword: (
     token: string,
@@ -126,8 +120,7 @@ export const api = {
       }),
     }),
 
-  me: () =>
-    request("/api/me"),
+  me: () => request("/api/me"),
 
   // ==========================================================
   // SELLER SUBSCRIPTION
@@ -142,24 +135,18 @@ export const api = {
   initializeSellerSubscription: (
     planId: string
   ) =>
-    request(
-      "/api/seller/subscription/initialize",
-      {
-        method: "POST",
-        body: JSON.stringify({ planId }),
-      }
-    ),
+    request("/api/seller/subscription/initialize", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    }),
 
   verifySellerSubscription: (
     reference: string
   ) =>
-    request(
-      "/api/seller/subscription/verify",
-      {
-        method: "POST",
-        body: JSON.stringify({ reference }),
-      }
-    ),
+    request("/api/seller/subscription/verify", {
+      method: "POST",
+      body: JSON.stringify({ reference }),
+    }),
 
   // ==========================================================
   // SELLER STOREFRONT
@@ -191,9 +178,7 @@ export const api = {
     slug: string
   ) =>
     request(
-      `/api/seller/storefront/${encodeURIComponent(
-        slug
-      )}`
+      `/api/seller/storefront/${encodeURIComponent(slug)}`
     ),
 
   // ==========================================================
@@ -222,19 +207,19 @@ export const api = {
     id: string,
     updates: Record<string, unknown>
   ) =>
-    request(`/api/seller/listings/${id}`, {
+    request(`/api/seller/listings/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     }),
 
   deleteSellerListing: (id: string) =>
-    request(`/api/seller/listings/${id}`, {
+    request(`/api/seller/listings/${encodeURIComponent(id)}`, {
       method: "DELETE",
     }),
 
   toggleSellerListing: (id: string) =>
     request(
-      `/api/seller/listings/${id}/toggle`,
+      `/api/seller/listings/${encodeURIComponent(id)}/toggle`,
       {
         method: "POST",
       }
@@ -245,7 +230,9 @@ export const api = {
     credentials: string[]
   ) =>
     request(
-      `/api/seller/listings/${id}/add-access-links`,
+      `/api/seller/listings/${encodeURIComponent(
+        id
+      )}/add-access-links`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -268,9 +255,7 @@ export const api = {
     slug: string
   ) =>
     request(
-      `/api/marketplace/storefront/${encodeURIComponent(
-        slug
-      )}`
+      `/api/marketplace/storefront/${encodeURIComponent(slug)}`
     ),
 
   // ==========================================================
@@ -281,7 +266,7 @@ export const api = {
     request("/api/seller/orders"),
 
   getSellerOrder: (id: string) =>
-    request(`/api/seller/orders/${id}`),
+    request(`/api/seller/orders/${encodeURIComponent(id)}`),
 
   // ==========================================================
   // SELLER WITHDRAWALS
@@ -322,7 +307,9 @@ export const api = {
     userId: string
   ) =>
     request(
-      `/api/admin/sellers/${userId}/unfreeze`,
+      `/api/admin/sellers/${encodeURIComponent(
+        userId
+      )}/unfreeze`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -332,9 +319,7 @@ export const api = {
     ),
 
   getAdminSellerSubscriptions: () =>
-    request(
-      "/api/admin/sellers/subscriptions"
-    ),
+    request("/api/admin/sellers/subscriptions"),
 
   getAdminSellerOrders: () =>
     request("/api/admin/sellers/orders"),
@@ -346,7 +331,9 @@ export const api = {
     id: string
   ) =>
     request(
-      `/api/admin/sellers/withdrawals/${id}/approve`,
+      `/api/admin/sellers/withdrawals/${encodeURIComponent(
+        id
+      )}/approve`,
       {
         method: "POST",
       }
@@ -357,7 +344,9 @@ export const api = {
     reason?: string
   ) =>
     request(
-      `/api/admin/sellers/withdrawals/${id}/reject`,
+      `/api/admin/sellers/withdrawals/${encodeURIComponent(
+        id
+      )}/reject`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -405,7 +394,9 @@ export const api = {
     credentials: string[]
   ) =>
     request(
-      `/api/items/${id}/add-access-links`,
+      `/api/items/${encodeURIComponent(
+        id
+      )}/add-access-links`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -418,21 +409,21 @@ export const api = {
     id: string,
     updates: Record<string, unknown>
   ) =>
-    request(`/api/items/${id}`, {
+    request(`/api/items/${encodeURIComponent(id)}`, {
       method: "PUT",
       body: JSON.stringify(updates),
     }),
 
   toggleItemStock: (id: string) =>
     request(
-      `/api/items/${id}/toggle-stock`,
+      `/api/items/${encodeURIComponent(id)}/toggle-stock`,
       {
         method: "POST",
       }
     ),
 
   deleteItem: (id: string) =>
-    request(`/api/items/${id}`, {
+    request(`/api/items/${encodeURIComponent(id)}`, {
       method: "DELETE",
     }),
 
@@ -487,7 +478,9 @@ export const api = {
     reference: string
   ) =>
     request(
-      `/api/wallet/deposit/instant/verify/${reference}`
+      `/api/wallet/deposit/instant/verify/${encodeURIComponent(
+        reference
+      )}`
     ),
 
   // ==========================================================
@@ -502,15 +495,8 @@ export const api = {
 
     const formData = new FormData();
 
-    formData.append(
-      "amount",
-      String(amount)
-    );
-
-    formData.append(
-      "screenshot",
-      file
-    );
+    formData.append("amount", String(amount));
+    formData.append("screenshot", file);
 
     const res = await fetch(
       `${API_URL}/api/wallet/deposit/manual`,
@@ -532,6 +518,7 @@ export const api = {
     if (!res.ok) {
       throw new Error(
         data.error ||
+          data.message ||
           "Something went wrong"
       );
     }
@@ -552,14 +539,16 @@ export const api = {
     request(
       `/api/admin/deposits${
         status
-          ? `?status=${status}`
+          ? `?status=${encodeURIComponent(status)}`
           : ""
       }`
     ),
 
   approveDeposit: (id: string) =>
     request(
-      `/api/admin/deposits/${id}/approve`,
+      `/api/admin/deposits/${encodeURIComponent(
+        id
+      )}/approve`,
       {
         method: "POST",
       }
@@ -567,7 +556,9 @@ export const api = {
 
   rejectDeposit: (id: string) =>
     request(
-      `/api/admin/deposits/${id}/reject`,
+      `/api/admin/deposits/${encodeURIComponent(
+        id
+      )}/reject`,
       {
         method: "POST",
       }
@@ -601,15 +592,21 @@ export const api = {
     id: string,
     updates: Record<string, unknown>
   ) =>
-    request(`/api/categories/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(updates),
-    }),
+    request(
+      `/api/categories/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      }
+    ),
 
   deleteCategory: (id: string) =>
-    request(`/api/categories/${id}`, {
-      method: "DELETE",
-    }),
+    request(
+      `/api/categories/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+      }
+    ),
 
   // ==========================================================
   // SUPPORT TICKETS
@@ -632,16 +629,16 @@ export const api = {
     }),
 
   getAdminTickets: () =>
-    request(
-      "/api/admin/support/tickets"
-    ),
+    request("/api/admin/support/tickets"),
 
   replyToTicket: (
     id: string,
     message: string
   ) =>
     request(
-      `/api/admin/support/tickets/${id}/reply`,
+      `/api/admin/support/tickets/${encodeURIComponent(
+        id
+      )}/reply`,
       {
         method: "POST",
         body: JSON.stringify({
@@ -655,7 +652,9 @@ export const api = {
     status: "open" | "resolved"
   ) =>
     request(
-      `/api/admin/support/tickets/${id}/status`,
+      `/api/admin/support/tickets/${encodeURIComponent(
+        id
+      )}/status`,
       {
         method: "POST",
         body: JSON.stringify({
