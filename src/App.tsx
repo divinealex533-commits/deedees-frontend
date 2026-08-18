@@ -152,34 +152,24 @@ function App() {
     wallet.confirmInstantDeposit,
   ]);
 
-  /*
-   * IMPORTANT:
-   *
-   * There is intentionally NO admin seller
-   * test-mode useEffect here.
-   *
-   * Admin login must always go to the normal
-   * admin dashboard.
-   */
-
   useEffect(() => {
-  const handleSellerTest = () => {
-    setView("seller-dashboard");
-  };
+    const handleSellerTest = () => {
+      setView("seller-dashboard");
+    };
 
-  window.addEventListener(
-    "deedee-admin-seller-test",
-    handleSellerTest
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       "deedee-admin-seller-test",
       handleSellerTest
     );
-  };
-}, []);
-  
+
+    return () => {
+      window.removeEventListener(
+        "deedee-admin-seller-test",
+        handleSellerTest
+      );
+    };
+  }, []);
+
   if (
     isResetPasswordPage &&
     resetToken
@@ -746,10 +736,6 @@ function App() {
             );
 
           if (result.success) {
-            /*
-             * ADMIN ALWAYS GOES TO ADMIN DASHBOARD.
-             * Never redirect admin to seller marketplace.
-             */
             if (
               result.user?.isAdmin
             ) {
