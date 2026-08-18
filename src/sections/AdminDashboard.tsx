@@ -1081,8 +1081,12 @@ const handleUnfreezeSeller = async (
 )}
         {/* System Diagnostics */}
 {activeTab === 'diagnostics' && (
-  <div className="space-y-4">
+  <div className="space-y-8">
+    {/* KEEP EXISTING FULL RESELLER DIAGNOSTICS */}
     <ResellerSystemDiagnostic />
+
+    {/* ADMIN STOREFRONT INSPECTOR */}
+    <AdminResellerStorefrontInspector />
   </div>
 )}
         
