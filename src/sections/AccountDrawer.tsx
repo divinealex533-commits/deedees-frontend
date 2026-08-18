@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   X,
   Home,
@@ -14,11 +14,11 @@ import {
   User as UserRoundIcon,
   Store,
   ChevronRight,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import type { User } from '@/hooks/useAuth';
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import type { User } from "@/hooks/useAuth";
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -41,7 +41,7 @@ interface AccountDrawerProps {
   onOpenAuth: () => void;
 }
 
-type SubPanel = 'blogs' | 'api' | null;
+type SubPanel = "blogs" | "api" | null;
 
 export function AccountDrawer({
   isOpen,
@@ -63,9 +63,9 @@ export function AccountDrawer({
     useState<SubPanel>(null);
 
   const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
       minimumFractionDigits: 0,
     }).format(price);
 
@@ -92,7 +92,7 @@ export function AccountDrawer({
       onOpenAuth();
 
       toast.info(
-        'Please login to access the seller marketplace.'
+        "Please login to access the seller marketplace."
       );
 
       return;
@@ -100,7 +100,7 @@ export function AccountDrawer({
 
     if (!onGoSellerDashboard) {
       toast.info(
-        'Seller marketplace is currently unavailable.'
+        "Seller marketplace is currently unavailable."
       );
       return;
     }
@@ -180,7 +180,7 @@ export function AccountDrawer({
             {isAuthenticated && (
               <div className="px-5 pb-4">
                 <p className="text-center text-sm text-slate-400">
-                  My balance:{' '}
+                  My balance:{" "}
                   <span className="font-semibold text-white">
                     {formatPrice(balance)}
                   </span>
@@ -268,7 +268,7 @@ export function AccountDrawer({
                 label="Blogs"
                 hasArrow
                 onClick={() =>
-                  setSubPanel('blogs')
+                  setSubPanel("blogs")
                 }
               />
 
@@ -278,7 +278,7 @@ export function AccountDrawer({
                 label="API documentation"
                 hasArrow
                 onClick={() =>
-                  setSubPanel('api')
+                  setSubPanel("api")
                 }
               />
 
@@ -329,7 +329,7 @@ export function AccountDrawer({
         )}
 
         {/* BLOGS PANEL */}
-        {subPanel === 'blogs' && (
+        {subPanel === "blogs" && (
           <div className="p-5">
             <button
               type="button"
@@ -351,7 +351,7 @@ export function AccountDrawer({
         )}
 
         {/* API PANEL */}
-        {subPanel === 'api' && (
+        {subPanel === "api" && (
           <div className="p-5">
             <button
               type="button"
