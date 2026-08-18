@@ -837,6 +837,27 @@ function App() {
         />
       )}
 
+      {view === "seller-marketplace" && (
+  <SellerMarketplace
+    onBack={() => {
+      setView("store");
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }, 50);
+    }}
+    onBuyNow={(listing) => {
+      // We will connect seller listing checkout here next.
+      toast.info(
+        "Seller product checkout is being prepared."
+      );
+    }}
+  />
+)}
+      
       {view ===
         "seller-dashboard" &&
         auth.user &&
