@@ -342,6 +342,15 @@ export const api = {
     request(
       "/api/admin/reseller-inspection/sellers"
     ),
+
+    getAdminResellerInspection: (
+    sellerId: string
+  ) =>
+    request(
+      `/api/admin/reseller-inspection/${encodeURIComponent(
+        sellerId
+      )}`
+    ),
   
   // ==========================================================
   // ADMIN SELLER MANAGEMENT
