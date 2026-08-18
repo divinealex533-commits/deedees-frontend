@@ -95,22 +95,24 @@ export default function AdminResellerStorefrontInspector() {
     useState(false);
 
   async function refresh() {
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const [sellerData, itemData] =
-        await Promise.all([
-          loadAdminSellers(),
-          api.getAdminItems(),
-        ]);
+  try {
+    const sellerData =
+      await loadAdminSellers();
 
-      setSellers(sellerData);
-      setItems(
-        Array.isArray(itemData)
-          ? itemData
-          : []
-      );
-    } catch (error) {
+    setSellers(sellerData);
+    setItems([]);
+  } catch (error) {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Could not load reseller data"
+    );
+  } finally {
+    setLoading(false);
+  }
+}
       toast.error(
         error instanceof Error
           ? error.message
@@ -126,45 +128,41 @@ export default function AdminResellerStorefrontInspector() {
   }, []);
 
   async function inspectSeller(
-    seller: Seller
-  ) {
-    setSelectedSeller(seller);
-    setStorefront(null);
-    setLoadingStore(true);
+  seller: Seller
+) {
+  setSelectedSeller(seller);
+  setStorefront(null);
+  setItems([]);
+  setLoadingStore(true);
 
-    const slug =
-      seller.sellerStoreSlug?.trim();
-
-    if (!slug) {
-      setLoadingStore(false);
-      return;
-    }
-
-    try {
-      const response =
-        await api.getPublicSellerStorefront(
-          slug
-        );
-
-      const store =
-        response?.storefront ||
-        response?.seller ||
-        response?.data?.storefront ||
-        response?.data?.seller ||
-        response?.data ||
-        response;
-
-      setStorefront(store || null);
-    } catch (error) {
-      console.warn(
-        "Admin storefront inspection:",
-        error
+  try {
+    const response =
+      await api.getAdminResellerInspection(
+        seller.id
       );
-    } finally {
-      setLoadingStore(false);
-    }
-  }
 
+    const store =
+      response?.storefront || null;
+
+    const listings =
+      Array.isArray(
+        response?.listings
+      )
+        ? response.listings
+        : [];
+
+    setStorefront(store);
+    setItems(listings);
+  } catch (error) {
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Could not inspect reseller website"
+    );
+  } finally {
+    setLoadingStore(false);
+  }
+}
   const filteredSellers = useMemo(() => {
     const q = search
       .trim()
