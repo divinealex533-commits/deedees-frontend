@@ -2,6 +2,7 @@ import AffiliateProgram from "@/sections/AffiliateProgram";
 import ResellerSystemDiagnostic from "./sections/ResellerSystemDiagnostic";
 import SellerDashboard from "@/sections/SellerDashboard";
 import PublicSellerStorefront from "@/sections/PublicSellerStorefront";
+import SellerMarketplace from "@/sections/SellerMarketplace";
 
 import { useState, useEffect } from "react";
 
@@ -42,6 +43,7 @@ type ViewType =
   | "affiliate"
   | "seller-dashboard"
   | "seller-inspector"
+  | "seller-marketplace"
   | "public-seller-storefront";
 
 function App() {
@@ -56,6 +58,9 @@ function App() {
 
   const [pendingBuyProduct, setPendingBuyProduct] =
     useState<typeof store.products[0] | null>(null);
+
+  const [pendingMarketplaceBuy, setPendingMarketplaceBuy] =
+    useState<any>(null);
 
   const [isCheckoutOpen, setIsCheckoutOpen] =
     useState(false);
@@ -103,11 +108,11 @@ function App() {
   const wallet = useWallet(
     auth.user?.id || null
   );
-  
+
   useEffect(() => {
     if (publicSellerSlug) {
       setView(
-        'public-seller-storefront'
+        "public-seller-storefront"
       );
     }
   }, [publicSellerSlug]);
@@ -225,9 +230,9 @@ function App() {
     );
   }
 
-    if (
+  if (
     publicSellerSlug &&
-    view === 'public-seller-storefront'
+    view === "public-seller-storefront"
   ) {
     return (
       <>
@@ -242,10 +247,10 @@ function App() {
             window.history.pushState(
               {},
               document.title,
-              '/'
+              "/"
             );
 
-            window.location.href = '/';
+            window.location.href = "/";
           }}
         />
       </>
@@ -316,6 +321,104 @@ function App() {
     }
 
     setSelectedProduct(product);
+    setIsCheckoutOpen(true);
+  };
+
+  /*
+   * SELLER MARKETPLACE BUY FLOW
+   *
+   * Marketplace listings are normalized into the
+   * existing Product shape so the existing CheckoutModal
+   * and purchase flow can be reused.
+   */
+  const handleSellerMarketplaceBuy = (
+    listing: any
+  ) => {
+    const marketplaceProduct =
+      {
+        ...listing,
+        id: String(
+          listing.id ||
+            listing.tonyixProductId ||
+            ""
+        ),
+        name:
+          listing.title ||
+          listing.name ||
+          "Digital Product",
+        description:
+          listing.description ||
+          "",
+        price:
+          Number(
+            listing.price || 0
+          ),
+        imageUrl:
+          listing.imageUrl ||
+          "",
+        quantity:
+          listing.quantity != null
+            ? Number(
+                listing.quantity
+              )
+            : listing.stockCount != null
+              ? Number(
+                  listing.stockCount
+                )
+              : undefined,
+        inStock:
+          listing.inStock !== false &&
+          (
+            listing.quantity == null &&
+            listing.stockCount == null
+              ? true
+              : Number(
+                  listing.quantity ??
+                    listing.stockCount ??
+                    0
+                ) > 0
+          ),
+      } as typeof store.products[0];
+
+    if (!marketplaceProduct.id) {
+      toast.error(
+        "This product cannot be purchased right now."
+      );
+      return;
+    }
+
+    if (
+      marketplaceProduct.inStock ===
+      false
+    ) {
+      toast.error(
+        "This product is out of stock"
+      );
+      return;
+    }
+
+    if (!auth.isAuthenticated) {
+      setPendingMarketplaceBuy(
+        marketplaceProduct
+      );
+
+      setIsAuthModalOpen(true);
+
+      toast.info(
+        "Please login to continue"
+      );
+
+      return;
+    }
+
+    setSelectedProduct(
+      marketplaceProduct
+    );
+
+    setView(
+      "seller-marketplace"
+    );
+
     setIsCheckoutOpen(true);
   };
 
@@ -617,58 +720,25 @@ function App() {
               handleCheckout
             }
           />
-
-          <CheckoutModal
-            isOpen={
-              isCheckoutOpen
-            }
-            onClose={() => {
-              setIsCheckoutOpen(
-                false
-              );
-              setSelectedProduct(
-                null
-              );
-            }}
-            product={
-              selectedProduct
-            }
-            walletBalance={
-              wallet.balance
-            }
-            onStartInstantDeposit={
-              wallet.startInstantDeposit
-            }
-            onSubmitManualDeposit={
-              wallet.submitManualDeposit
-            }
-            onPurchase={async (
-              product,
-              quantity
-            ) => {
-              await store.purchaseItem(
-                product.id,
-                quantity
-              );
-
-              await wallet.refresh();
-
-              await auth.refresh();
-
-              setIsCheckoutOpen(
-                false
-              );
-
-              setSelectedProduct(
-                null
-              );
-
-              setView(
-                "dashboard"
-              );
-            }}
-          />
         </>
+      )}
+
+      {view === "seller-marketplace" && (
+        <SellerMarketplace
+          onBack={() => {
+            setView("store");
+
+            setTimeout(() => {
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }, 50);
+          }}
+          onBuyNow={
+            handleSellerMarketplaceBuy
+          }
+        />
       )}
 
       {view === "admin" &&
@@ -815,6 +885,10 @@ function App() {
           setPendingBuyProduct(
             null
           );
+
+          setPendingMarketplaceBuy(
+            null
+          );
         }}
         onLogin={async (
           email,
@@ -830,6 +904,11 @@ function App() {
             if (
               result.user?.isAdmin
             ) {
+              /*
+               * IMPORTANT:
+               * Normal admin login always goes to
+               * the normal Admin Dashboard.
+               */
               setIsAuthModalOpen(
                 false
               );
@@ -838,11 +917,37 @@ function App() {
                 null
               );
 
+              setPendingMarketplaceBuy(
+                null
+              );
+
               setPendingCatalogScroll(
                 false
               );
 
               setView("admin");
+            } else if (
+              pendingMarketplaceBuy
+            ) {
+              setSelectedProduct(
+                pendingMarketplaceBuy
+              );
+
+              setPendingMarketplaceBuy(
+                null
+              );
+
+              setPendingBuyProduct(
+                null
+              );
+
+              setIsAuthModalOpen(
+                false
+              );
+
+              setIsCheckoutOpen(
+                true
+              );
             } else if (
               pendingBuyProduct
             ) {
@@ -932,6 +1037,9 @@ function App() {
             false
           );
 
+          /*
+           * Normal admin login goes ONLY to AdminDashboard.
+           */
           setView("admin");
 
           return {
@@ -939,6 +1047,62 @@ function App() {
             message:
               "Welcome back!",
           };
+        }}
+      />
+
+      <CheckoutModal
+        isOpen={
+          isCheckoutOpen
+        }
+        onClose={() => {
+          setIsCheckoutOpen(
+            false
+          );
+
+          setSelectedProduct(
+            null
+          );
+        }}
+        product={
+          selectedProduct
+        }
+        walletBalance={
+          wallet.balance
+        }
+        onStartInstantDeposit={
+          wallet.startInstantDeposit
+        }
+        onSubmitManualDeposit={
+          wallet.submitManualDeposit
+        }
+        onPurchase={async (
+          product,
+          quantity
+        ) => {
+          await store.purchaseItem(
+            product.id,
+            quantity
+          );
+
+          await wallet.refresh();
+
+          await auth.refresh();
+
+          setIsCheckoutOpen(
+            false
+          );
+
+          setSelectedProduct(
+            null
+          );
+
+          setPendingMarketplaceBuy(
+            null
+          );
+
+          setView(
+            "dashboard"
+          );
         }}
       />
     </div>
