@@ -19,6 +19,7 @@ type NavbarView =
   | "affiliate"
   | "seller-dashboard"
   | "seller-inspector"
+  | "seller-marketplace"
   | "public-seller-storefront";
 
 type MainNavbarView =
