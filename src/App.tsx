@@ -103,10 +103,6 @@ function App() {
   const wallet = useWallet(
     auth.user?.id || null
   );
-  const publicSellerMatch =
-  window.location.pathname.match(
-    /^\/(?:store|seller)\/([^/]+)\/?$/
-  );
   
   useEffect(() => {
     if (publicSellerSlug) {
