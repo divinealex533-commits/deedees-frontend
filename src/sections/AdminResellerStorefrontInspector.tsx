@@ -113,16 +113,6 @@ export default function AdminResellerStorefrontInspector() {
     setLoading(false);
   }
 }
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not load reseller data"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
     refresh();
   }, []);
