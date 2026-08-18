@@ -162,6 +162,24 @@ function App() {
    * admin dashboard.
    */
 
+  useEffect(() => {
+  const handleSellerTest = () => {
+    setView("seller-dashboard");
+  };
+
+  window.addEventListener(
+    "deedee-admin-seller-test",
+    handleSellerTest
+  );
+
+  return () => {
+    window.removeEventListener(
+      "deedee-admin-seller-test",
+      handleSellerTest
+    );
+  };
+}, []);
+  
   if (
     isResetPasswordPage &&
     resetToken
