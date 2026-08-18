@@ -333,6 +333,16 @@ export const api = {
       }),
     }),
 
+
+    // ==========================================================
+  // ADMIN — REAL RESELLER WEBSITE INSPECTION
+  // ==========================================================
+
+  getAdminResellerInspectionSellers: () =>
+    request(
+      "/api/admin/reseller-inspection/sellers"
+    ),
+  
   // ==========================================================
   // ADMIN SELLER MANAGEMENT
   // ==========================================================
