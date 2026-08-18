@@ -1,5 +1,5 @@
 import AffiliateProgram from '@/sections/AffiliateProgram';
-import ResellerSystemDiagnostic from "./sections/ResellerSystemDiagnostic";
+import ResellerSystemDiagnostic from './sections/ResellerSystemDiagnostic';
 import SellerDashboard from '@/sections/SellerDashboard';
 
 import { useState, useEffect } from 'react';
@@ -149,6 +149,35 @@ function App() {
     wallet.confirmInstantDeposit,
   ]);
 
+  // ==========================================================
+  // ADMIN SELLER TEST MODE
+  // ==========================================================
+
+  useEffect(() => {
+    if (!auth.isLoaded) return;
+
+    const testPlan = localStorage.getItem(
+      'deedee_admin_seller_test_plan'
+    );
+
+    const validTestPlans = [
+      'standard_seller',
+      'premium_monthly',
+      'premium_yearly',
+    ];
+
+    if (
+      auth.user?.isAdmin &&
+      testPlan &&
+      validTestPlans.includes(testPlan)
+    ) {
+      setView('seller-dashboard');
+    }
+  }, [
+    auth.isLoaded,
+    auth.user?.isAdmin,
+  ]);
+
   if (
     isResetPasswordPage &&
     resetToken
@@ -159,35 +188,6 @@ function App() {
           position="top-right"
           richColors
         />
-  // ==========================================================
-  // ADMIN SELLER TEST MODE
-  // ==========================================================
-
-  useEffect(() => {
-    if (!auth.isLoaded) return;
-
-    const testPlan = localStorage.getItem(
-      "deedee_admin_seller_test_plan"
-    );
-
-    const validTestPlans = [
-      "standard_seller",
-      "premium_monthly",
-      "premium_yearly",
-    ];
-
-    if (
-      auth.user?.isAdmin &&
-      testPlan &&
-      validTestPlans.includes(testPlan)
-    ) {
-      setView("seller-dashboard");
-    }
-  }, [
-    auth.isLoaded,
-    auth.user?.isAdmin,
-  ]);
-        
 
         <ResetPassword
           token={resetToken}
@@ -416,14 +416,6 @@ function App() {
         }
         view={view}
         onViewChange={(nextView) => {
-          /*
-           * Navbar may still expose the original
-           * navigation views.
-           *
-           * Seller dashboard is controlled
-           * separately so normal customers are
-           * not accidentally routed into it.
-           */
           setView(
             nextView as ViewType
           );
@@ -483,8 +475,8 @@ function App() {
           setIsAccountDrawerOpen(false);
         }}
         onGoSellerDashboard={
-  handleSellerDashboard
-}
+          handleSellerDashboard
+        }
         onLogout={() => {
           auth.logout();
           setView('store');
@@ -718,10 +710,10 @@ function App() {
           />
         )}
 
-     {view === 'seller-inspector' &&
-  auth.user?.isAdmin && (
-    <ResellerSystemDiagnostic />
-  )}
+      {view === 'seller-inspector' &&
+        auth.user?.isAdmin && (
+          <ResellerSystemDiagnostic />
+        )}
 
       <AuthModal
         isOpen={
