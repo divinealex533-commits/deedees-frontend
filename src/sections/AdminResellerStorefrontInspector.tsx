@@ -72,28 +72,13 @@ function stockOf(item: Listing) {
 }
 
 async function loadAdminSellers(): Promise<Seller[]> {
-  const token = getToken();
+  const response =
+    await api.getAdminResellerInspectionSellers();
 
-  const response = await fetch(
-    `${API_URL}/api/admin/sellers`,
-    {
-      headers: token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {},
-    }
-  );
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-        data.message ||
-        "Could not load reseller accounts"
-    );
-  }
+  return Array.isArray(response?.sellers)
+    ? response.sellers
+    : [];
+}
 
   return Array.isArray(data.sellers)
     ? data.sellers
