@@ -275,14 +275,29 @@ export default function SellerDashboard({
   const [listingTonyixId, setListingTonyixId] =
     useState("");
 
+    const adminSellerTestPlan =
+    typeof window !== "undefined"
+      ? localStorage.getItem(
+          "deedee_admin_seller_test_plan"
+        )
+      : null;
+
+  const isAdminSellerTestMode =
+    !!adminSellerTestPlan;
+
   const subscriptionStatus =
-    getSubscriptionStatus(subscription);
+    isAdminSellerTestMode
+      ? "test"
+      : getSubscriptionStatus(subscription);
 
   const isSubscriptionActive =
+    isAdminSellerTestMode ||
     subscriptionStatus === "active";
 
   const planName =
-    getPlanName(subscription);
+    isAdminSellerTestMode
+      ? adminSellerTestPlan || "Admin Test Seller Plan"
+      : getPlanName(subscription);
 
   const subscriptionExpiry =
     getSubscriptionExpiry(subscription);
@@ -458,11 +473,17 @@ export default function SellerDashboard({
     }
   }
 
-  useEffect(() => {
-    if (!isSubscriptionActive) {
+    useEffect(() => {
+    if (
+      !isSubscriptionActive &&
+      !isAdminSellerTestMode
+    ) {
       loadSellerPlans();
     }
-  }, [isSubscriptionActive]);
+  }, [
+    isSubscriptionActive,
+    isAdminSellerTestMode,
+  ]);
 
   useEffect(() => {
     const params =
