@@ -858,19 +858,22 @@ function App() {
   />
 )}
       
-    {view ===
-  "seller-dashboard" &&
-  auth.user &&
-  (
-    !auth.user.isAdmin ||
-    (
-      auth.user.isAdmin &&
-      typeof window !== "undefined" &&
-      !!localStorage.getItem(
-        "deedee_admin_seller_test_plan"
-      )
-    )
-  ) && (
+         {view === "seller-dashboard" &&
+        auth.user &&
+        (
+          !auth.user.isAdmin ||
+          (
+            auth.user.isAdmin &&
+            typeof window !== "undefined" &&
+            !!localStorage.getItem(
+              "deedee_admin_seller_test_plan"
+            )
+          )
+        ) && (
+          <SellerDashboard
+            userId={auth.user.id}
+            onBack={() => {
+              setView("store");
 
               setTimeout(() => {
                 window.scrollTo({
@@ -889,6 +892,12 @@ function App() {
               );
             }}
           />
+        )}
+
+      {view ===
+        "seller-inspector" &&
+        auth.user?.isAdmin && (
+          <ResellerSystemDiagnostic />
         )}
 
       {view ===
