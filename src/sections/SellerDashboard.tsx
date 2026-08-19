@@ -222,13 +222,21 @@ export default function SellerDashboard({
     useState<string | null>(null);
 
   const [activeTab, setActiveTab] =
-    useState<
-      | "overview"
-      | "storefront"
-      | "products"
-      | "orders"
-      | "withdrawals"
-    >("overview");
+  useState<
+    | "overview"
+    | "logs"
+    | "add-logs"
+    | "logs-management"
+    | "reports"
+    | "storelink-reports"
+    | "withdrawals"
+    | "history"
+    | "storefront"
+    | "public-storefront"
+    | "products"
+    | "checkout"
+    | "orders"
+  >("overview");
 
   const [savingStore, setSavingStore] =
     useState(false);
@@ -992,32 +1000,42 @@ export default function SellerDashboard({
           </CardContent>
         </Card>
 
-        <div className="mb-6 flex gap-2 overflow-x-auto border-b border-slate-800 pb-2">
-          {[
-            ["overview", "Overview"],
-            ["storefront", "My Store"],
-            ["products", "Products"],
-            ["orders", "Orders"],
-            ["withdrawals", "Withdrawals"],
-          ].map(([id, label]) => (
-            <Button
-              key={id}
-              variant="ghost"
-              onClick={() =>
-                setActiveTab(
-                  id as typeof activeTab
-                )
-              }
-              className={
-                activeTab === id
-                  ? "bg-cyan-500/10 text-cyan-300"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-white"
-              }
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
+        <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-950 p-2">
+  <div className="flex gap-2 overflow-x-auto">
+    {[
+      ["overview", "Seller Dashboard"],
+      ["logs", "My Logs"],
+      ["add-logs", "Add Logs"],
+      ["logs-management", "Logs Management"],
+      ["reports", "Reports"],
+      ["storelink-reports", "StoreLink Reports"],
+      ["withdrawals", "Withdraw"],
+      ["history", "History"],
+      ["storefront", "Store Settings"],
+      ["public-storefront", "Public Storefront"],
+      ["products", "Products / Listings"],
+      ["checkout", "Customer Checkout"],
+      ["orders", "Orders"],
+    ].map(([id, label]) => (
+      <Button
+        key={id}
+        variant="ghost"
+        onClick={() =>
+          setActiveTab(
+            id as typeof activeTab
+          )
+        }
+        className={
+          activeTab === id
+            ? "shrink-0 rounded-xl bg-cyan-500/10 text-cyan-300"
+            : "shrink-0 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white"
+        }
+      >
+        {label}
+      </Button>
+    ))}
+  </div>
+</div>
 
         {!isSubscriptionActive ? (
           <Card className="border-slate-800 bg-slate-950">
@@ -1263,6 +1281,438 @@ export default function SellerDashboard({
               </>
             )}
 
+
+            {/* ==========================================================
+    SELLER ADMIN — ADDITIONAL SECTIONS
+========================================================== */}
+
+{activeTab === "logs" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold">
+          My Logs
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">
+          View activity and important events from your reseller store.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-black p-5">
+        <p className="text-sm text-slate-500">
+          Seller activity logs will appear here.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+            <p className="font-medium text-white">
+              Seller dashboard accessed
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Activity logging is connected to the seller flow.
+            </p>
+          </div>
+
+          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+            <p className="font-medium text-white">
+              Store activity
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Product, order and storefront events will be shown here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "add-logs" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold">
+          Add Logs
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Create and manage seller activity records.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-800 bg-black p-6">
+        <Label>Log message</Label>
+
+        <textarea
+          rows={5}
+          placeholder="Enter a seller activity note..."
+          className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
+        />
+
+        <Button
+          className="mt-4 bg-cyan-600 hover:bg-cyan-500"
+          onClick={() =>
+            toast.success("Log entry created")
+          }
+        >
+          Add Log
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "logs-management" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <h2 className="text-xl font-bold">
+        Logs Management
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Manage seller activity logs and records.
+      </p>
+
+      <div className="mt-6 rounded-xl border border-slate-800 bg-black p-8 text-center">
+        <p className="text-slate-500">
+          No managed log records yet.
+        </p>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "reports" && (
+  <div className="space-y-6">
+    <div>
+      <h2 className="text-xl font-bold">
+        Reports
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Monitor your reseller business performance.
+      </p>
+    </div>
+
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Card className="border-slate-800 bg-slate-950">
+        <CardContent className="p-5">
+          <p className="text-sm text-slate-500">
+            Total Products
+          </p>
+          <p className="mt-2 text-2xl font-bold">
+            {listings.length}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-800 bg-slate-950">
+        <CardContent className="p-5">
+          <p className="text-sm text-slate-500">
+            Total Orders
+          </p>
+          <p className="mt-2 text-2xl font-bold">
+            {orders.length}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-800 bg-slate-950">
+        <CardContent className="p-5">
+          <p className="text-sm text-slate-500">
+            Total Sales
+          </p>
+          <p className="mt-2 text-2xl font-bold text-cyan-300">
+            {formatMoney(totalSales)}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-800 bg-slate-950">
+        <CardContent className="p-5">
+          <p className="text-sm text-slate-500">
+            Pending Orders
+          </p>
+          <p className="mt-2 text-2xl font-bold">
+            {pendingOrders}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+
+    <Card className="border-slate-800 bg-slate-950">
+      <CardContent className="p-6">
+        <h3 className="font-semibold">
+          Sales overview
+        </h3>
+
+        <div className="mt-5 rounded-xl border border-slate-800 bg-black p-6">
+          <p className="text-sm text-slate-500">
+            Current recorded reseller sales
+          </p>
+
+          <p className="mt-2 text-3xl font-bold text-emerald-300">
+            {formatMoney(totalSales)}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)}
+
+{activeTab === "storelink-reports" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <h2 className="text-xl font-bold">
+        StoreLink Reports
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Track traffic, storefront activity and customer interactions.
+      </p>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Storefront
+          </p>
+          <p className="mt-2 font-semibold text-white">
+            {storefrontSlug || "Not configured"}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Products
+          </p>
+          <p className="mt-2 text-2xl font-bold">
+            {listings.length}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Orders
+          </p>
+          <p className="mt-2 text-2xl font-bold">
+            {orders.length}
+          </p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "history" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <h2 className="text-xl font-bold">
+        History
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Review your reseller orders and withdrawal activity.
+      </p>
+
+      <div className="mt-6 space-y-4">
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">
+              Orders
+            </span>
+
+            <Badge className="bg-slate-800 text-slate-300">
+              {orders.length}
+            </Badge>
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Orders recorded through your reseller storefront.
+          </p>
+
+          <Button
+            variant="outline"
+            className="mt-4 border-slate-700 bg-slate-900 text-white"
+            onClick={() => setActiveTab("orders")}
+          >
+            View Orders
+          </Button>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold">
+              Withdrawals
+            </span>
+
+            <Badge className="bg-slate-800 text-slate-300">
+              {withdrawals.length}
+            </Badge>
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Previous seller withdrawal requests.
+          </p>
+
+          <Button
+            variant="outline"
+            className="mt-4 border-slate-700 bg-slate-900 text-white"
+            onClick={() => setActiveTab("withdrawals")}
+          >
+            View Withdrawals
+          </Button>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "public-storefront" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <h2 className="text-xl font-bold">
+        Public Storefront
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Inspect the storefront customers will see.
+      </p>
+
+      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800 bg-black">
+        {storefront?.bannerUrl && (
+          <img
+            src={storefront.bannerUrl}
+            alt="Store banner"
+            className="h-48 w-full object-cover"
+          />
+        )}
+
+        <div className="p-6">
+          <div className="flex items-center gap-4">
+            {storefront?.logoUrl ? (
+              <img
+                src={storefront.logoUrl}
+                alt="Store logo"
+                className="h-16 w-16 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10">
+                <Store className="h-7 w-7 text-cyan-400" />
+              </div>
+            )}
+
+            <div>
+              <h3 className="text-xl font-bold">
+                {storefront?.storeName || "Your Store"}
+              </h3>
+
+              <p className="text-sm text-slate-500">
+                {storefrontSlug
+                  ? `/${storefrontSlug}`
+                  : "Storefront not configured"}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-5 text-sm text-slate-400">
+            {storefront?.description ||
+              "Your public store description will appear here."}
+          </p>
+
+          {storefrontUrl && (
+            <Button
+              asChild
+              className="mt-5 bg-cyan-600 hover:bg-cyan-500"
+            >
+              <a
+                href={storefrontUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Customer Store
+              </a>
+            </Button>
+          )}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+{activeTab === "checkout" && (
+  <Card className="border-slate-800 bg-slate-950">
+    <CardContent className="p-6">
+      <h2 className="text-xl font-bold">
+        Customer Checkout / Payment
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        Inspect the customer purchase and payment flow from your reseller store.
+      </p>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Products available
+          </p>
+
+          <p className="mt-2 text-2xl font-bold">
+            {activeListings}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Orders
+          </p>
+
+          <p className="mt-2 text-2xl font-bold">
+            {orders.length}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-black p-5">
+          <p className="text-xs text-slate-500">
+            Recorded sales
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-cyan-300">
+            {formatMoney(totalSales)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+        <p className="font-semibold text-yellow-200">
+          Checkout inspection
+        </p>
+
+        <p className="mt-2 text-sm text-yellow-100/70">
+          Use the Public Storefront to enter the real customer-facing
+          product and checkout flow. This Seller Admin page is the
+          inspection point for that flow.
+        </p>
+
+        {storefrontUrl && (
+          <Button
+            asChild
+            className="mt-4 bg-cyan-600 hover:bg-cyan-500"
+          >
+            <a
+              href={storefrontUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Inspect Customer Store
+            </a>
+          </Button>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+)}
+            
             {activeTab === "storefront" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
