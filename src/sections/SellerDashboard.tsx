@@ -199,6 +199,9 @@ export default function SellerDashboard({
 
   const [listings, setListings] =
     useState<Listing[]>([]);
+  
+  const [categories, setCategories] = useState<any[]>([]);
+const [tonyixProducts, setTonyixProducts] = useState<any[]>([]);
 
   const [orders, setOrders] =
     useState<SellerOrder[]>([]);
@@ -338,6 +341,8 @@ export default function SellerDashboard({
           api.getMySellerListings().catch(() => []),
           api.getMySellerOrders().catch(() => []),
           api.getMySellerWithdrawals().catch(() => []),
+          api.getCategories().catch(() => []),
+api.getTonyixProducts().catch(() => []),
         ]);
 
         setSubscription(subscriptionData || null);
