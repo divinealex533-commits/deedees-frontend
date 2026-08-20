@@ -1317,103 +1317,6 @@ setTonyixProducts(
                       <h2 className="text-lg font-semibold">
                         Order activity
                       </h2>
-
-                      <div className="mt-5 rounded-xl border border-slate-800 bg-black p-4">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="font-semibold text-white">
-        Credential Pool
-      </p>
-
-      <p className="mt-1 text-xs text-slate-500">
-        {Array.isArray(listing.accessLinks)
-          ? listing.accessLinks.length
-          : 0}{" "}
-        credential
-        {Array.isArray(listing.accessLinks) &&
-        listing.accessLinks.length === 1
-          ? ""
-          : "s"}
-      </p>
-    </div>
-
-    <Button
-      size="sm"
-      onClick={() => {
-        setCredentialPoolListingId(
-          String(listing.id)
-        );
-        setCredentialValue("");
-        setCredentialNotes("");
-      }}
-      className="bg-cyan-600 hover:bg-cyan-500"
-    >
-      <Plus className="mr-1 h-4 w-4" />
-      Add Item
-    </Button>
-  </div>
-
-  {credentialPoolListingId ===
-    String(listing.id) && (
-    <div className="mt-4 rounded-lg border border-cyan-500/20 bg-slate-950 p-4">
-      <Label>Email / Password</Label>
-
-      <Input
-        value={credentialValue}
-        onChange={(event) =>
-          setCredentialValue(
-            event.target.value
-          )
-        }
-        placeholder="email@example.com | password"
-        className="mt-2 border-slate-700 bg-black text-white"
-      />
-
-      <Label className="mt-4 block">
-        Notes / Description
-      </Label>
-
-      <textarea
-        value={credentialNotes}
-        onChange={(event) =>
-          setCredentialNotes(
-            event.target.value
-          )
-        }
-        rows={3}
-        placeholder="Notes or description..."
-        className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
-      />
-
-      <div className="mt-4 flex gap-2">
-        <Button
-          onClick={() =>
-            addCredentialToPool(
-              String(listing.id)
-            )
-          }
-          disabled={savingCredential}
-          className="bg-cyan-600 hover:bg-cyan-500"
-        >
-          {savingCredential ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : null}
-          Add to Pool
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() =>
-            setCredentialPoolListingId(null)
-          }
-          className="border-slate-700 bg-slate-900 text-white"
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
-  )}
-</div>
                       
                       <div className="mt-5 grid grid-cols-2 gap-4">
                         <div className="rounded-xl border border-slate-800 bg-black p-4">
@@ -2336,6 +2239,103 @@ setTonyixProducts(
                                   {quantity}
                                 </span>
                               </div>
+
+                                <div className="mt-5 rounded-xl border border-slate-800 bg-black p-4">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="font-semibold text-white">
+        Credential Pool
+      </p>
+
+      <p className="mt-1 text-xs text-slate-500">
+        {Array.isArray(listing.accessLinks)
+          ? listing.accessLinks.length
+          : 0}{" "}
+        credential
+        {Array.isArray(listing.accessLinks) &&
+        listing.accessLinks.length === 1
+          ? ""
+          : "s"}
+      </p>
+    </div>
+
+    <Button
+      size="sm"
+      onClick={() => {
+        setCredentialPoolListingId(
+          String(listing.id)
+        );
+        setCredentialValue("");
+        setCredentialNotes("");
+      }}
+      className="bg-cyan-600 hover:bg-cyan-500"
+    >
+      <Plus className="mr-1 h-4 w-4" />
+      Add Item
+    </Button>
+  </div>
+
+  {credentialPoolListingId ===
+    String(listing.id) && (
+    <div className="mt-4 rounded-lg border border-cyan-500/20 bg-slate-950 p-4">
+      <Label>Email / Password</Label>
+
+      <Input
+        value={credentialValue}
+        onChange={(event) =>
+          setCredentialValue(
+            event.target.value
+          )
+        }
+        placeholder="email@example.com | password"
+        className="mt-2 border-slate-700 bg-black text-white"
+      />
+
+      <Label className="mt-4 block">
+        Notes / Description
+      </Label>
+
+      <textarea
+        value={credentialNotes}
+        onChange={(event) =>
+          setCredentialNotes(
+            event.target.value
+          )
+        }
+        rows={3}
+        placeholder="Notes or description..."
+        className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
+      />
+
+      <div className="mt-4 flex gap-2">
+        <Button
+          onClick={() =>
+            addCredentialToPool(
+              String(listing.id)
+            )
+          }
+          disabled={savingCredential}
+          className="bg-cyan-600 hover:bg-cyan-500"
+        >
+          {savingCredential ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : null}
+          Add to Pool
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() =>
+            setCredentialPoolListingId(null)
+          }
+          className="border-slate-700 bg-slate-900 text-white"
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  )}
+</div>
 
                               <div className="mt-5 grid grid-cols-2 gap-2">
                                 <Button
