@@ -118,6 +118,19 @@ function App() {
   }, [publicSellerSlug]);
 
   useEffect(() => {
+  if (!auth.isLoaded) return;
+
+  // Restore admin dashboard after page refresh
+  if (auth.user?.isAdmin && !publicSellerSlug) {
+    setView("admin");
+  }
+}, [
+  auth.isLoaded,
+  auth.user,
+  publicSellerSlug,
+]);
+
+  useEffect(() => {
     if (!auth.isLoaded) return;
 
     const params =
