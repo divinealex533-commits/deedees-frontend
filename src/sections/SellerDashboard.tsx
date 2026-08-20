@@ -330,21 +330,22 @@ const [tonyixProducts, setTonyixProducts] = useState<any[]>([]);
 
       try {
         const [
-          subscriptionData,
-          storefrontData,
-          listingsData,
-          ordersData,
-          withdrawalsData,
-        ] = await Promise.all([
-          api.getSellerSubscription().catch(() => null),
-          api.getMySellerStorefront().catch(() => null),
-          api.getMySellerListings().catch(() => []),
-          api.getMySellerOrders().catch(() => []),
-          api.getMySellerWithdrawals().catch(() => []),
-          api.getCategories().catch(() => []),
-api.getTonyixProducts().catch(() => []),
-        ]);
-
+  subscriptionData,
+  storefrontData,
+  listingsData,
+  ordersData,
+  withdrawalsData,
+  categoriesData,
+  tonyixData,
+] = await Promise.all([
+  api.getSellerSubscription().catch(() => null),
+  api.getMySellerStorefront().catch(() => null),
+  api.getMySellerListings().catch(() => []),
+  api.getMySellerOrders().catch(() => []),
+  api.getMySellerWithdrawals().catch(() => []),
+  api.getCategories().catch(() => []),
+  api.getTonyixProducts().catch(() => []),
+]);
         setSubscription(subscriptionData || null);
 
         const nextStore =
@@ -359,6 +360,23 @@ api.getTonyixProducts().catch(() => []),
         setWithdrawals(
           normalizeWithdrawals(withdrawalsData)
         );
+
+        setCategories(
+  Array.isArray(categoriesData)
+    ? categoriesData
+    : categoriesData?.categories ||
+      categoriesData?.items ||
+      []
+);
+
+setTonyixProducts(
+  Array.isArray(tonyixData)
+    ? tonyixData
+    : tonyixData?.products ||
+      tonyixData?.items ||
+      tonyixData?.data ||
+      []
+);
 
         if (nextStore) {
           setStoreName(nextStore.storeName || "");
@@ -1931,21 +1949,39 @@ api.getTonyixProducts().catch(() => []),
                         </div>
 
                         <div>
-                          <Label>Category</Label>
+                        <Label>Category</Label>
 
-                          <Input
-                            value={
-                              listingCategoryId
-                            }
-                            onChange={(event) =>
-                              setListingCategoryId(
-                                event.target.value
-                              )
-                            }
-                            placeholder="Category ID"
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
-                        </div>
+<select
+  value={listingCategoryId}
+  onChange={(event) =>
+    setListingCategoryId(event.target.value)
+  }
+  className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white"
+>
+  <option value="">
+    Select category
+  </option>
+
+  {categories.map((category: any) => (
+    <option
+      key={String(
+        category.id ??
+          category.categoryId
+      )}
+      value={String(
+        category.id ??
+          category.categoryId
+      )}
+    >
+      {category.icon
+        ? `${category.icon} `
+        : ""}
+      {category.name ??
+        category.title ??
+        "Unnamed Category"}
+    </option>
+  ))}
+</select>           </div>
 
                         <div>
                           <Label>Quantity</Label>
