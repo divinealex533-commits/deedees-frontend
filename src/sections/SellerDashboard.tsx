@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -16,6 +17,7 @@ import {
   RefreshCw,
   Store,
   Trash2,
+  Upload,
   Wallet,
   XCircle,
 } from "lucide-react";
@@ -64,6 +66,20 @@ type Storefront = {
   storefrontUrl?: string;
   sellerStoreSlug?: string;
   sellerStoreUrl?: string;
+};
+
+type Category = {
+  id?: string | number;
+  categoryId?: string | number;
+  name?: string;
+  title?: string;
+  description?: string;
+  icon?: string;
+};
+
+type CredentialItem = {
+  value: string;
+  notes: string;
 };
 
 type Listing = {
@@ -186,6 +202,64 @@ function normalizeWithdrawals(response: any): Withdrawal[] {
   return [];
 }
 
+function getCategoryId(category: Category) {
+  return String(
+    category.id ??
+      category.categoryId ??
+      ""
+  );
+}
+
+function getCategoryName(category: Category) {
+  return (
+    category.name ??
+    category.title ??
+    "Unnamed Category"
+  );
+}
+
+function credentialToString(item: CredentialItem) {
+  const value = item.value.trim();
+  const notes = item.notes.trim();
+
+  if (!value) return "";
+
+  if (!notes) {
+    return value;
+  }
+
+  return `${value}\nNotes: ${notes}`;
+}
+
+function credentialStringToItem(
+  value: string
+): CredentialItem {
+  const lines = String(value || "").split("\n");
+
+  const main = lines
+    .filter(
+      (line) =>
+        !line.trim().toLowerCase().startsWith("notes:")
+    )
+    .join("\n")
+    .trim();
+
+  const noteLine = lines.find((line) =>
+    line.trim().toLowerCase().startsWith("notes:")
+  );
+
+  const notes = noteLine
+    ? noteLine
+        .replace(/^notes:\s*/i, "")
+        .trim()
+    : "";
+
+  return {
+    value: main,
+    notes,
+  };
+}
+
 export default function SellerDashboard({
   userId,
   onBack,
@@ -199,9 +273,12 @@ export default function SellerDashboard({
 
   const [listings, setListings] =
     useState<Listing[]>([]);
-  
-  const [categories, setCategories] = useState<any[]>([]);
-const [tonyixProducts, setTonyixProducts] = useState<any[]>([]);
+
+  const [categories, setCategories] =
+    useState<Category[]>([]);
+
+  const [tonyixProducts, setTonyixProducts] =
+    useState<any[]>([]);
 
   const [orders, setOrders] =
     useState<SellerOrder[]>([]);
@@ -225,21 +302,21 @@ const [tonyixProducts, setTonyixProducts] = useState<any[]>([]);
     useState<string | null>(null);
 
   const [activeTab, setActiveTab] =
-  useState<
-    | "overview"
-    | "logs"
-    | "add-logs"
-    | "logs-management"
-    | "reports"
-    | "storelink-reports"
-    | "withdrawals"
-    | "history"
-    | "storefront"
-    | "public-storefront"
-    | "products"
-    | "checkout"
-    | "orders"
-  >("overview");
+    useState<
+      | "overview"
+      | "logs"
+      | "add-logs"
+      | "logs-management"
+      | "reports"
+      | "storelink-reports"
+      | "withdrawals"
+      | "history"
+      | "storefront"
+      | "public-storefront"
+      | "products"
+      | "checkout"
+      | "orders"
+    >("overview");
 
   const [savingStore, setSavingStore] =
     useState(false);
@@ -286,19 +363,52 @@ const [tonyixProducts, setTonyixProducts] = useState<any[]>([]);
   const [listingTonyixId, setListingTonyixId] =
     useState("");
 
-  const [credentialPoolListingId, setCredentialPoolListingId] =
-  useState<string | null>(null);
+  /*
+   * ==========================================================
+   * CATEGORY CREATION
+   * ==========================================================
+   */
 
-const [credentialValue, setCredentialValue] =
-  useState("");
+  const [showCategoryForm, setShowCategoryForm] =
+    useState(false);
 
-const [credentialNotes, setCredentialNotes] =
-  useState("");
+  const [categoryName, setCategoryName] =
+    useState("");
 
-const [savingCredential, setSavingCredential] =
-  useState(false);
+  const [categoryDescription, setCategoryDescription] =
+    useState("");
 
-    const adminSellerTestPlan =
+  const [categoryIcon, setCategoryIcon] =
+    useState("");
+
+  const [savingCategory, setSavingCategory] =
+    useState(false);
+
+  const [deletingCategoryId, setDeletingCategoryId] =
+    useState<string | null>(null);
+
+  /*
+   * ==========================================================
+   * PRODUCT CREDENTIAL POOL
+   * ==========================================================
+   */
+
+  const [credentialItems, setCredentialItems] =
+    useState<CredentialItem[]>([]);
+
+  const [credentialValue, setCredentialValue] =
+    useState("");
+
+  const [credentialNotes, setCredentialNotes] =
+    useState("");
+
+  const [savingCredential, setSavingCredential] =
+    useState(false);
+
+  const fileInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const adminSellerTestPlan =
     typeof window !== "undefined"
       ? localStorage.getItem(
           "deedee_admin_seller_test_plan"
@@ -319,7 +429,8 @@ const [savingCredential, setSavingCredential] =
 
   const planName =
     isAdminSellerTestMode
-      ? adminSellerTestPlan || "Admin Test Seller Plan"
+      ? adminSellerTestPlan ||
+        "Admin Test Seller Plan"
       : getPlanName(subscription);
 
   const subscriptionExpiry =
@@ -342,23 +453,46 @@ const [savingCredential, setSavingCredential] =
 
       try {
         const [
-  subscriptionData,
-  storefrontData,
-  listingsData,
-  ordersData,
-  withdrawalsData,
-  categoriesData,
-  tonyixData,
-] = await Promise.all([
-  api.getSellerSubscription().catch(() => null),
-  api.getMySellerStorefront().catch(() => null),
-  api.getMySellerListings().catch(() => []),
-  api.getMySellerOrders().catch(() => []),
-  api.getMySellerWithdrawals().catch(() => []),
-  api.getCategories().catch(() => []),
-  api.getTonyixProducts().catch(() => []),
-]);
-        setSubscription(subscriptionData || null);
+          subscriptionData,
+          storefrontData,
+          listingsData,
+          ordersData,
+          withdrawalsData,
+          categoriesData,
+          tonyixData,
+        ] = await Promise.all([
+          api
+            .getSellerSubscription()
+            .catch(() => null),
+
+          api
+            .getMySellerStorefront()
+            .catch(() => null),
+
+          api
+            .getMySellerListings()
+            .catch(() => []),
+
+          api
+            .getMySellerOrders()
+            .catch(() => []),
+
+          api
+            .getMySellerWithdrawals()
+            .catch(() => []),
+
+          api
+            .getCategories()
+            .catch(() => []),
+
+          api
+            .getTonyixProducts()
+            .catch(() => []),
+        ]);
+
+        setSubscription(
+          subscriptionData || null
+        );
 
         const nextStore =
           storefrontData?.storefront ||
@@ -367,35 +501,50 @@ const [savingCredential, setSavingCredential] =
 
         setStorefront(nextStore);
 
-        setListings(normalizeListings(listingsData));
-        setOrders(normalizeOrders(ordersData));
+        setListings(
+          normalizeListings(listingsData)
+        );
+
+        setOrders(
+          normalizeOrders(ordersData)
+        );
+
         setWithdrawals(
-          normalizeWithdrawals(withdrawalsData)
+          normalizeWithdrawals(
+            withdrawalsData
+          )
         );
 
         setCategories(
-  Array.isArray(categoriesData)
-    ? categoriesData
-    : categoriesData?.categories ||
-      categoriesData?.items ||
-      []
-);
+          Array.isArray(categoriesData)
+            ? categoriesData
+            : categoriesData?.categories ||
+              categoriesData?.items ||
+              []
+        );
 
-setTonyixProducts(
-  Array.isArray(tonyixData)
-    ? tonyixData
-    : tonyixData?.products ||
-      tonyixData?.items ||
-      tonyixData?.data ||
-      []
-);
+        setTonyixProducts(
+          Array.isArray(tonyixData)
+            ? tonyixData
+            : tonyixData?.products ||
+              tonyixData?.items ||
+              tonyixData?.data ||
+              []
+        );
 
         if (nextStore) {
-          setStoreName(nextStore.storeName || "");
+          setStoreName(
+            nextStore.storeName || ""
+          );
+
           setStoreDescription(
             nextStore.description || ""
           );
-          setStoreLogoUrl(nextStore.logoUrl || "");
+
+          setStoreLogoUrl(
+            nextStore.logoUrl || ""
+          );
+
           setStoreBannerUrl(
             nextStore.bannerUrl || ""
           );
@@ -516,7 +665,7 @@ setTonyixProducts(
     }
   }
 
-    useEffect(() => {
+  useEffect(() => {
     if (
       !isSubscriptionActive &&
       !isAdminSellerTestMode
@@ -593,8 +742,9 @@ setTonyixProducts(
     () =>
       orders.filter(
         (order) =>
-          String(order.status || "").toLowerCase() ===
-          "pending"
+          String(
+            order.status || ""
+          ).toLowerCase() === "pending"
       ).length,
     [orders]
   );
@@ -680,6 +830,123 @@ setTonyixProducts(
     ]
   );
 
+  /*
+   * ==========================================================
+   * CATEGORY FUNCTIONS
+   * ==========================================================
+   */
+
+  function resetCategoryForm() {
+    setCategoryName("");
+    setCategoryDescription("");
+    setCategoryIcon("");
+    setShowCategoryForm(false);
+  }
+
+  async function saveCategory() {
+    const name =
+      categoryName.trim();
+
+    if (!name) {
+      toast.error(
+        "Enter a category name"
+      );
+      return;
+    }
+
+    setSavingCategory(true);
+
+    try {
+      const response =
+        await api.createCategory({
+          name,
+          description:
+            categoryDescription.trim(),
+          icon:
+            categoryIcon.trim(),
+        });
+
+      const created =
+        response?.category ||
+        response?.data ||
+        response;
+
+      const createdId =
+        created?.id ??
+        created?.categoryId;
+
+      await loadDashboard();
+
+      if (createdId != null) {
+        setListingCategoryId(
+          String(createdId)
+        );
+      }
+
+      resetCategoryForm();
+
+      toast.success(
+        "Category created successfully"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not create category"
+      );
+    } finally {
+      setSavingCategory(false);
+    }
+  }
+
+  async function deleteCategory(
+    categoryId: string
+  ) {
+    const confirmed =
+      window.confirm(
+        "Delete this category? Products already assigned to it may keep their category ID."
+      );
+
+    if (!confirmed) return;
+
+    setDeletingCategoryId(
+      categoryId
+    );
+
+    try {
+      await api.deleteCategory(
+        categoryId
+      );
+
+      if (
+        listingCategoryId ===
+        categoryId
+      ) {
+        setListingCategoryId("");
+      }
+
+      await loadDashboard();
+
+      toast.success(
+        "Category deleted"
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not delete category"
+      );
+    } finally {
+      setDeletingCategoryId(null);
+    }
+  }
+
+  /*
+   * ==========================================================
+   * PRODUCT FORM
+   * ==========================================================
+   */
+
   function resetListingForm() {
     setListingTitle("");
     setListingDescription("");
@@ -688,11 +955,18 @@ setTonyixProducts(
     setListingCategoryId("");
     setListingQuantity("1");
     setListingTonyixId("");
+
+    setCredentialItems([]);
+    setCredentialValue("");
+    setCredentialNotes("");
+
     setEditingListingId(null);
     setShowListingForm(false);
   }
 
-  function editListing(listing: Listing) {
+  function editListing(
+    listing: Listing
+  ) {
     setEditingListingId(
       String(listing.id)
     );
@@ -735,13 +1009,345 @@ setTonyixProducts(
         : ""
     );
 
+    const existingCredentials =
+      Array.isArray(
+        listing.accessLinks
+      )
+        ? listing.accessLinks.map(
+            credentialStringToItem
+          )
+        : [];
+
+    setCredentialItems(
+      existingCredentials
+    );
+
+    setCredentialValue("");
+    setCredentialNotes("");
+
     setShowListingForm(true);
     setActiveTab("products");
   }
 
+  function addCredentialItem() {
+    const value =
+      credentialValue.trim();
+
+    if (!value) {
+      toast.error(
+        "Enter the email and password first"
+      );
+      return;
+    }
+
+    setCredentialItems(
+      (current) => [
+        ...current,
+        {
+          value,
+          notes:
+            credentialNotes.trim(),
+        },
+      ]
+    );
+
+    setCredentialValue("");
+    setCredentialNotes("");
+
+    toast.success(
+      "Item added to product pool"
+    );
+  }
+
+  function removeCredentialItem(
+    index: number
+  ) {
+    setCredentialItems(
+      (current) =>
+        current.filter(
+          (_, itemIndex) =>
+            itemIndex !== index
+        )
+    );
+  }
+
+  function clearCredentialPool() {
+    if (
+      credentialItems.length === 0
+    ) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Remove all unsaved credential items from this product?"
+      );
+
+    if (!confirmed) return;
+
+    setCredentialItems([]);
+  }
+
+  async function handleUploadItems(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const text =
+        await file.text();
+
+      const lines =
+        text
+          .split(/\r?\n/)
+          .map((line) =>
+            line.trim()
+          )
+          .filter(Boolean);
+
+      if (lines.length === 0) {
+        toast.error(
+          "The uploaded file has no items"
+        );
+        return;
+      }
+
+      const uploadedItems =
+        lines.map((line) => ({
+          value: line,
+          notes: "",
+        }));
+
+      setCredentialItems(
+        (current) => [
+          ...current,
+          ...uploadedItems,
+        ]
+      );
+
+      toast.success(
+        `${uploadedItems.length} item${
+          uploadedItems.length === 1
+            ? ""
+            : "s"
+        } loaded into the pool`
+      );
+    } catch (error) {
+      console.error(
+        "Credential file error:",
+        error
+      );
+
+      toast.error(
+        "Could not read the uploaded file"
+      );
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  async function saveListing() {
+    if (!listingTitle.trim()) {
+      toast.error(
+        "Enter a product title"
+      );
+      return;
+    }
+
+    if (!listingCategoryId) {
+      toast.error(
+        "Select a category for this product"
+      );
+      return;
+    }
+
+    const price =
+      Number(listingPrice);
+
+    if (
+      !Number.isFinite(price) ||
+      price <= 0
+    ) {
+      toast.error(
+        "Enter a valid product price"
+      );
+      return;
+    }
+
+    const cleanedCredentials =
+      credentialItems
+        .map(credentialToString)
+        .filter(Boolean);
+
+    const normalQuantity =
+      Math.max(
+        0,
+        Number(
+          listingQuantity
+        ) || 0
+      );
+
+    const quantity =
+      cleanedCredentials.length > 0
+        ? cleanedCredentials.length
+        : normalQuantity;
+
+    setSavingListing(true);
+
+    try {
+      const data = {
+        title:
+          listingTitle.trim(),
+
+        description:
+          listingDescription.trim(),
+
+        price,
+
+        imageUrl:
+          listingImageUrl.trim(),
+
+        categoryId:
+          listingCategoryId,
+
+        quantity,
+
+        accessLinks:
+          cleanedCredentials,
+
+        tonyixProductId:
+          listingTonyixId.trim() ||
+          undefined,
+      };
+
+      if (editingListingId) {
+        /*
+         * Existing product:
+         * update the product first.
+         *
+         * The backend's credential route is then
+         * used for any newly added credentials.
+         */
+        const existing =
+          listings.find(
+            (listing) =>
+              String(
+                listing.id
+              ) ===
+              String(
+                editingListingId
+              )
+          );
+
+        const existingCredentials =
+          Array.isArray(
+            existing?.accessLinks
+          )
+            ? existing.accessLinks
+            : [];
+
+        const existingStrings =
+          existingCredentials;
+
+        const newCredentials =
+          cleanedCredentials.filter(
+            (credential) =>
+              !existingStrings.includes(
+                credential
+              )
+          );
+
+        await api.updateSellerListing(
+          editingListingId,
+          {
+            title:
+              listingTitle.trim(),
+
+            description:
+              listingDescription.trim(),
+
+            price,
+
+            imageUrl:
+              listingImageUrl.trim(),
+
+            categoryId:
+              listingCategoryId,
+
+            quantity,
+
+            tonyixProductId:
+              listingTonyixId.trim() ||
+              undefined,
+          }
+        );
+
+        if (
+          newCredentials.length > 0
+        ) {
+          setSavingCredential(true);
+
+          await api.addSellerCredentials(
+            editingListingId,
+            newCredentials
+          );
+
+          setSavingCredential(false);
+        }
+
+        resetListingForm();
+
+        await loadDashboard();
+
+        toast.success(
+          "Product updated"
+        );
+      } else {
+        /*
+         * New product:
+         * accessLinks are sent with the product,
+         * so the credential pool is created together
+         * with the product.
+         */
+        await api.createSellerListing(
+          data
+        );
+
+        resetListingForm();
+
+        await loadDashboard();
+
+        toast.success(
+          "Product created successfully"
+        );
+      }
+    } catch (error) {
+      setSavingCredential(false);
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not save product"
+      );
+    } finally {
+      setSavingListing(false);
+    }
+  }
+
+  /*
+   * ==========================================================
+   * STORE
+   * ==========================================================
+   */
+
   async function saveStorefront() {
     if (!storeName.trim()) {
-      toast.error("Enter a store name");
+      toast.error(
+        "Enter a store name"
+      );
       return;
     }
 
@@ -749,10 +1355,15 @@ setTonyixProducts(
 
     try {
       const data = {
-        storeName: storeName.trim(),
+        storeName:
+          storeName.trim(),
+
         description:
           storeDescription.trim(),
-        logoUrl: storeLogoUrl.trim(),
+
+        logoUrl:
+          storeLogoUrl.trim(),
+
         bannerUrl:
           storeBannerUrl.trim(),
       };
@@ -783,131 +1394,15 @@ setTonyixProducts(
     }
   }
 
-  async function saveListing() {
-    if (!listingTitle.trim()) {
-      toast.error(
-        "Enter a product title"
-      );
-      return;
-    }
+  /*
+   * ==========================================================
+   * LISTING ACTIONS
+   * ==========================================================
+   */
 
-    const price =
-      Number(listingPrice);
-
-    if (
-      !Number.isFinite(price) ||
-      price <= 0
-    ) {
-      toast.error(
-        "Enter a valid product price"
-      );
-      return;
-    }
-
-    const quantity =
-      Math.max(
-        0,
-        Number(
-          listingQuantity
-        ) || 0
-      );
-
-    setSavingListing(true);
-
-    try {
-      const data = {
-        title:
-          listingTitle.trim(),
-        description:
-          listingDescription.trim(),
-        price,
-        imageUrl:
-          listingImageUrl.trim(),
-        categoryId:
-          listingCategoryId.trim() ||
-          undefined,
-        quantity,
-        tonyixProductId:
-          listingTonyixId.trim() ||
-          undefined,
-      };
-
-      if (editingListingId) {
-        await api.updateSellerListing(
-          editingListingId,
-          data
-        );
-      } else {
-        await api.createSellerListing(
-          data
-        );
-      }
-
-      const wasEditing =
-        !!editingListingId;
-
-      resetListingForm();
-
-      await loadDashboard();
-
-      toast.success(
-        wasEditing
-          ? "Product updated"
-          : "Product added to your store"
-      );
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not save product"
-      );
-    } finally {
-      setSavingListing(false);
-    }
-  }
-
-  async function addCredentialToPool(listingId: string) {
-  if (!credentialValue.trim()) {
-    toast.error("Paste the email and password");
-    return;
-  }
-
-  setSavingCredential(true);
-
-  try {
-    const credential = [
-      credentialValue.trim(),
-      credentialNotes.trim()
-        ? `Notes: ${credentialNotes.trim()}`
-        : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    await api.addSellerCredentials(
-      listingId,
-      [credential]
-    );
-
-    setCredentialValue("");
-    setCredentialNotes("");
-    setCredentialPoolListingId(null);
-
-    await loadDashboard();
-
-    toast.success("Credential added to pool");
-  } catch (error) {
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Could not add credential"
-    );
-  } finally {
-    setSavingCredential(false);
-  }
-}
-  
-  async function deleteListing(id: string) {
+  async function deleteListing(
+    id: string
+  ) {
     const confirmed =
       window.confirm(
         "Delete this product from your reseller store?"
@@ -916,11 +1411,15 @@ setTonyixProducts(
     if (!confirmed) return;
 
     try {
-      await api.deleteSellerListing(id);
+      await api.deleteSellerListing(
+        id
+      );
 
       await loadDashboard();
 
-      toast.success("Product deleted");
+      toast.success(
+        "Product deleted"
+      );
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -930,9 +1429,13 @@ setTonyixProducts(
     }
   }
 
-  async function toggleListing(id: string) {
+  async function toggleListing(
+    id: string
+  ) {
     try {
-      await api.toggleSellerListing(id);
+      await api.toggleSellerListing(
+        id
+      );
 
       await loadDashboard();
 
@@ -948,11 +1451,18 @@ setTonyixProducts(
     }
   }
 
+  /*
+   * ==========================================================
+   * LOADING
+   * ==========================================================
+   */
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-cyan-400" />
+
           <p className="text-slate-400">
             Loading your reseller marketplace...
           </p>
@@ -961,9 +1471,17 @@ setTonyixProducts(
     );
   }
 
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
+
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+        {/* HEADER */}
 
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
@@ -994,7 +1512,9 @@ setTonyixProducts(
 
             <Button
               variant="outline"
-              onClick={refreshDashboard}
+              onClick={
+                refreshDashboard
+              }
               disabled={refreshing}
               className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800"
             >
@@ -1019,6 +1539,8 @@ setTonyixProducts(
             )}
           </div>
         </div>
+
+        {/* SUBSCRIPTION */}
 
         <Card className="mb-6 border-slate-800 bg-slate-950">
           <CardContent className="p-5">
@@ -1067,53 +1589,58 @@ setTonyixProducts(
                 <div className="max-w-xl rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-200">
                   Your seller tools stay locked until
                   your reseller subscription is active.
-                  Once the backend marks the subscription
-                  as active, your storefront, listings,
-                  orders and withdrawals become available.
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
+        {/* NAVIGATION */}
+
         <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-950 p-2">
-  <div className="flex gap-2 overflow-x-auto">
-    {[
-      ["overview", "Seller Dashboard"],
-      ["logs", "My Logs"],
-      ["add-logs", "Add Logs"],
-      ["logs-management", "Logs Management"],
-      ["reports", "Reports"],
-      ["storelink-reports", "StoreLink Reports"],
-      ["withdrawals", "Withdraw"],
-      ["history", "History"],
-      ["storefront", "Store Settings"],
-      ["public-storefront", "Public Storefront"],
-      ["products", "Products / Listings"],
-      ["checkout", "Customer Checkout"],
-      ["orders", "Orders"],
-    ].map(([id, label]) => (
-      <Button
-        key={id}
-        variant="ghost"
-        onClick={() =>
-          setActiveTab(
-            id as typeof activeTab
-          )
-        }
-        className={
-          activeTab === id
-            ? "shrink-0 rounded-xl bg-cyan-500/10 text-cyan-300"
-            : "shrink-0 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white"
-        }
-      >
-        {label}
-      </Button>
-    ))}
-  </div>
-</div>
+          <div className="flex gap-2 overflow-x-auto">
+            {[
+              ["overview", "Seller Dashboard"],
+              ["logs", "My Logs"],
+              ["add-logs", "Add Logs"],
+              ["logs-management", "Logs Management"],
+              ["reports", "Reports"],
+              ["storelink-reports", "StoreLink Reports"],
+              ["withdrawals", "Withdraw"],
+              ["history", "History"],
+              ["storefront", "Store Settings"],
+              ["public-storefront", "Public Storefront"],
+              ["products", "Products / Listings"],
+              ["checkout", "Customer Checkout"],
+              ["orders", "Orders"],
+            ].map(
+              ([id, label]) => (
+                <Button
+                  key={id}
+                  variant="ghost"
+                  onClick={() =>
+                    setActiveTab(
+                      id as typeof activeTab
+                    )
+                  }
+                  className={
+                    activeTab === id
+                      ? "shrink-0 rounded-xl bg-cyan-500/10 text-cyan-300"
+                      : "shrink-0 rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white"
+                  }
+                >
+                  {label}
+                </Button>
+              )
+            )}
+          </div>
+        </div>
 
         {!isSubscriptionActive ? (
+          /* ======================================================
+             SELLER PLAN
+          ====================================================== */
+
           <Card className="border-slate-800 bg-slate-950">
             <CardContent className="p-8">
               <div className="mx-auto max-w-4xl text-center">
@@ -1153,7 +1680,7 @@ setTonyixProducts(
                               ""
                           );
 
-                        const planName =
+                        const name =
                           plan.name ??
                           plan.title ??
                           planId;
@@ -1177,7 +1704,7 @@ setTonyixProducts(
                           >
                             <CardContent className="p-6">
                               <h3 className="text-lg font-bold text-white">
-                                {planName}
+                                {name}
                               </h3>
 
                               <div className="mt-4 text-2xl font-bold text-cyan-300">
@@ -1226,6 +1753,10 @@ setTonyixProducts(
           </Card>
         ) : (
           <>
+            {/* ====================================================
+               OVERVIEW
+            ==================================================== */}
+
             {activeTab === "overview" && (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1317,7 +1848,7 @@ setTonyixProducts(
                       <h2 className="text-lg font-semibold">
                         Order activity
                       </h2>
-                      
+
                       <div className="mt-5 grid grid-cols-2 gap-4">
                         <div className="rounded-xl border border-slate-800 bg-black p-4">
                           <p className="text-xs text-slate-500">
@@ -1357,439 +1888,516 @@ setTonyixProducts(
               </>
             )}
 
+            {/* ====================================================
+               LOGS
+            ==================================================== */}
 
-            {/* ==========================================================
-    SELLER ADMIN — ADDITIONAL SECTIONS
-========================================================== */}
+            {activeTab === "logs" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    My Logs
+                  </h2>
 
-{activeTab === "logs" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold">
-          My Logs
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          View activity and important events from your reseller store.
-        </p>
-      </div>
+                  <p className="mt-1 text-sm text-slate-400">
+                    View activity and important events from your
+                    reseller store.
+                  </p>
 
-      <div className="rounded-xl border border-slate-800 bg-black p-5">
-        <p className="text-sm text-slate-500">
-          Seller activity logs will appear here.
-        </p>
+                  <div className="mt-6 rounded-xl border border-slate-800 bg-black p-5">
+                    <p className="text-sm text-slate-500">
+                      Seller activity logs will appear here.
+                    </p>
 
-        <div className="mt-4 space-y-3">
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
-            <p className="font-medium text-white">
-              Seller dashboard accessed
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Activity logging is connected to the seller flow.
-            </p>
-          </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+                        <p className="font-medium text-white">
+                          Seller dashboard accessed
+                        </p>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
-            <p className="font-medium text-white">
-              Store activity
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Product, order and storefront events will be shown here.
-            </p>
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                        <p className="mt-1 text-xs text-slate-500">
+                          Activity logging is connected to the seller
+                          flow.
+                        </p>
+                      </div>
 
-{activeTab === "add-logs" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold">
-          Add Logs
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">
-          Create and manage seller activity records.
-        </p>
-      </div>
+                      <div className="rounded-lg border border-slate-800 bg-slate-950 p-4">
+                        <p className="font-medium text-white">
+                          Store activity
+                        </p>
 
-      <div className="rounded-xl border border-slate-800 bg-black p-6">
-        <Label>Log message</Label>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Product, order and storefront events will
+                          be shown here.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-        <textarea
-          rows={5}
-          placeholder="Enter a seller activity note..."
-          className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
-        />
+            {/* ====================================================
+               ADD LOGS
+            ==================================================== */}
 
-        <Button
-          className="mt-4 bg-cyan-600 hover:bg-cyan-500"
-          onClick={() =>
-            toast.success("Log entry created")
-          }
-        >
-          Add Log
-        </Button>
-      </div>
-    </CardContent>
-  </Card>
-)}
+            {activeTab === "add-logs" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    Add Logs
+                  </h2>
 
-{activeTab === "logs-management" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <h2 className="text-xl font-bold">
-        Logs Management
-      </h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Create and manage seller activity records.
+                  </p>
 
-      <p className="mt-1 text-sm text-slate-400">
-        Manage seller activity logs and records.
-      </p>
+                  <div className="mt-6 rounded-xl border border-slate-800 bg-black p-6">
+                    <Label>
+                      Log message
+                    </Label>
 
-      <div className="mt-6 rounded-xl border border-slate-800 bg-black p-8 text-center">
-        <p className="text-slate-500">
-          No managed log records yet.
-        </p>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                    <textarea
+                      rows={5}
+                      placeholder="Enter a seller activity note..."
+                      className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
+                    />
 
-{activeTab === "reports" && (
-  <div className="space-y-6">
-    <div>
-      <h2 className="text-xl font-bold">
-        Reports
-      </h2>
+                    <Button
+                      className="mt-4 bg-cyan-600 hover:bg-cyan-500"
+                      onClick={() =>
+                        toast.success(
+                          "Log entry created"
+                        )
+                      }
+                    >
+                      Add Log
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-      <p className="mt-1 text-sm text-slate-400">
-        Monitor your reseller business performance.
-      </p>
-    </div>
+            {/* ====================================================
+               LOG MANAGEMENT
+            ==================================================== */}
 
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card className="border-slate-800 bg-slate-950">
-        <CardContent className="p-5">
-          <p className="text-sm text-slate-500">
-            Total Products
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            {listings.length}
-          </p>
-        </CardContent>
-      </Card>
+            {activeTab ===
+              "logs-management" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    Logs Management
+                  </h2>
 
-      <Card className="border-slate-800 bg-slate-950">
-        <CardContent className="p-5">
-          <p className="text-sm text-slate-500">
-            Total Orders
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            {orders.length}
-          </p>
-        </CardContent>
-      </Card>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Manage seller activity logs and records.
+                  </p>
 
-      <Card className="border-slate-800 bg-slate-950">
-        <CardContent className="p-5">
-          <p className="text-sm text-slate-500">
-            Total Sales
-          </p>
-          <p className="mt-2 text-2xl font-bold text-cyan-300">
-            {formatMoney(totalSales)}
-          </p>
-        </CardContent>
-      </Card>
+                  <div className="mt-6 rounded-xl border border-slate-800 bg-black p-8 text-center">
+                    <p className="text-slate-500">
+                      No managed log records yet.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-      <Card className="border-slate-800 bg-slate-950">
-        <CardContent className="p-5">
-          <p className="text-sm text-slate-500">
-            Pending Orders
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            {pendingOrders}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+            {/* ====================================================
+               REPORTS
+            ==================================================== */}
 
-    <Card className="border-slate-800 bg-slate-950">
-      <CardContent className="p-6">
-        <h3 className="font-semibold">
-          Sales overview
-        </h3>
+            {activeTab === "reports" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold">
+                    Reports
+                  </h2>
 
-        <div className="mt-5 rounded-xl border border-slate-800 bg-black p-6">
-          <p className="text-sm text-slate-500">
-            Current recorded reseller sales
-          </p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Monitor your reseller business performance.
+                  </p>
+                </div>
 
-          <p className="mt-2 text-3xl font-bold text-emerald-300">
-            {formatMoney(totalSales)}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-)}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <Card className="border-slate-800 bg-slate-950">
+                    <CardContent className="p-5">
+                      <p className="text-sm text-slate-500">
+                        Total Products
+                      </p>
 
-{activeTab === "storelink-reports" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <h2 className="text-xl font-bold">
-        StoreLink Reports
-      </h2>
+                      <p className="mt-2 text-2xl font-bold">
+                        {listings.length}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-      <p className="mt-1 text-sm text-slate-400">
-        Track traffic, storefront activity and customer interactions.
-      </p>
+                  <Card className="border-slate-800 bg-slate-950">
+                    <CardContent className="p-5">
+                      <p className="text-sm text-slate-500">
+                        Total Orders
+                      </p>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Storefront
-          </p>
-          <p className="mt-2 font-semibold text-white">
-            {storefrontSlug || "Not configured"}
-          </p>
-        </div>
+                      <p className="mt-2 text-2xl font-bold">
+                        {orders.length}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Products
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            {listings.length}
-          </p>
-        </div>
+                  <Card className="border-slate-800 bg-slate-950">
+                    <CardContent className="p-5">
+                      <p className="text-sm text-slate-500">
+                        Total Sales
+                      </p>
 
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Orders
-          </p>
-          <p className="mt-2 text-2xl font-bold">
-            {orders.length}
-          </p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                      <p className="mt-2 text-2xl font-bold text-cyan-300">
+                        {formatMoney(
+                          totalSales
+                        )}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-{activeTab === "history" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <h2 className="text-xl font-bold">
-        History
-      </h2>
+                  <Card className="border-slate-800 bg-slate-950">
+                    <CardContent className="p-5">
+                      <p className="text-sm text-slate-500">
+                        Pending Orders
+                      </p>
 
-      <p className="mt-1 text-sm text-slate-400">
-        Review your reseller orders and withdrawal activity.
-      </p>
+                      <p className="mt-2 text-2xl font-bold">
+                        {pendingOrders}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
 
-      <div className="mt-6 space-y-4">
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold">
-              Orders
-            </span>
+                <Card className="border-slate-800 bg-slate-950">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold">
+                      Sales overview
+                    </h3>
 
-            <Badge className="bg-slate-800 text-slate-300">
-              {orders.length}
-            </Badge>
-          </div>
+                    <div className="mt-5 rounded-xl border border-slate-800 bg-black p-6">
+                      <p className="text-sm text-slate-500">
+                        Current recorded reseller sales
+                      </p>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Orders recorded through your reseller storefront.
-          </p>
-
-          <Button
-            variant="outline"
-            className="mt-4 border-slate-700 bg-slate-900 text-white"
-            onClick={() => setActiveTab("orders")}
-          >
-            View Orders
-          </Button>
-        </div>
-
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold">
-              Withdrawals
-            </span>
-
-            <Badge className="bg-slate-800 text-slate-300">
-              {withdrawals.length}
-            </Badge>
-          </div>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Previous seller withdrawal requests.
-          </p>
-
-          <Button
-            variant="outline"
-            className="mt-4 border-slate-700 bg-slate-900 text-white"
-            onClick={() => setActiveTab("withdrawals")}
-          >
-            View Withdrawals
-          </Button>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)}
-
-{activeTab === "public-storefront" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <h2 className="text-xl font-bold">
-        Public Storefront
-      </h2>
-
-      <p className="mt-1 text-sm text-slate-400">
-        Inspect the storefront customers will see.
-      </p>
-
-      <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800 bg-black">
-        {storefront?.bannerUrl && (
-          <img
-            src={storefront.bannerUrl}
-            alt="Store banner"
-            className="h-48 w-full object-cover"
-          />
-        )}
-
-        <div className="p-6">
-          <div className="flex items-center gap-4">
-            {storefront?.logoUrl ? (
-              <img
-                src={storefront.logoUrl}
-                alt="Store logo"
-                className="h-16 w-16 rounded-2xl object-cover"
-              />
-            ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10">
-                <Store className="h-7 w-7 text-cyan-400" />
+                      <p className="mt-2 text-3xl font-bold text-emerald-300">
+                        {formatMoney(
+                          totalSales
+                        )}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
-            <div>
-              <h3 className="text-xl font-bold">
-                {storefront?.storeName || "Your Store"}
-              </h3>
+            {/* ====================================================
+               STORELINK REPORTS
+            ==================================================== */}
 
-              <p className="text-sm text-slate-500">
-                {storefrontSlug
-                  ? `/${storefrontSlug}`
-                  : "Storefront not configured"}
-              </p>
-            </div>
-          </div>
+            {activeTab ===
+              "storelink-reports" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    StoreLink Reports
+                  </h2>
 
-          <p className="mt-5 text-sm text-slate-400">
-            {storefront?.description ||
-              "Your public store description will appear here."}
-          </p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Track traffic, storefront activity and customer
+                    interactions.
+                  </p>
 
-          {storefrontUrl && (
-            <Button
-              asChild
-              className="mt-5 bg-cyan-600 hover:bg-cyan-500"
-            >
-              <a
-                href={storefrontUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Open Customer Store
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)}
+                  <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Storefront
+                      </p>
 
-{activeTab === "checkout" && (
-  <Card className="border-slate-800 bg-slate-950">
-    <CardContent className="p-6">
-      <h2 className="text-xl font-bold">
-        Customer Checkout / Payment
-      </h2>
+                      <p className="mt-2 font-semibold text-white">
+                        {storefrontSlug ||
+                          "Not configured"}
+                      </p>
+                    </div>
 
-      <p className="mt-1 text-sm text-slate-400">
-        Inspect the customer purchase and payment flow from your reseller store.
-      </p>
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Products
+                      </p>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Products available
-          </p>
+                      <p className="mt-2 text-2xl font-bold">
+                        {listings.length}
+                      </p>
+                    </div>
 
-          <p className="mt-2 text-2xl font-bold">
-            {activeListings}
-          </p>
-        </div>
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Orders
+                      </p>
 
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Orders
-          </p>
+                      <p className="mt-2 text-2xl font-bold">
+                        {orders.length}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          <p className="mt-2 text-2xl font-bold">
-            {orders.length}
-          </p>
-        </div>
+            {/* ====================================================
+               HISTORY
+            ==================================================== */}
 
-        <div className="rounded-xl border border-slate-800 bg-black p-5">
-          <p className="text-xs text-slate-500">
-            Recorded sales
-          </p>
+            {activeTab === "history" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    History
+                  </h2>
 
-          <p className="mt-2 text-2xl font-bold text-cyan-300">
-            {formatMoney(totalSales)}
-          </p>
-        </div>
-      </div>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Review your reseller orders and withdrawal
+                    activity.
+                  </p>
 
-      <div className="mt-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
-        <p className="font-semibold text-yellow-200">
-          Checkout inspection
-        </p>
+                  <div className="mt-6 space-y-4">
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">
+                          Orders
+                        </span>
 
-        <p className="mt-2 text-sm text-yellow-100/70">
-          Use the Public Storefront to enter the real customer-facing
-          product and checkout flow. This Seller Admin page is the
-          inspection point for that flow.
-        </p>
+                        <Badge className="bg-slate-800 text-slate-300">
+                          {orders.length}
+                        </Badge>
+                      </div>
 
-        {storefrontUrl && (
-          <Button
-            asChild
-            className="mt-4 bg-cyan-600 hover:bg-cyan-500"
-          >
-            <a
-              href={storefrontUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Inspect Customer Store
-            </a>
-          </Button>
-        )}
-      </div>
-    </CardContent>
-  </Card>
-)}
-            
-            {activeTab === "storefront" && (
+                      <p className="mt-2 text-sm text-slate-500">
+                        Orders recorded through your reseller
+                        storefront.
+                      </p>
+
+                      <Button
+                        variant="outline"
+                        className="mt-4 border-slate-700 bg-slate-900 text-white"
+                        onClick={() =>
+                          setActiveTab(
+                            "orders"
+                          )
+                        }
+                      >
+                        View Orders
+                      </Button>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">
+                          Withdrawals
+                        </span>
+
+                        <Badge className="bg-slate-800 text-slate-300">
+                          {withdrawals.length}
+                        </Badge>
+                      </div>
+
+                      <p className="mt-2 text-sm text-slate-500">
+                        Previous seller withdrawal requests.
+                      </p>
+
+                      <Button
+                        variant="outline"
+                        className="mt-4 border-slate-700 bg-slate-900 text-white"
+                        onClick={() =>
+                          setActiveTab(
+                            "withdrawals"
+                          )
+                        }
+                      >
+                        View Withdrawals
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ====================================================
+               PUBLIC STOREFRONT
+            ==================================================== */}
+
+            {activeTab ===
+              "public-storefront" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    Public Storefront
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-400">
+                    Inspect the storefront customers will see.
+                  </p>
+
+                  <div className="mt-6 overflow-hidden rounded-2xl border border-slate-800 bg-black">
+                    {storefront?.bannerUrl && (
+                      <img
+                        src={
+                          storefront.bannerUrl
+                        }
+                        alt="Store banner"
+                        className="h-48 w-full object-cover"
+                      />
+                    )}
+
+                    <div className="p-6">
+                      <div className="flex items-center gap-4">
+                        {storefront?.logoUrl ? (
+                          <img
+                            src={
+                              storefront.logoUrl
+                            }
+                            alt="Store logo"
+                            className="h-16 w-16 rounded-2xl object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/10">
+                            <Store className="h-7 w-7 text-cyan-400" />
+                          </div>
+                        )}
+
+                        <div>
+                          <h3 className="text-xl font-bold">
+                            {storefront?.storeName ||
+                              "Your Store"}
+                          </h3>
+
+                          <p className="text-sm text-slate-500">
+                            {storefrontSlug
+                              ? `/${storefrontSlug}`
+                              : "Storefront not configured"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="mt-5 text-sm text-slate-400">
+                        {storefront?.description ||
+                          "Your public store description will appear here."}
+                      </p>
+
+                      {storefrontUrl && (
+                        <Button
+                          asChild
+                          className="mt-5 bg-cyan-600 hover:bg-cyan-500"
+                        >
+                          <a
+                            href={
+                              storefrontUrl
+                            }
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open Customer Store
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ====================================================
+               CHECKOUT
+            ==================================================== */}
+
+            {activeTab ===
+              "checkout" && (
+              <Card className="border-slate-800 bg-slate-950">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-bold">
+                    Customer Checkout / Payment
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-400">
+                    Inspect the customer purchase and payment flow
+                    from your reseller store.
+                  </p>
+
+                  <div className="mt-6 grid gap-5 lg:grid-cols-3">
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Products available
+                      </p>
+
+                      <p className="mt-2 text-2xl font-bold">
+                        {activeListings}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Orders
+                      </p>
+
+                      <p className="mt-2 text-2xl font-bold">
+                        {orders.length}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-800 bg-black p-5">
+                      <p className="text-xs text-slate-500">
+                        Recorded sales
+                      </p>
+
+                      <p className="mt-2 text-2xl font-bold text-cyan-300">
+                        {formatMoney(
+                          totalSales
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+                    <p className="font-semibold text-yellow-200">
+                      Checkout inspection
+                    </p>
+
+                    <p className="mt-2 text-sm text-yellow-100/70">
+                      Use the Public Storefront to enter the real
+                      customer-facing product and checkout flow.
+                    </p>
+
+                    {storefrontUrl && (
+                      <Button
+                        asChild
+                        className="mt-4 bg-cyan-600 hover:bg-cyan-500"
+                      >
+                        <a
+                          href={
+                            storefrontUrl
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Inspect Customer Store
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* ====================================================
+               STORE SETTINGS
+            ==================================================== */}
+
+            {activeTab ===
+              "storefront" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
                   <div className="mb-6">
@@ -1798,14 +2406,16 @@ setTonyixProducts(
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-400">
-                      This is your reseller's public
-                      identity on the DeeDee marketplace.
+                      This is your reseller's public identity on the
+                      DeeDee marketplace.
                     </p>
                   </div>
 
                   <div className="grid gap-5 lg:grid-cols-2">
                     <div>
-                      <Label>Store name</Label>
+                      <Label>
+                        Store name
+                      </Label>
 
                       <Input
                         value={storeName}
@@ -1820,7 +2430,9 @@ setTonyixProducts(
                     </div>
 
                     <div>
-                      <Label>Logo URL</Label>
+                      <Label>
+                        Logo URL
+                      </Label>
 
                       <Input
                         value={storeLogoUrl}
@@ -1835,7 +2447,9 @@ setTonyixProducts(
                     </div>
 
                     <div className="lg:col-span-2">
-                      <Label>Description</Label>
+                      <Label>
+                        Description
+                      </Label>
 
                       <textarea
                         value={
@@ -1914,224 +2528,783 @@ setTonyixProducts(
               </Card>
             )}
 
-            {activeTab === "products" && (
-              <div>
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* ====================================================
+               PRODUCTS
+            ==================================================== */}
+
+            {activeTab ===
+              "products" && (
+              <div className="space-y-6">
+
+                {/* ==================================================
+                   CATEGORY AREA
+                ================================================== */}
+
+                <Card className="border-slate-800 bg-slate-950">
+                  <CardContent className="p-6">
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold">
+                          Product Categories
+                        </h2>
+
+                        <p className="mt-1 text-sm text-slate-400">
+                          Create the category first, then create
+                          products inside the category you want.
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={() =>
+                          setShowCategoryForm(
+                            (current) =>
+                              !current
+                          )
+                        }
+                        className="bg-cyan-600 hover:bg-cyan-500"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Category
+                      </Button>
+                    </div>
+
+                    {showCategoryForm && (
+                      <div className="mt-6 rounded-xl border border-cyan-500/20 bg-black p-5">
+                        <div className="mb-5">
+                          <h3 className="font-semibold text-white">
+                            Create Category
+                          </h3>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            Example: Netflix, Spotify, Gaming,
+                            Social Media, VPN, Software.
+                          </p>
+                        </div>
+
+                        <div className="grid gap-5 lg:grid-cols-3">
+                          <div>
+                            <Label>
+                              Category name
+                            </Label>
+
+                            <Input
+                              value={
+                                categoryName
+                              }
+                              onChange={(event) =>
+                                setCategoryName(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Netflix Accounts"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>
+                              Icon
+                            </Label>
+
+                            <Input
+                              value={
+                                categoryIcon
+                              }
+                              onChange={(event) =>
+                                setCategoryIcon(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="📺"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <Label>
+                              Description
+                            </Label>
+
+                            <Input
+                              value={
+                                categoryDescription
+                              }
+                              onChange={(event) =>
+                                setCategoryDescription(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Netflix digital products"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          <Button
+                            onClick={
+                              saveCategory
+                            }
+                            disabled={
+                              savingCategory
+                            }
+                            className="bg-cyan-600 hover:bg-cyan-500"
+                          >
+                            {savingCategory ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Plus className="mr-2 h-4 w-4" />
+                            )}
+
+                            Create Category
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            onClick={
+                              resetCategoryForm
+                            }
+                            className="border-slate-700 bg-slate-900 text-white"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-6">
+                      {categories.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-slate-800 bg-black p-6 text-center">
+                          <p className="text-sm text-slate-500">
+                            No categories yet.
+                          </p>
+
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              setShowCategoryForm(
+                                true
+                              )
+                            }
+                            className="mt-4 border-slate-700 bg-slate-900 text-white"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Create your first category
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {categories.map(
+                            (category) => {
+                              const id =
+                                getCategoryId(
+                                  category
+                                );
+
+                              const name =
+                                getCategoryName(
+                                  category
+                                );
+
+                              const productCount =
+                                listings.filter(
+                                  (listing) =>
+                                    String(
+                                      listing.categoryId ||
+                                        ""
+                                    ) === id
+                                ).length;
+
+                              return (
+                                <div
+                                  key={id}
+                                  className={`rounded-xl border p-4 ${
+                                    listingCategoryId ===
+                                    id
+                                      ? "border-cyan-500/40 bg-cyan-500/5"
+                                      : "border-slate-800 bg-black"
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setListingCategoryId(
+                                          id
+                                        )
+                                      }
+                                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                    >
+                                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-lg">
+                                        {category.icon ||
+                                          "📦"}
+                                      </span>
+
+                                      <span className="min-w-0">
+                                        <span className="block truncate font-semibold text-white">
+                                          {name}
+                                        </span>
+
+                                        <span className="mt-1 block text-xs text-slate-500">
+                                          {productCount}{" "}
+                                          product
+                                          {productCount ===
+                                          1
+                                            ? ""
+                                            : "s"}
+                                        </span>
+                                      </span>
+                                    </button>
+
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={
+                                        deletingCategoryId ===
+                                        id
+                                      }
+                                      onClick={() =>
+                                        deleteCategory(
+                                          id
+                                        )
+                                      }
+                                      className="shrink-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                    >
+                                      {deletingCategoryId ===
+                                      id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+
+                                  {category.description && (
+                                    <p className="mt-3 line-clamp-2 text-xs text-slate-500">
+                                      {
+                                        category.description
+                                      }
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* ==================================================
+                   PRODUCT HEADER
+                ================================================== */}
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-xl font-bold">
                       Store Products
                     </h2>
 
                     <p className="text-sm text-slate-400">
-                      Products shown in your reseller storefront.
+                      Create products and assign each one to the
+                      category you want.
                     </p>
                   </div>
 
                   <Button
                     onClick={() => {
                       resetListingForm();
-                      setShowListingForm(true);
+                      setShowListingForm(
+                        true
+                      );
                     }}
                     className="bg-cyan-600 hover:bg-cyan-500"
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Add Product
+                    Create Product
                   </Button>
                 </div>
 
+                {/* ==================================================
+                   CREATE PRODUCT FORM
+                ================================================== */}
+
                 {showListingForm && (
-                  <Card className="mb-6 border-cyan-500/20 bg-slate-950">
+                  <Card className="border-cyan-500/30 bg-slate-950">
                     <CardContent className="p-6">
-                      <div className="mb-5 flex items-center justify-between">
-                        <h3 className="font-semibold">
-                          {editingListingId
-                            ? "Edit Product"
-                            : "Add Product"}
-                        </h3>
+
+                      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold">
+                            {editingListingId
+                              ? "Edit Product"
+                              : "Create Product"}
+                          </h3>
+
+                          <p className="mt-1 text-sm text-slate-400">
+                            Choose the category, enter the product
+                            details, then add the credentials that
+                            customers will receive.
+                          </p>
+                        </div>
 
                         <Button
                           variant="ghost"
                           onClick={
                             resetListingForm
                           }
-                          className="text-slate-400"
+                          className="text-slate-400 hover:text-white"
                         >
                           Close
                         </Button>
                       </div>
 
-                      <div className="grid gap-5 lg:grid-cols-2">
-                        <div>
-                          <Label>
-                            Product title
-                          </Label>
+                      {/* PRODUCT DETAILS */}
 
-                          <Input
-                            value={
-                              listingTitle
-                            }
-                            onChange={(event) =>
-                              setListingTitle(
-                                event.target.value
-                              )
-                            }
-                            placeholder="Product name"
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
+                      <div className="rounded-xl border border-slate-800 bg-black p-5">
+                        <div className="mb-5">
+                          <p className="font-semibold text-white">
+                            Product Details
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            This is the product customers will see
+                            in your storefront.
+                          </p>
                         </div>
 
-                        <div>
-                          <Label>
-                            Price (₦)
-                          </Label>
+                        <div className="grid gap-5 lg:grid-cols-2">
 
-                          <Input
-                            type="number"
-                            min="0"
-                            value={
-                              listingPrice
-                            }
-                            onChange={(event) =>
-                              setListingPrice(
-                                event.target.value
-                              )
-                            }
-                            placeholder="0"
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
-                        </div>
+                          <div>
+                            <Label>
+                              Product name
+                            </Label>
 
-                        <div>
-                        <Label>Category</Label>
+                            <Input
+                              value={
+                                listingTitle
+                              }
+                              onChange={(event) =>
+                                setListingTitle(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Netflix Premium 1 Month"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
 
-<select
-  value={listingCategoryId}
-  onChange={(event) =>
-    setListingCategoryId(event.target.value)
-  }
-  className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white"
->
-  <option value="">
-    Select category
-  </option>
+                          <div>
+                            <Label>
+                              Category
+                            </Label>
 
-  {categories.map((category: any) => (
-    <option
-      key={String(
-        category.id ??
-          category.categoryId
-      )}
-      value={String(
-        category.id ??
-          category.categoryId
-      )}
-    >
-      {category.icon
-        ? `${category.icon} `
-        : ""}
-      {category.name ??
-        category.title ??
-        "Unnamed Category"}
-    </option>
-  ))}
-</select>
+                            <select
+                              value={
+                                listingCategoryId
+                              }
+                              onChange={(event) =>
+                                setListingCategoryId(
+                                  event.target.value
+                                )
+                              }
+                              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
+                            >
+                              <option value="">
+                                Select category
+                              </option>
 
-                          
-             
-                        </div>
+                              {categories.map(
+                                (category) => (
+                                  <option
+                                    key={getCategoryId(
+                                      category
+                                    )}
+                                    value={getCategoryId(
+                                      category
+                                    )}
+                                  >
+                                    {category.icon
+                                      ? `${category.icon} `
+                                      : ""}
+                                    {getCategoryName(
+                                      category
+                                    )}
+                                  </option>
+                                )
+                              )}
+                            </select>
 
-                        <div>
-                          <Label>Quantity</Label>
+                            {categories.length ===
+                              0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowCategoryForm(
+                                    true
+                                  )
+                                }
+                                className="mt-2 text-xs text-cyan-400 hover:text-cyan-300"
+                              >
+                                + Create a category
+                                first
+                              </button>
+                            )}
+                          </div>
 
-                          <Input
-                            type="number"
-                            min="0"
-                            value={
-                              listingQuantity
-                            }
-                            onChange={(event) =>
-                              setListingQuantity(
-                                event.target.value
-                              )
-                            }
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
-                        </div>
+                          <div>
+                            <Label>
+                              Price (₦)
+                            </Label>
 
-                        <div className="lg:col-span-2">
-                          <Label>
-                            Image URL
-                          </Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={
+                                listingPrice
+                              }
+                              onChange={(event) =>
+                                setListingPrice(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="5000"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
 
-                          <Input
-                            value={
-                              listingImageUrl
-                            }
-                            onChange={(event) =>
-                              setListingImageUrl(
-                                event.target.value
-                              )
-                            }
-                            placeholder="https://..."
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
-                        </div>
+                          <div>
+                            <Label>
+                              Quantity
+                            </Label>
 
-                        <div className="lg:col-span-2">
-                          <Label>
-                            Description
-                          </Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={
+                                listingQuantity
+                              }
+                              onChange={(event) =>
+                                setListingQuantity(
+                                  event.target.value
+                                )
+                              }
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
 
-                          <textarea
-                            value={
-                              listingDescription
-                            }
-                            onChange={(event) =>
-                              setListingDescription(
-                                event.target.value
-                              )
-                            }
-                            rows={4}
-                            placeholder="Describe this product..."
-                            className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
-                          />
-                        </div>
+                            <p className="mt-1 text-xs text-slate-600">
+                              If you add credentials below,
+                              quantity automatically follows the
+                              credential pool.
+                            </p>
+                          </div>
 
-                        <div className="lg:col-span-2">
-                          <Label>
-                            Tonyix Product ID
-                          </Label>
+                          <div className="lg:col-span-2">
+                            <Label>
+                              Image URL
+                            </Label>
 
-                          <Input
-                            value={
-                              listingTonyixId
-                            }
-                            onChange={(event) =>
-                              setListingTonyixId(
-                                event.target.value
-                              )
-                            }
-                            placeholder="Optional"
-                            className="mt-2 border-slate-700 bg-black text-white"
-                          />
+                            <Input
+                              value={
+                                listingImageUrl
+                              }
+                              onChange={(event) =>
+                                setListingImageUrl(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="https://..."
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
+
+                          <div className="lg:col-span-2">
+                            <Label>
+                              Description
+                            </Label>
+
+                            <textarea
+                              value={
+                                listingDescription
+                              }
+                              onChange={(event) =>
+                                setListingDescription(
+                                  event.target.value
+                                )
+                              }
+                              rows={4}
+                              placeholder="Describe this product..."
+                              className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
+                            />
+                          </div>
+
+                          <div className="lg:col-span-2">
+                            <Label>
+                              Tonyix Product ID
+                            </Label>
+
+                            <Input
+                              value={
+                                listingTonyixId
+                              }
+                              onChange={(event) =>
+                                setListingTonyixId(
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Optional"
+                              className="mt-2 border-slate-700 bg-slate-950 text-white"
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="mt-6 flex gap-3">
+                      {/* ==================================================
+                         CREDENTIAL POOL
+                      ================================================== */}
+
+                      <div className="mt-6 rounded-xl border border-cyan-500/20 bg-black p-5">
+
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Package className="h-5 w-5 text-cyan-400" />
+
+                              <p className="font-semibold text-white">
+                                Credential Pool
+                              </p>
+
+                              <Badge className="bg-cyan-500/10 text-cyan-300">
+                                {
+                                  credentialItems.length
+                                }{" "}
+                                item
+                                {credentialItems.length ===
+                                1
+                                  ? ""
+                                  : "s"}
+                              </Badge>
+                            </div>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                              Add the email/password credentials
+                              customers will receive after purchase.
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <input
+                              ref={
+                                fileInputRef
+                              }
+                              type="file"
+                              accept=".txt,.csv,text/plain,text/csv"
+                              onChange={
+                                handleUploadItems
+                              }
+                              className="hidden"
+                            />
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                fileInputRef.current?.click()
+                              }
+                              className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800"
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload Items
+                            </Button>
+
+                            {credentialItems.length >
+                              0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={
+                                  clearCredentialPool
+                                }
+                                className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                              >
+                                Clear Pool
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ADD ITEM */}
+
+                        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-950 p-5">
+
+                          <div className="mb-4">
+                            <p className="font-semibold text-white">
+                              Add Item
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                              Enter one email/password credential
+                              at a time.
+                            </p>
+                          </div>
+
+                          <div className="grid gap-5 lg:grid-cols-2">
+
+                            <div>
+                              <Label>
+                                Email / Password
+                              </Label>
+
+                              <Input
+                                value={
+                                  credentialValue
+                                }
+                                onChange={(event) =>
+                                  setCredentialValue(
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="email@example.com | password"
+                                className="mt-2 border-slate-700 bg-black text-white"
+                              />
+                            </div>
+
+                            <div>
+                              <Label>
+                                Description / Notes
+                              </Label>
+
+                              <Input
+                                value={
+                                  credentialNotes
+                                }
+                                onChange={(event) =>
+                                  setCredentialNotes(
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Premium account, renewal date, profile, etc."
+                                className="mt-2 border-slate-700 bg-black text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            onClick={
+                              addCredentialItem
+                            }
+                            className="mt-5 bg-cyan-600 hover:bg-cyan-500"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Item
+                          </Button>
+                        </div>
+
+                        {/* POOL ITEMS */}
+
+                        {credentialItems.length >
+                          0 && (
+                          <div className="mt-5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-white">
+                                Items in Pool
+                              </p>
+
+                              <p className="text-xs text-slate-500">
+                                {
+                                  credentialItems.length
+                                }{" "}
+                                ready
+                              </p>
+                            </div>
+
+                            {credentialItems.map(
+                              (
+                                item,
+                                index
+                              ) => (
+                                <div
+                                  key={
+                                    `${index}-${item.value}`
+                                  }
+                                  className="flex flex-col gap-3 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center sm:justify-between"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-white">
+                                      {item.value}
+                                    </p>
+
+                                    {item.notes && (
+                                      <p className="mt-1 text-xs text-slate-500">
+                                        {
+                                          item.notes
+                                        }
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      removeCredentialItem(
+                                        index
+                                      )
+                                    }
+                                    className="shrink-0 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                                  >
+                                    <Trash2 className="mr-1 h-4 w-4" />
+                                    Remove
+                                  </Button>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+
+                        {credentialItems.length ===
+                          0 && (
+                          <div className="mt-5 rounded-lg border border-dashed border-slate-800 p-6 text-center">
+                            <Package className="mx-auto h-8 w-8 text-slate-700" />
+
+                            <p className="mt-3 text-sm text-slate-500">
+                              Credential pool is empty.
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-600">
+                              Use Add Item or Upload Items.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SAVE PRODUCT */}
+
+                      <div className="mt-6 flex flex-wrap gap-3">
                         <Button
                           onClick={
                             saveListing
                           }
                           disabled={
-                            savingListing
+                            savingListing ||
+                            savingCredential
                           }
                           className="bg-cyan-600 hover:bg-cyan-500"
                         >
-                          {savingListing && (
+                          {savingListing ||
+                          savingCredential ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
                           )}
 
-                          Save Product
+                          {editingListingId
+                            ? "Save Product"
+                            : "Create Product"}
                         </Button>
 
                         <Button
@@ -2148,7 +3321,12 @@ setTonyixProducts(
                   </Card>
                 )}
 
-                {listings.length === 0 ? (
+                {/* ==================================================
+                   EXISTING PRODUCTS
+                ================================================== */}
+
+                {listings.length ===
+                0 ? (
                   <Card className="border-slate-800 bg-slate-950">
                     <CardContent className="flex min-h-[260px] flex-col items-center justify-center p-8 text-center">
                       <Package className="h-10 w-10 text-slate-600" />
@@ -2158,9 +3336,21 @@ setTonyixProducts(
                       </h3>
 
                       <p className="mt-2 text-sm text-slate-500">
-                        Add your first product to start
-                        building your reseller store.
+                        Create a category, then create your first
+                        product.
                       </p>
+
+                      <Button
+                        onClick={() => {
+                          setShowListingForm(
+                            true
+                          );
+                        }}
+                        className="mt-5 bg-cyan-600 hover:bg-cyan-500"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Product
+                      </Button>
                     </CardContent>
                   </Card>
                 ) : (
@@ -2174,14 +3364,37 @@ setTonyixProducts(
                               0
                           );
 
+                        const credentialCount =
+                          Array.isArray(
+                            listing.accessLinks
+                          )
+                            ? listing
+                                .accessLinks
+                                .length
+                            : 0;
+
                         const active =
                           listing.inStock !==
                             false &&
                           quantity > 0;
 
+                        const category =
+                          categories.find(
+                            (item) =>
+                              getCategoryId(
+                                item
+                              ) ===
+                              String(
+                                listing.categoryId ||
+                                  ""
+                              )
+                          );
+
                         return (
                           <Card
-                            key={listing.id}
+                            key={
+                              listing.id
+                            }
                             className="overflow-hidden border-slate-800 bg-slate-950"
                           >
                             {listing.imageUrl && (
@@ -2219,7 +3432,18 @@ setTonyixProducts(
                                 </Badge>
                               </div>
 
-                              <p className="mt-2 line-clamp-2 text-sm text-slate-400">
+                              {category && (
+                                <Badge className="mt-3 bg-cyan-500/10 text-cyan-300">
+                                  {category.icon
+                                    ? `${category.icon} `
+                                    : ""}
+                                  {getCategoryName(
+                                    category
+                                  )}
+                                </Badge>
+                              )}
+
+                              <p className="mt-3 line-clamp-2 text-sm text-slate-400">
                                 {listing.description ||
                                   "No description"}
                               </p>
@@ -2240,102 +3464,28 @@ setTonyixProducts(
                                 </span>
                               </div>
 
-                                <div className="mt-5 rounded-xl border border-slate-800 bg-black p-4">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="font-semibold text-white">
-        Credential Pool
-      </p>
+                              <div className="mt-4 rounded-xl border border-slate-800 bg-black p-4">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-semibold text-white">
+                                      Credential Pool
+                                    </p>
 
-      <p className="mt-1 text-xs text-slate-500">
-        {Array.isArray(listing.accessLinks)
-          ? listing.accessLinks.length
-          : 0}{" "}
-        credential
-        {Array.isArray(listing.accessLinks) &&
-        listing.accessLinks.length === 1
-          ? ""
-          : "s"}
-      </p>
-    </div>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {
+                                        credentialCount
+                                      }{" "}
+                                      credential
+                                      {credentialCount ===
+                                      1
+                                        ? ""
+                                        : "s"}
+                                    </p>
+                                  </div>
 
-    <Button
-      size="sm"
-      onClick={() => {
-        setCredentialPoolListingId(
-          String(listing.id)
-        );
-        setCredentialValue("");
-        setCredentialNotes("");
-      }}
-      className="bg-cyan-600 hover:bg-cyan-500"
-    >
-      <Plus className="mr-1 h-4 w-4" />
-      Add Item
-    </Button>
-  </div>
-
-  {credentialPoolListingId ===
-    String(listing.id) && (
-    <div className="mt-4 rounded-lg border border-cyan-500/20 bg-slate-950 p-4">
-      <Label>Email / Password</Label>
-
-      <Input
-        value={credentialValue}
-        onChange={(event) =>
-          setCredentialValue(
-            event.target.value
-          )
-        }
-        placeholder="email@example.com | password"
-        className="mt-2 border-slate-700 bg-black text-white"
-      />
-
-      <Label className="mt-4 block">
-        Notes / Description
-      </Label>
-
-      <textarea
-        value={credentialNotes}
-        onChange={(event) =>
-          setCredentialNotes(
-            event.target.value
-          )
-        }
-        rows={3}
-        placeholder="Notes or description..."
-        className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-500"
-      />
-
-      <div className="mt-4 flex gap-2">
-        <Button
-          onClick={() =>
-            addCredentialToPool(
-              String(listing.id)
-            )
-          }
-          disabled={savingCredential}
-          className="bg-cyan-600 hover:bg-cyan-500"
-        >
-          {savingCredential ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : null}
-          Add to Pool
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() =>
-            setCredentialPoolListingId(null)
-          }
-          className="border-slate-700 bg-slate-900 text-white"
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
-  )}
-</div>
+                                  <Package className="h-5 w-5 text-cyan-400" />
+                                </div>
+                              </div>
 
                               <div className="mt-5 grid grid-cols-2 gap-2">
                                 <Button
@@ -2388,6 +3538,10 @@ setTonyixProducts(
               </div>
             )}
 
+            {/* ====================================================
+               ORDERS
+            ==================================================== */}
+
             {activeTab === "orders" && (
               <Card className="border-slate-800 bg-slate-950">
                 <CardContent className="p-6">
@@ -2397,11 +3551,13 @@ setTonyixProducts(
                     </h2>
 
                     <p className="text-sm text-slate-400">
-                      Orders generated through your reseller storefront.
+                      Orders generated through your reseller
+                      storefront.
                     </p>
                   </div>
 
-                  {orders.length === 0 ? (
+                  {orders.length ===
+                  0 ? (
                     <div className="py-16 text-center text-slate-500">
                       No reseller orders yet.
                     </div>
@@ -2410,13 +3566,18 @@ setTonyixProducts(
                       {orders.map(
                         (order) => (
                           <div
-                            key={order.id}
+                            key={
+                              order.id
+                            }
                             className="rounded-xl border border-slate-800 bg-black p-4"
                           >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               <div>
                                 <p className="font-semibold">
-                                  Order #{order.id}
+                                  Order #
+                                  {
+                                    order.id
+                                  }
                                 </p>
 
                                 <p className="mt-1 text-sm text-slate-400">
@@ -2454,7 +3615,8 @@ setTonyixProducts(
                             </div>
 
                             {order.items &&
-                              order.items.length >
+                              order.items
+                                .length >
                                 0 && (
                                 <div className="mt-4 border-t border-slate-800 pt-3">
                                   {order.items.map(
@@ -2493,7 +3655,12 @@ setTonyixProducts(
               </Card>
             )}
 
-            {activeTab === "withdrawals" && (
+            {/* ====================================================
+               WITHDRAWALS
+            ==================================================== */}
+
+            {activeTab ===
+              "withdrawals" && (
               <div className="space-y-6">
                 <Card className="border-slate-800 bg-slate-950">
                   <CardContent className="p-6">
@@ -2510,8 +3677,8 @@ setTonyixProducts(
                         </p>
 
                         <p className="mt-2 text-xs text-slate-500">
-                          Final withdrawal eligibility
-                          is validated by the backend.
+                          Final withdrawal eligibility is validated
+                          by the backend.
                         </p>
                       </div>
 
@@ -2536,14 +3703,17 @@ setTonyixProducts(
                       Withdrawal History
                     </h2>
 
-                    {withdrawals.length === 0 ? (
+                    {withdrawals.length ===
+                    0 ? (
                       <div className="py-12 text-center text-slate-500">
                         No withdrawal requests yet.
                       </div>
                     ) : (
                       <div className="mt-5 space-y-3">
                         {withdrawals.map(
-                          (withdrawal) => (
+                          (
+                            withdrawal
+                          ) => (
                             <div
                               key={
                                 withdrawal.id
@@ -2568,7 +3738,9 @@ setTonyixProducts(
 
                                 {withdrawal.reason && (
                                   <p className="mt-1 text-xs text-red-400">
-                                    {withdrawal.reason}
+                                    {
+                                      withdrawal.reason
+                                    }
                                   </p>
                                 )}
                               </div>
