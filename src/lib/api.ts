@@ -213,15 +213,17 @@ export const api = {
     request("/api/seller/listings"),
 
   createSellerListing: (listing: {
-    title: string;
-    description?: string;
-    price: number;
-    imageUrl?: string;
-    categoryId?: string;
-    quantity?: number;
-    accessLinks?: string[];
-    tonyixProductId?: string | number;
-  }) =>
+  title: string;
+  name?: string;
+  description?: string;
+  price: number;
+  imageUrl?: string;
+  categoryId?: string;
+  quantity?: number;
+  accessLinks?: string[];
+  previewLinks?: string[];
+  tonyixProductId?: string | number;
+}) =>
     request("/api/seller/listings", {
       method: "POST",
       body: JSON.stringify(listing),
