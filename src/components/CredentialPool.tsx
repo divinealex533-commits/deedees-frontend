@@ -179,7 +179,9 @@ export function CredentialPool({
     }
 
     try {
-      await sellerApi.createCategory(name);
+      await sellerApi.createCategory({
+  name,
+});
 
       toast.success(
         `${name} category created`
