@@ -8,8 +8,6 @@ import {
   Search,
   ShieldCheck,
   Store,
-  Crown,
-  CheckCircle2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -28,11 +26,8 @@ type Seller = {
   id: string;
   name?: string;
   email?: string;
-
   sellerPlanStatus?: string;
-
   sellerPlan?: SellerPlan | null;
-
   sellerStoreName?: string;
   sellerStoreSlug?: string;
   sellerStoreUrl?: string;
@@ -41,22 +36,18 @@ type Seller = {
 
 type Listing = {
   id: string;
-
   title?: string;
   name?: string;
   description?: string;
-
   price?: number;
-
   imageUrl?: string;
-
   quantity?: number;
   stockCount?: number;
   inStock?: boolean;
-
   ownerId?: string;
   sellerId?: string;
   userId?: string;
+  ownerType?: string;
 };
 
 type Storefront = {
@@ -83,18 +74,8 @@ function stockOf(item: Listing) {
   return item.inStock === false ? 0 : 1;
 }
 
-async function loadAdminSellers(): Promise<Seller[]> {
-  const response =
-    await api.getAdminResellerInspectionSellers();
-
-  return Array.isArray(response?.sellers)
-    ? response.sellers
-    : [];
-}
-
 export default function AdminResellerStorefrontInspector() {
   const [sellers, setSellers] = useState<Seller[]>([]);
-
   const [items, setItems] = useState<Listing[]>([]);
 
   const [selectedSeller, setSelectedSeller] =
@@ -105,40 +86,49 @@ export default function AdminResellerStorefrontInspector() {
 
   const [search, setSearch] = useState("");
 
-  const [selectedPlan, setSelectedPlan] =
-    useState<string>("all");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [loadingStore, setLoadingStore] =
-    useState(false);
-
-  /*
-   * ------------------------------------------------------------
-   * LOAD SELLERS
-   * ------------------------------------------------------------
-   */
+  const [loading, setLoading] = useState(true);
+  const [loadingStore, setLoadingStore] = useState(false);
 
   async function refresh() {
     setLoading(true);
 
     try {
-      const sellerData =
-        await loadAdminSellers();
+      /*
+       * ADMIN:
+       * Load all reseller accounts directly from the
+       * existing admin endpoint.
+       */
+      const sellerResponse =
+        await api.getAdminResellerInspectionSellers();
 
-      setSellers(sellerData);
+      const sellerList = Array.isArray(
+        sellerResponse?.sellers
+      )
+        ? sellerResponse.sellers
+        : [];
 
-      setItems([]);
+      setSellers(sellerList);
 
-      setSelectedSeller(null);
+      /*
+       * Load marketplace products.
+       *
+       * Seller products contain ownerId in publicItem(),
+       * so we can safely identify which products belong
+       * to each reseller without exposing access credentials.
+       */
+      const itemResponse =
+        await api.getItems();
 
-      setStorefront(null);
+      const itemList = Array.isArray(itemResponse)
+        ? itemResponse
+        : [];
+
+      setItems(itemList);
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Could not load reseller data"
+          : "Could not load reseller marketplace"
       );
     } finally {
       setLoading(false);
@@ -149,180 +139,76 @@ export default function AdminResellerStorefrontInspector() {
     void refresh();
   }, []);
 
-  /*
-   * ------------------------------------------------------------
-   * PLAN LIST
-   *
-   * We build this directly from the seller data already returned
-   * by your admin inspection endpoint.
-   *
-   * This means we do NOT need a subscription checkout.
-   * ------------------------------------------------------------
-   */
+  const filteredSellers = useMemo(() => {
+    const q = search.trim().toLowerCase();
 
-  const plans = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        sellerCount: number;
-      }
-    >();
-
-    sellers.forEach((seller) => {
-      const id =
-        seller.sellerPlan?.id ||
-        seller.sellerPlan?.name ||
-        "unknown";
-
-      const name =
-        seller.sellerPlan?.name ||
-        "No Plan";
-
-      const existing = map.get(id);
-
-      if (existing) {
-        existing.sellerCount += 1;
-      } else {
-        map.set(id, {
-          id,
-          name,
-          sellerCount: 1,
-        });
-      }
-    });
-
-    return Array.from(map.values());
-  }, [sellers]);
-
-  /*
-   * ------------------------------------------------------------
-   * PLAN FILTER
-   * ------------------------------------------------------------
-   */
-
-  const sellersForSelectedPlan = useMemo(() => {
-    if (selectedPlan === "all") {
+    if (!q) {
       return sellers;
     }
 
-    return sellers.filter((seller) => {
-      const planId =
-        seller.sellerPlan?.id ||
-        seller.sellerPlan?.name ||
-        "unknown";
-
-      return planId === selectedPlan;
-    });
-  }, [sellers, selectedPlan]);
-
-  /*
-   * ------------------------------------------------------------
-   * SEARCH
-   * ------------------------------------------------------------
-   */
-
-  const filteredSellers = useMemo(() => {
-    const q =
-      search.trim().toLowerCase();
-
-    if (!q) {
-      return sellersForSelectedPlan;
-    }
-
-    return sellersForSelectedPlan.filter(
-      (seller) =>
-        [
-          seller.name,
-          seller.email,
-          seller.sellerStoreName,
-          seller.sellerStoreSlug,
-          seller.sellerPlan?.name,
-          seller.sellerPlanStatus,
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value)
-              .toLowerCase()
-              .includes(q)
-          )
+    return sellers.filter((seller) =>
+      [
+        seller.name,
+        seller.email,
+        seller.sellerStoreName,
+        seller.sellerStoreSlug,
+        seller.sellerPlan?.name,
+        seller.sellerPlanStatus,
+      ]
+        .filter(Boolean)
+        .some((value) =>
+          String(value).toLowerCase().includes(q)
+        )
     );
-  }, [
-    sellersForSelectedPlan,
-    search,
-  ]);
+  }, [sellers, search]);
 
-  /*
-   * ------------------------------------------------------------
-   * INSPECT SELLER
-   * ------------------------------------------------------------
-   */
-
-  async function inspectSeller(
-    seller: Seller
-  ) {
+  async function inspectSeller(seller: Seller) {
     setSelectedSeller(seller);
-
     setStorefront(null);
-
-    setItems([]);
-
     setLoadingStore(true);
 
     try {
       /*
-       * IMPORTANT:
+       * Get the real public storefront using the seller's
+       * existing slug.
        *
-       * This is the ADMIN inspection endpoint.
-       *
-       * It does NOT use the normal seller subscription checkout.
-       *
-       * Therefore the admin can inspect the seller account even
-       * when the admin itself has no seller subscription.
+       * No seller subscription is purchased.
+       * No Paystack request is made.
        */
+      const slug =
+        seller.sellerStoreSlug || "";
 
-      const response =
-        await api.getAdminResellerInspection(
-          seller.id
-        );
+      if (slug) {
+        try {
+          const store =
+            await api.getPublicSellerStorefront(
+              slug
+            );
 
-      const store =
-        response?.storefront || null;
-
-      const listings =
-        Array.isArray(
-          response?.listings
-        )
-          ? response.listings
-          : [];
-
-      setStorefront(store);
-
-      setItems(listings);
+          setStorefront(store || null);
+        } catch {
+          /*
+           * Some older seller accounts may not yet have
+           * a storefront record. We still show their
+           * seller profile information below.
+           */
+          setStorefront(null);
+        }
+      }
 
       toast.success(
-        `Admin inspection opened: ${
-          seller.sellerPlan?.name ||
-          "Seller plan"
-        }`
+        `Inspecting ${seller.sellerStoreName || seller.name || "seller"}`
       );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Could not inspect reseller website"
+          : "Could not inspect reseller"
       );
     } finally {
       setLoadingStore(false);
     }
   }
-
-  /*
-   * ------------------------------------------------------------
-   * LISTINGS BELONGING TO SELECTED SELLER
-   * ------------------------------------------------------------
-   */
 
   const sellerListings = useMemo(() => {
     if (!selectedSeller) {
@@ -336,15 +222,13 @@ export default function AdminResellerStorefrontInspector() {
         item.userId;
 
       return (
+        item.ownerType === "seller" &&
         owner != null &&
         String(owner) ===
           String(selectedSeller.id)
       );
     });
-  }, [
-    items,
-    selectedSeller,
-  ]);
+  }, [items, selectedSeller]);
 
   const storeName =
     storefront?.storeName ||
@@ -356,24 +240,15 @@ export default function AdminResellerStorefrontInspector() {
     selectedSeller?.sellerStoreSlug ||
     "";
 
-  /*
-   * ------------------------------------------------------------
-   * BACK TO PLAN/SELLER LIST
-   * ------------------------------------------------------------
-   */
-
   function backToResellers() {
     setSelectedSeller(null);
-
     setStorefront(null);
-
-    setItems([]);
   }
 
   /*
-   * ------------------------------------------------------------
-   * DETAIL VIEW
-   * ------------------------------------------------------------
+   * ==========================================================
+   * SELLER INSPECTION
+   * ==========================================================
    */
 
   if (selectedSeller) {
@@ -386,35 +261,31 @@ export default function AdminResellerStorefrontInspector() {
           className="border-slate-700 bg-slate-900 text-white"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Seller Plans
+          Back to Resellers
         </Button>
-
-        {/* ADMIN MODE NOTICE */}
 
         <Card className="border-emerald-500/30 bg-emerald-500/5">
           <CardContent className="p-5">
             <div className="flex items-start gap-3">
-
-              <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-400" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-400" />
 
               <div>
                 <p className="font-semibold text-emerald-300">
-                  Administrator inspection mode
+                  Administrator inspection
                 </p>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  You are viewing this seller as an
-                  administrator. No seller subscription is
-                  being purchased and no Paystack payment is
-                  started.
+                  You are viewing this reseller as the
+                  main DeeDee's administrator. No seller
+                  subscription or Paystack payment is
+                  required.
                 </p>
               </div>
-
             </div>
           </CardContent>
         </Card>
 
-        {/* SELLER STOREFRONT */}
+        {/* STOREFRONT */}
 
         <Card className="overflow-hidden border-slate-800 bg-slate-950">
 
@@ -453,7 +324,7 @@ export default function AdminResellerStorefrontInspector() {
                   </h2>
 
                   <Badge className="bg-cyan-500/10 text-cyan-300">
-                    ADMIN VIEW
+                    ADMIN
                   </Badge>
 
                   <Badge className="bg-purple-500/10 text-purple-300">
@@ -477,7 +348,7 @@ export default function AdminResellerStorefrontInspector() {
 
                 <p className="mt-2 text-slate-400">
                   {storefront?.description ||
-                    "Welcome to this seller's store."}
+                    "No storefront description available."}
                 </p>
 
                 <p className="mt-3 text-sm text-slate-500">
@@ -510,7 +381,7 @@ export default function AdminResellerStorefrontInspector() {
                     rel="noreferrer"
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Customer Store
+                    Open Store
                   </a>
                 </Button>
               )}
@@ -520,19 +391,27 @@ export default function AdminResellerStorefrontInspector() {
           </CardContent>
         </Card>
 
-        {/* REAL LISTINGS */}
+        {/* PRODUCTS */}
 
         <Card className="border-slate-800 bg-slate-950">
           <CardContent className="p-6">
 
-            <div className="mb-5">
-              <h3 className="text-2xl font-bold text-white">
-                Seller Listings
-              </h3>
+            <div className="mb-5 flex items-center justify-between">
 
-              <p className="mt-1 text-sm text-slate-500">
-                Products belonging to this seller.
-              </p>
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  Reseller Products
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Every product currently owned by this reseller.
+                </p>
+              </div>
+
+              <Badge className="bg-cyan-500/10 text-cyan-300">
+                {sellerListings.length}
+              </Badge>
+
             </div>
 
             {loadingStore && (
@@ -548,12 +427,11 @@ export default function AdminResellerStorefrontInspector() {
                 <Package className="mx-auto h-12 w-12 text-slate-700" />
 
                 <h4 className="mt-4 font-semibold text-white">
-                  No listings found
+                  No reseller products
                 </h4>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  This reseller currently has no stored
-                  listings.
+                  This reseller has not added any products yet.
                 </p>
 
               </div>
@@ -561,9 +439,7 @@ export default function AdminResellerStorefrontInspector() {
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
                 {sellerListings.map((listing) => {
-
-                  const stock =
-                    stockOf(listing);
+                  const stock = stockOf(listing);
 
                   const available =
                     listing.inStock !== false &&
@@ -652,15 +528,13 @@ export default function AdminResellerStorefrontInspector() {
   }
 
   /*
-   * ------------------------------------------------------------
-   * MAIN PLAN SELECTION SCREEN
-   * ------------------------------------------------------------
+   * ==========================================================
+   * RESELLER LIST
+   * ==========================================================
    */
 
   return (
     <div className="space-y-6">
-
-      {/* HEADER */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
@@ -672,12 +546,11 @@ export default function AdminResellerStorefrontInspector() {
 
           <div>
             <h2 className="text-2xl font-bold text-white">
-              Admin Seller Inspector
+              Reseller Inspector
             </h2>
 
             <p className="text-sm text-slate-400">
-              Test and inspect seller storefronts from the
-              admin dashboard.
+              Inspect reseller stores and products directly.
             </p>
           </div>
 
@@ -691,17 +564,13 @@ export default function AdminResellerStorefrontInspector() {
         >
           <RefreshCw
             className={`mr-2 h-4 w-4 ${
-              loading
-                ? "animate-spin"
-                : ""
+              loading ? "animate-spin" : ""
             }`}
           />
           Refresh
         </Button>
 
       </div>
-
-      {/* ADMIN ACCESS CARD */}
 
       <Card className="border-emerald-500/20 bg-emerald-500/5">
         <CardContent className="p-5">
@@ -713,15 +582,13 @@ export default function AdminResellerStorefrontInspector() {
             <div>
 
               <p className="font-semibold text-emerald-300">
-                Admin testing is subscription-free
+                Full admin access
               </p>
 
               <p className="mt-1 text-sm text-slate-400">
-                Select a seller plan below and inspect a
-                seller using that plan. This admin inspection
-                does not purchase a plan, does not charge
-                Paystack, and does not change your admin
-                subscription.
+                The main DeeDee's admin can inspect reseller
+                accounts, storefronts and products without
+                purchasing a seller plan.
               </p>
 
             </div>
@@ -730,118 +597,6 @@ export default function AdminResellerStorefrontInspector() {
 
         </CardContent>
       </Card>
-
-      {/* PLAN TESTER */}
-
-      <Card className="border-slate-800 bg-slate-950">
-
-        <CardContent className="p-6">
-
-          <div className="mb-5 flex items-center gap-3">
-
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10">
-              <Crown className="h-5 w-5 text-purple-400" />
-            </div>
-
-            <div>
-
-              <h3 className="text-xl font-bold text-white">
-                Test a Seller Plan
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                Tap a plan to see sellers currently using
-                that plan.
-              </p>
-
-            </div>
-
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-
-            {/* ALL PLANS */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setSelectedPlan("all")
-              }
-              className={`rounded-xl border p-4 text-left transition ${
-                selectedPlan === "all"
-                  ? "border-cyan-500/60 bg-cyan-500/10"
-                  : "border-slate-800 bg-black hover:border-cyan-500/30"
-              }`}
-            >
-
-              <div className="flex items-center justify-between">
-
-                <span className="font-semibold text-white">
-                  All Plans
-                </span>
-
-                {selectedPlan === "all" && (
-                  <CheckCircle2 className="h-5 w-5 text-cyan-400" />
-                )}
-
-              </div>
-
-              <p className="mt-2 text-xs text-slate-500">
-                {sellers.length} sellers
-              </p>
-
-            </button>
-
-            {/* ACTUAL PLANS */}
-
-            {plans.map((plan) => {
-
-              const active =
-                selectedPlan === plan.id;
-
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  onClick={() =>
-                    setSelectedPlan(plan.id)
-                  }
-                  className={`rounded-xl border p-4 text-left transition ${
-                    active
-                      ? "border-purple-500/60 bg-purple-500/10"
-                      : "border-slate-800 bg-black hover:border-purple-500/30"
-                  }`}
-                >
-
-                  <div className="flex items-center justify-between gap-2">
-
-                    <span className="truncate font-semibold text-white">
-                      {plan.name}
-                    </span>
-
-                    {active && (
-                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-purple-400" />
-                    )}
-
-                  </div>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    {plan.sellerCount} seller
-                    {plan.sellerCount === 1
-                      ? ""
-                      : "s"}
-                  </p>
-
-                </button>
-              );
-            })}
-
-          </div>
-
-        </CardContent>
-      </Card>
-
-      {/* SEARCH */}
 
       <Card className="border-slate-800 bg-slate-950">
 
@@ -856,7 +611,7 @@ export default function AdminResellerStorefrontInspector() {
               onChange={(e) =>
                 setSearch(e.target.value)
               }
-              placeholder="Search seller, store, email or plan..."
+              placeholder="Search reseller, store or email..."
               className="border-slate-800 bg-black pl-9 text-white"
             />
 
@@ -864,8 +619,6 @@ export default function AdminResellerStorefrontInspector() {
 
         </CardContent>
       </Card>
-
-      {/* SELLERS */}
 
       <Card className="border-slate-800 bg-slate-950">
 
@@ -876,14 +629,11 @@ export default function AdminResellerStorefrontInspector() {
             <div>
 
               <h3 className="text-xl font-bold text-white">
-                {selectedPlan === "all"
-                  ? "Seller Accounts"
-                  : "Sellers on Selected Plan"}
+                Reseller Accounts
               </h3>
 
               <p className="mt-1 text-sm text-slate-500">
-                Tap a seller to open the admin storefront
-                inspector.
+                Select a reseller to inspect their website.
               </p>
 
             </div>
@@ -901,7 +651,7 @@ export default function AdminResellerStorefrontInspector() {
 
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
 
-                Loading sellers...
+                Loading resellers...
 
               </div>
             ) : filteredSellers.length === 0 ? (
@@ -910,7 +660,7 @@ export default function AdminResellerStorefrontInspector() {
                 <Store className="mx-auto h-10 w-10 text-slate-700" />
 
                 <p className="mt-3 text-slate-400">
-                  No sellers found for this plan.
+                  No reseller accounts found.
                 </p>
 
               </div>
@@ -933,7 +683,7 @@ export default function AdminResellerStorefrontInspector() {
                       <p className="truncate font-semibold text-white">
                         {seller.sellerStoreName ||
                           seller.name ||
-                          "Unnamed seller"}
+                          "Unnamed reseller"}
                       </p>
 
                       <p className="mt-1 truncate text-xs text-slate-500">
@@ -964,7 +714,7 @@ export default function AdminResellerStorefrontInspector() {
                     </span>
 
                     <span className="text-xs font-semibold text-cyan-400">
-                      TEST AS ADMIN →
+                      INSPECT →
                     </span>
 
                   </div>
