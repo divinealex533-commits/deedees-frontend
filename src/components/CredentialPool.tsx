@@ -215,7 +215,7 @@ export function CredentialPool({
 
             <div className="space-y-2">
 
-     {categories.map((category) => {
+              {categories.map((category) => {
                 const categoryProducts = products.filter(
                   (product) =>
                     product.categoryId === category.id
