@@ -1981,7 +1981,31 @@ setTonyixProducts(
         "Unnamed Category"}
     </option>
   ))}
-</select>           </div>
+</select>
+                          <Label className="mt-4">Tonyix Product</Label>
+
+<select
+  value={listingTonyixId}
+  onChange={(event) =>
+    setListingTonyixId(event.target.value)
+  }
+  className="mt-2 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-white"
+>
+  <option value="">Select Tonyix product</option>
+
+  {tonyixProducts.map((product) => (
+    <option
+      key={product.id}
+      value={product.id}
+    >
+      {product.name ||
+        product.title ||
+        `Tonyix Product ${product.id}`}
+    </option>
+  ))}
+</select>
+                          
+                        </div>
 
                         <div>
                           <Label>Quantity</Label>
