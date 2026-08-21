@@ -849,17 +849,24 @@ function App() {
           }}
         />
       )}
-
-    
-      // We will connect seller listing checkout here next.
-      toast.info(
-        "Seller product checkout is being prepared."
-      );
-    }}
-  />
-)}
       
-         {view === "seller-dashboard" &&
+              {view === "seller-marketplace" && (
+        <SellerMarketplace
+          onBack={() => {
+            setView("store");
+
+            setTimeout(() => {
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }, 50);
+          }}
+          onBuyNow={handleSellerMarketplaceBuy}
+        />
+      )}
+
+      {view === "seller-dashboard" &&
         auth.user &&
         (
           !auth.user.isAdmin ||
@@ -895,14 +902,7 @@ function App() {
           />
         )}
 
-      {view ===
-        "seller-inspector" &&
-        auth.user?.isAdmin && (
-          <ResellerSystemDiagnostic />
-        )}
-
-      {view ===
-        "seller-inspector" &&
+      {view === "seller-inspector" &&
         auth.user?.isAdmin && (
           <ResellerSystemDiagnostic />
         )}
