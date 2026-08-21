@@ -14,8 +14,18 @@ import {
   User as UserRoundIcon,
   Store,
   ChevronRight,
+  ChevronUp,
+  UserCog,
+  ScrollText,
+  PlusSquare,
+  ClipboardList,
+  FileWarning,
+  Link2,
+  Wallet,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { User } from "@/hooks/useAuth";
@@ -34,14 +44,18 @@ interface AccountDrawerProps {
   onGoContact: () => void;
   onGoAffiliate: () => void;
 
-  // Seller marketplace
+  // Seller admin
   onGoSellerDashboard?: () => void;
 
   onLogout: () => void;
   onOpenAuth: () => void;
 }
 
-type SubPanel = "blogs" | "api" | null;
+type SubPanel =
+  | "blogs"
+  | "api"
+  | "seller-admin"
+  | null;
 
 export function AccountDrawer({
   isOpen,
@@ -86,21 +100,31 @@ export function AccountDrawer({
     action();
   };
 
-  const handleSellerDashboard = () => {
+  /*
+   * ==========================================================
+   * SELLER ADMIN
+   * ==========================================================
+   */
+
+  const handleSellerAdmin = () => {
     if (!isAuthenticated) {
       handleClose();
       onOpenAuth();
 
       toast.info(
-        "Please login to access the seller marketplace."
+        "Please login to access Seller Admin."
       );
 
       return;
     }
 
+    setSubPanel("seller-admin");
+  };
+
+  const openSellerDashboard = () => {
     if (!onGoSellerDashboard) {
       toast.info(
-        "Seller marketplace is currently unavailable."
+        "Seller dashboard is currently unavailable."
       );
       return;
     }
@@ -122,6 +146,7 @@ export function AccountDrawer({
 
       {/* Drawer */}
       <div className="fixed left-0 top-0 bottom-0 z-[70] w-[85vw] max-w-sm overflow-y-auto border-r border-blue-500/20 bg-slate-950 animate-in slide-in-from-left duration-300">
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-500/20 p-5">
           <div className="flex items-center gap-2">
@@ -150,7 +175,10 @@ export function AccountDrawer({
           </Button>
         </div>
 
+        {/* ================================================== */}
         {/* MAIN PANEL */}
+        {/* ================================================== */}
+
         {subPanel === null && (
           <>
             {/* User row */}
@@ -192,6 +220,7 @@ export function AccountDrawer({
 
             {/* Menu */}
             <nav className="p-3">
+
               <DrawerItem
                 icon={Home}
                 label="Home"
@@ -252,13 +281,19 @@ export function AccountDrawer({
                 }}
               />
 
-              {/* SELLER MARKETPLACE */}
+              {/* ================================================== */}
+              {/* SELLER ADMIN */}
+              {/* ================================================== */}
+
               {isAuthenticated && (
                 <DrawerItem
                   icon={Store}
-                  label="Seller Marketplace"
-                  hasArrow
-                  onClick={handleSellerDashboard}
+                  label="Seller Admin"
+                  hasCustomArrow
+                  arrowUp={
+                    subPanel === "seller-admin"
+                  }
+                  onClick={handleSellerAdmin}
                 />
               )}
 
@@ -297,6 +332,7 @@ export function AccountDrawer({
 
             {/* SUPPORT */}
             <div className="mt-2 space-y-4 border-t border-blue-500/20 p-5">
+
               <a
                 href="https://t.me/deedeesmarketsupport"
                 target="_blank"
@@ -324,16 +360,147 @@ export function AccountDrawer({
                   Contact Support
                 </span>
               </button>
+
             </div>
           </>
         )}
 
-        {/* BLOGS PANEL */}
-        {subPanel === "blogs" && (
+        {/* ================================================== */}
+        {/* SELLER ADMIN PANEL */}
+        {/* ================================================== */}
+
+        {subPanel === "seller-admin" && (
           <div className="p-5">
+
+            {/* Seller Admin Header */}
             <button
               type="button"
-              onClick={() => setSubPanel(null)}
+              onClick={() =>
+                setSubPanel(null)
+              }
+              className="mb-5 flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-4 py-4 text-left transition hover:border-blue-500/40"
+            >
+              <div className="flex items-center gap-3">
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950">
+                  <UserCog className="h-6 w-6 text-cyan-400" />
+                </div>
+
+                <span className="text-xl font-bold text-white">
+                  Seller Admin
+                </span>
+
+              </div>
+
+              <ChevronUp className="h-5 w-5 text-slate-500" />
+            </button>
+
+            {/* Seller Admin Navigation */}
+
+            <div className="space-y-1">
+
+              <SellerAdminItem
+                icon={Store}
+                label="Seller Dashboard"
+                onClick={openSellerDashboard}
+              />
+
+              <SellerAdminItem
+                icon={ScrollText}
+                label="My Logs"
+                onClick={() => {
+                  toast.info(
+                    "My Logs will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={PlusSquare}
+                label="Add Logs"
+                onClick={() => {
+                  toast.info(
+                    "Add Logs will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={ClipboardList}
+                label="Logs Management"
+                onClick={() => {
+                  toast.info(
+                    "Logs Management will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={FileWarning}
+                label="Reports"
+                onClick={() => {
+                  toast.info(
+                    "Reports will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={Link2}
+                label="StoreLink Reports"
+                onClick={() => {
+                  toast.info(
+                    "StoreLink Reports will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={Wallet}
+                label="Withdraw"
+                onClick={() => {
+                  toast.info(
+                    "Withdraw will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={HistoryIcon}
+                label="History"
+                onClick={() => {
+                  toast.info(
+                    "Seller history will open here."
+                  );
+                }}
+              />
+
+              <SellerAdminItem
+                icon={Settings}
+                label="Store Settings"
+                onClick={() => {
+                  toast.info(
+                    "Store Settings will open here."
+                  );
+                }}
+              />
+
+            </div>
+          </div>
+        )}
+
+        {/* ================================================== */}
+        {/* BLOGS PANEL */}
+        {/* ================================================== */}
+
+        {subPanel === "blogs" && (
+          <div className="p-5">
+
+            <button
+              type="button"
+              onClick={() =>
+                setSubPanel(null)
+              }
               className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
@@ -347,15 +514,22 @@ export function AccountDrawer({
               Coming soon — check back for updates,
               tips and guides.
             </p>
+
           </div>
         )}
 
+        {/* ================================================== */}
         {/* API PANEL */}
+        {/* ================================================== */}
+
         {subPanel === "api" && (
           <div className="p-5">
+
             <button
               type="button"
-              onClick={() => setSubPanel(null)}
+              onClick={() =>
+                setSubPanel(null)
+              }
               className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
@@ -369,6 +543,7 @@ export function AccountDrawer({
               Coming soon — API access and documentation
               for developers.
             </p>
+
           </div>
         )}
       </div>
@@ -376,16 +551,24 @@ export function AccountDrawer({
   );
 }
 
+/* ============================================================
+ * NORMAL DRAWER ITEM
+ * ============================================================ */
+
 function DrawerItem({
   icon: Icon,
   label,
   onClick,
   hasArrow,
+  hasCustomArrow,
+  arrowUp,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
   hasArrow?: boolean;
+  hasCustomArrow?: boolean;
+  arrowUp?: boolean;
 }) {
   return (
     <button
@@ -394,16 +577,54 @@ function DrawerItem({
       className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-slate-300 transition-colors hover:bg-blue-500/10 hover:text-white"
     >
       <span className="flex items-center gap-3">
+
         <Icon className="h-5 w-5 text-blue-400" />
 
         <span className="font-medium">
           {label}
         </span>
+
       </span>
 
-      {hasArrow && (
-        <ChevronRight className="h-4 w-4 text-slate-500" />
+      {hasCustomArrow ? (
+        arrowUp ? (
+          <ChevronUp className="h-4 w-4 text-slate-500" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-slate-500" />
+        )
+      ) : (
+        hasArrow && (
+          <ChevronRight className="h-4 w-4 text-slate-500" />
+        )
       )}
+    </button>
+  );
+}
+
+/* ============================================================
+ * SELLER ADMIN ITEM
+ * ============================================================ */
+
+function SellerAdminItem({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center rounded-xl px-4 py-4 text-left text-slate-300 transition-colors hover:bg-blue-500/10 hover:text-white"
+    >
+      <Icon className="mr-4 h-5 w-5 flex-shrink-0 text-blue-400" />
+
+      <span className="text-base font-semibold">
+        {label}
+      </span>
     </button>
   );
 }
