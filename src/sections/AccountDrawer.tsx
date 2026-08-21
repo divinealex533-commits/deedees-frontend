@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
   Home,
@@ -14,18 +14,15 @@ import {
   User as UserRoundIcon,
   Store,
   ChevronRight,
-  ChevronUp,
-  UserCog,
-  ScrollText,
-  PlusSquare,
+  ChevronDown,
   ClipboardList,
-  FileWarning,
+  Plus,
+  BarChart3,
   Link2,
   Wallet,
   Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { User } from "@/hooks/useAuth";
@@ -44,18 +41,32 @@ interface AccountDrawerProps {
   onGoContact: () => void;
   onGoAffiliate: () => void;
 
-  // Seller admin
+  /*
+   * Seller marketplace
+   *
+   * For a normal customer this opens the seller subscription/
+   * onboarding screen.
+   *
+   * For an active seller this opens the seller dashboard.
+   */
   onGoSellerDashboard?: () => void;
 
   onLogout: () => void;
   onOpenAuth: () => void;
 }
 
-type SubPanel =
-  | "blogs"
-  | "api"
-  | "seller-admin"
-  | null;
+type SubPanel = "blogs" | "api" | null;
+
+type SellerSection =
+  | "dashboard"
+  | "logs"
+  | "add-logs"
+  | "logs-management"
+  | "reports"
+  | "storelink-reports"
+  | "withdraw"
+  | "history"
+  | "store-settings";
 
 export function AccountDrawer({
   isOpen,
@@ -76,6 +87,24 @@ export function AccountDrawer({
   const [subPanel, setSubPanel] =
     useState<SubPanel>(null);
 
+  const [sellerAdminOpen, setSellerAdminOpen] =
+    useState(false);
+
+  /*
+   * IMPORTANT:
+   * Being authenticated does NOT mean the customer is a seller.
+   *
+   * We check the seller subscription separately.
+   */
+  const [sellerSubscriptionActive, setSellerSubscriptionActive] =
+    useState(false);
+
+  const [sellerSubscriptionLoading, setSellerSubscriptionLoading] =
+    useState(false);
+
+  const [sellerSection, setSellerSection] =
+    useState<SellerSection>("dashboard");
+
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("en-NG", {
       style: "currency",
@@ -85,6 +114,8 @@ export function AccountDrawer({
 
   const handleClose = () => {
     setSubPanel(null);
+    setSellerAdminOpen(false);
+    setSellerSection("dashboard");
     onClose();
   };
 
@@ -102,9 +133,135 @@ export function AccountDrawer({
 
   /*
    * ==========================================================
-   * SELLER ADMIN
+   * SELLER SUBSCRIPTION CHECK
+   * ==========================================================
+   *
+   * The seller menu is determined by the seller subscription,
+   * not merely by whether the user is logged in.
+   *
+   * Expected backend endpoint:
+   * GET /api/seller/subscription
+   *
+   * The response is intentionally handled defensively so that
+   * common response shapes work without breaking the drawer.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkSellerSubscription() {
+      if (!isAuthenticated || !user) {
+        setSellerSubscriptionActive(false);
+        return;
+      }
+
+      setSellerSubscriptionLoading(true);
+
+      try {
+        const token =
+          localStorage.getItem("token") ||
+          localStorage.getItem("authToken") ||
+          localStorage.getItem("accessToken");
+
+        const headers: HeadersInit = {
+          Accept: "application/json",
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        const response = await fetch(
+          "/api/seller/subscription",
+          {
+            method: "GET",
+            credentials: "include",
+            headers,
+          }
+        );
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setSellerSubscriptionActive(false);
+          }
+
+          return;
+        }
+
+        const data = await response.json();
+
+        const subscription =
+          data?.subscription ??
+          data?.sellerSubscription ??
+          data?.seller_subscription ??
+          data;
+
+        const status = String(
+          subscription?.status ??
+            subscription?.subscriptionStatus ??
+            subscription?.subscription_status ??
+            ""
+        ).toLowerCase();
+
+        const active =
+          subscription?.active === true ||
+          subscription?.isActive === true ||
+          subscription?.is_active === true ||
+          status === "active" ||
+          status === "paid" ||
+          status === "current";
+
+        if (!cancelled) {
+          setSellerSubscriptionActive(active);
+        }
+      } catch {
+        if (!cancelled) {
+          setSellerSubscriptionActive(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setSellerSubscriptionLoading(false);
+        }
+      }
+    }
+
+    checkSellerSubscription();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isAuthenticated,
+    user,
+  ]);
+
+  /*
+   * ==========================================================
+   * SELLER NAVIGATION
    * ==========================================================
    */
+
+  const handleBecomeSeller = () => {
+    if (!isAuthenticated) {
+      handleClose();
+      onOpenAuth();
+
+      toast.info(
+        "Please login to become a seller."
+      );
+
+      return;
+    }
+
+    if (!onGoSellerDashboard) {
+      toast.info(
+        "Seller marketplace is currently unavailable."
+      );
+      return;
+    }
+
+    handleClose();
+    onGoSellerDashboard();
+  };
 
   const handleSellerAdmin = () => {
     if (!isAuthenticated) {
@@ -118,19 +275,30 @@ export function AccountDrawer({
       return;
     }
 
-    setSubPanel("seller-admin");
+    setSellerAdminOpen(
+      (previous) => !previous
+    );
   };
 
-  const openSellerDashboard = () => {
-    if (!onGoSellerDashboard) {
-      toast.info(
-        "Seller dashboard is currently unavailable."
-      );
-      return;
-    }
+  const openSellerSection = (
+    section: SellerSection
+  ) => {
+    setSellerSection(section);
 
-    handleClose();
-    onGoSellerDashboard();
+    /*
+     * The current seller dashboard is the main destination
+     * already wired into the application.
+     *
+     * Keep all seller-admin items visible here while allowing
+     * the existing dashboard navigation to remain in control.
+     */
+    if (
+      section === "dashboard" &&
+      onGoSellerDashboard
+    ) {
+      handleClose();
+      onGoSellerDashboard();
+    }
   };
 
   if (!isOpen) return null;
@@ -146,7 +314,6 @@ export function AccountDrawer({
 
       {/* Drawer */}
       <div className="fixed left-0 top-0 bottom-0 z-[70] w-[85vw] max-w-sm overflow-y-auto border-r border-blue-500/20 bg-slate-950 animate-in slide-in-from-left duration-300">
-
         {/* Header */}
         <div className="flex items-center justify-between border-b border-blue-500/20 p-5">
           <div className="flex items-center gap-2">
@@ -175,10 +342,7 @@ export function AccountDrawer({
           </Button>
         </div>
 
-        {/* ================================================== */}
         {/* MAIN PANEL */}
-        {/* ================================================== */}
-
         {subPanel === null && (
           <>
             {/* User row */}
@@ -220,7 +384,6 @@ export function AccountDrawer({
 
             {/* Menu */}
             <nav className="p-3">
-
               <DrawerItem
                 icon={Home}
                 label="Home"
@@ -281,20 +444,171 @@ export function AccountDrawer({
                 }}
               />
 
-              {/* ================================================== */}
-              {/* SELLER ADMIN */}
-              {/* ================================================== */}
+              {/* ==================================================
+                  SELLER AREA
+                  ================================================== */}
 
               {isAuthenticated && (
-                <DrawerItem
-                  icon={Store}
-                  label="Seller Admin"
-                  hasCustomArrow
-                  arrowUp={
-                    subPanel === "seller-admin"
-                  }
-                  onClick={handleSellerAdmin}
-                />
+                <>
+                  {sellerSubscriptionLoading ? (
+                    <DrawerItem
+                      icon={Store}
+                      label="Checking seller status..."
+                    />
+                  ) : sellerSubscriptionActive ? (
+                    <>
+                      {/* SELLER ADMIN */}
+                      <DrawerItem
+                        icon={Store}
+                        label="Seller Admin"
+                        hasArrow
+                        onClick={handleSellerAdmin}
+                        isOpen={sellerAdminOpen}
+                      />
+
+                      {/* SELLER ADMIN SUBMENU */}
+                      {sellerAdminOpen && (
+                        <div className="ml-4 mt-1 space-y-1 border-l border-emerald-500/20 pl-2">
+                          <SellerDrawerItem
+                            icon={Store}
+                            label="Seller Dashboard"
+                            active={
+                              sellerSection ===
+                              "dashboard"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "dashboard"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={ClipboardList}
+                            label="My Logs"
+                            active={
+                              sellerSection ===
+                              "logs"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "logs"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={Plus}
+                            label="Add Logs"
+                            active={
+                              sellerSection ===
+                              "add-logs"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "add-logs"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={ClipboardList}
+                            label="Logs Management"
+                            active={
+                              sellerSection ===
+                              "logs-management"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "logs-management"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={BarChart3}
+                            label="Reports"
+                            active={
+                              sellerSection ===
+                              "reports"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "reports"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={Link2}
+                            label="StoreLink Reports"
+                            active={
+                              sellerSection ===
+                              "storelink-reports"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "storelink-reports"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={Wallet}
+                            label="Withdraw"
+                            active={
+                              sellerSection ===
+                              "withdraw"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "withdraw"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={HistoryIcon}
+                            label="History"
+                            active={
+                              sellerSection ===
+                              "history"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "history"
+                              )
+                            }
+                          />
+
+                          <SellerDrawerItem
+                            icon={Settings}
+                            label="Store Settings"
+                            active={
+                              sellerSection ===
+                              "store-settings"
+                            }
+                            onClick={() =>
+                              openSellerSection(
+                                "store-settings"
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* CUSTOMER WITHOUT SELLER SUBSCRIPTION */
+                    <DrawerItem
+                      icon={Store}
+                      label="Become a Seller"
+                      hasArrow
+                      onClick={
+                        handleBecomeSeller
+                      }
+                    />
+                  )}
+                </>
               )}
 
               {/* BLOGS */}
@@ -332,7 +646,6 @@ export function AccountDrawer({
 
             {/* SUPPORT */}
             <div className="mt-2 space-y-4 border-t border-blue-500/20 p-5">
-
               <a
                 href="https://t.me/deedeesmarketsupport"
                 target="_blank"
@@ -360,147 +673,16 @@ export function AccountDrawer({
                   Contact Support
                 </span>
               </button>
-
             </div>
           </>
         )}
 
-        {/* ================================================== */}
-        {/* SELLER ADMIN PANEL */}
-        {/* ================================================== */}
-
-        {subPanel === "seller-admin" && (
-          <div className="p-5">
-
-            {/* Seller Admin Header */}
-            <button
-              type="button"
-              onClick={() =>
-                setSubPanel(null)
-              }
-              className="mb-5 flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 px-4 py-4 text-left transition hover:border-blue-500/40"
-            >
-              <div className="flex items-center gap-3">
-
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-950">
-                  <UserCog className="h-6 w-6 text-cyan-400" />
-                </div>
-
-                <span className="text-xl font-bold text-white">
-                  Seller Admin
-                </span>
-
-              </div>
-
-              <ChevronUp className="h-5 w-5 text-slate-500" />
-            </button>
-
-            {/* Seller Admin Navigation */}
-
-            <div className="space-y-1">
-
-              <SellerAdminItem
-                icon={Store}
-                label="Seller Dashboard"
-                onClick={openSellerDashboard}
-              />
-
-              <SellerAdminItem
-                icon={ScrollText}
-                label="My Logs"
-                onClick={() => {
-                  toast.info(
-                    "My Logs will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={PlusSquare}
-                label="Add Logs"
-                onClick={() => {
-                  toast.info(
-                    "Add Logs will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={ClipboardList}
-                label="Logs Management"
-                onClick={() => {
-                  toast.info(
-                    "Logs Management will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={FileWarning}
-                label="Reports"
-                onClick={() => {
-                  toast.info(
-                    "Reports will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={Link2}
-                label="StoreLink Reports"
-                onClick={() => {
-                  toast.info(
-                    "StoreLink Reports will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={Wallet}
-                label="Withdraw"
-                onClick={() => {
-                  toast.info(
-                    "Withdraw will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={HistoryIcon}
-                label="History"
-                onClick={() => {
-                  toast.info(
-                    "Seller history will open here."
-                  );
-                }}
-              />
-
-              <SellerAdminItem
-                icon={Settings}
-                label="Store Settings"
-                onClick={() => {
-                  toast.info(
-                    "Store Settings will open here."
-                  );
-                }}
-              />
-
-            </div>
-          </div>
-        )}
-
-        {/* ================================================== */}
         {/* BLOGS PANEL */}
-        {/* ================================================== */}
-
         {subPanel === "blogs" && (
           <div className="p-5">
-
             <button
               type="button"
-              onClick={() =>
-                setSubPanel(null)
-              }
+              onClick={() => setSubPanel(null)}
               className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
@@ -514,22 +696,15 @@ export function AccountDrawer({
               Coming soon — check back for updates,
               tips and guides.
             </p>
-
           </div>
         )}
 
-        {/* ================================================== */}
         {/* API PANEL */}
-        {/* ================================================== */}
-
         {subPanel === "api" && (
           <div className="p-5">
-
             <button
               type="button"
-              onClick={() =>
-                setSubPanel(null)
-              }
+              onClick={() => setSubPanel(null)}
               className="mb-4 text-sm text-slate-400 hover:text-white"
             >
               ← Back
@@ -543,7 +718,6 @@ export function AccountDrawer({
               Coming soon — API access and documentation
               for developers.
             </p>
-
           </div>
         )}
       </div>
@@ -551,24 +725,18 @@ export function AccountDrawer({
   );
 }
 
-/* ============================================================
- * NORMAL DRAWER ITEM
- * ============================================================ */
-
 function DrawerItem({
   icon: Icon,
   label,
   onClick,
   hasArrow,
-  hasCustomArrow,
-  arrowUp,
+  isOpen,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
   hasArrow?: boolean;
-  hasCustomArrow?: boolean;
-  arrowUp?: boolean;
+  isOpen?: boolean;
 }) {
   return (
     <button
@@ -577,52 +745,53 @@ function DrawerItem({
       className="flex w-full items-center justify-between rounded-lg px-3 py-3 text-slate-300 transition-colors hover:bg-blue-500/10 hover:text-white"
     >
       <span className="flex items-center gap-3">
-
         <Icon className="h-5 w-5 text-blue-400" />
 
         <span className="font-medium">
           {label}
         </span>
-
       </span>
 
-      {hasCustomArrow ? (
-        arrowUp ? (
-          <ChevronUp className="h-4 w-4 text-slate-500" />
+      {hasArrow &&
+        (isOpen ? (
+          <ChevronDown className="h-4 w-4 text-slate-500" />
         ) : (
           <ChevronRight className="h-4 w-4 text-slate-500" />
-        )
-      ) : (
-        hasArrow && (
-          <ChevronRight className="h-4 w-4 text-slate-500" />
-        )
-      )}
+        ))}
     </button>
   );
 }
 
-/* ============================================================
- * SELLER ADMIN ITEM
- * ============================================================ */
-
-function SellerAdminItem({
+function SellerDrawerItem({
   icon: Icon,
   label,
   onClick,
+  active,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center rounded-xl px-4 py-4 text-left text-slate-300 transition-colors hover:bg-blue-500/10 hover:text-white"
+      className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors ${
+        active
+          ? "bg-emerald-500/10 text-white"
+          : "text-slate-400 hover:bg-emerald-500/10 hover:text-white"
+      }`}
     >
-      <Icon className="mr-4 h-5 w-5 flex-shrink-0 text-blue-400" />
+      <Icon
+        className={`h-5 w-5 ${
+          active
+            ? "text-emerald-400"
+            : "text-emerald-500/80"
+        }`}
+      />
 
-      <span className="text-base font-semibold">
+      <span className="font-medium">
         {label}
       </span>
     </button>
