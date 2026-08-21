@@ -267,7 +267,7 @@ function stockOf(listing: Listing) {
     : 1;
 }
 
-function emptyUploadItem(): UploadItem {
+async function handleUploadItems() {
   return {
     credential: "",
     preview: "",
@@ -881,10 +881,10 @@ export default function SellerDashboard({
       "";
 
     const categoryId =
-      product?.categoryId ??
-      product?.category_id ??
-      listingCategoryId ??
-      undefined;
+  product?.categoryId ??
+  product?.category_id ??
+  listingCategoryId ??
+  undefined;
 
     setSelectedProductId(
       String(id)
@@ -1994,8 +1994,8 @@ export default function SellerDashboard({
                     uploading
                   }
                   onClick={() =>
-                    void uploadItems()
-                  }
+  void handleUploadItems()
+}
                   className="h-16 w-full rounded-3xl bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-500 text-lg font-black shadow-xl shadow-purple-900/30 hover:from-purple-600 hover:to-fuchsia-400"
                 >
                   {uploading ? (
