@@ -10,6 +10,7 @@ import {
   BarChart3,
   CheckCircle2,
   ExternalLink,
+  FolderPlus,
   Loader2,
   Package,
   Pencil,
@@ -17,8 +18,9 @@ import {
   RefreshCw,
   Store,
   Trash2,
-  Upload,
+  UploadCloud,
   Wallet,
+  X,
   XCircle,
 } from "lucide-react";
 
@@ -84,11 +86,12 @@ type Listing = {
   description?: string;
   price?: number;
   imageUrl?: string;
-  categoryId?: string;
+  categoryId?: string | number;
   quantity?: number;
   stockCount?: number;
   inStock?: boolean;
   accessLinks?: string[];
+  previewLinks?: string[];
   tonyixProductId?: string | number | null;
 };
 
@@ -120,9 +123,9 @@ type Withdrawal = {
   };
 };
 
-type CredentialItem = {
-  value: string;
-  notes: string;
+type UploadItem = {
+  credential: string;
+  preview: string;
 };
 
 function formatMoney(amount: number) {
@@ -175,7 +178,9 @@ function normalizeWithdrawals(response: any): Withdrawal[] {
   return [];
 }
 
-function getPlanName(subscription: Subscription | null) {
+function getPlanName(
+  subscription: Subscription | null
+) {
   if (!subscription) return "No plan";
 
   const plan =
@@ -262,6 +267,13 @@ function stockOf(listing: Listing) {
     : 1;
 }
 
+function emptyUploadItem(): UploadItem {
+  return {
+    credential: "",
+    preview: "",
+  };
+}
+
 export default function SellerDashboard({
   userId,
   onBack,
@@ -303,43 +315,32 @@ export default function SellerDashboard({
   const [payingPlan, setPayingPlan] =
     useState<string | null>(null);
 
-  const [activeTab, setActiveTab] =
+  const [activeSection, setActiveSection] =
     useState<
-      | "overview"
+      | "upload"
       | "products"
       | "storefront"
       | "orders"
       | "withdrawals"
-      | "history"
       | "categories"
-    >("overview");
+    >("upload");
 
-  const [savingStore, setSavingStore] =
-    useState(false);
+  const [selectedProductId, setSelectedProductId] =
+    useState("");
 
-  const [savingListing, setSavingListing] =
-    useState(false);
+  const [uploadItems, setUploadItems] =
+    useState<UploadItem[]>([
+      emptyUploadItem(),
+    ]);
 
-  const [savingCredential, setSavingCredential] =
+  const [uploadPreviewImage, setUploadPreviewImage] =
+    useState("");
+
+  const [uploading, setUploading] =
     useState(false);
 
   const [editingListingId, setEditingListingId] =
     useState<string | null>(null);
-
-  const [showListingForm, setShowListingForm] =
-    useState(false);
-
-  const [storeName, setStoreName] =
-    useState("");
-
-  const [storeDescription, setStoreDescription] =
-    useState("");
-
-  const [storeLogoUrl, setStoreLogoUrl] =
-    useState("");
-
-  const [storeBannerUrl, setStoreBannerUrl] =
-    useState("");
 
   const [listingTitle, setListingTitle] =
     useState("");
@@ -362,16 +363,22 @@ export default function SellerDashboard({
   const [listingTonyixId, setListingTonyixId] =
     useState("");
 
-  const [credentialItems, setCredentialItems] =
-    useState<CredentialItem[]>([]);
+  const [savingListing, setSavingListing] =
+    useState(false);
 
-  const [credentialValue, setCredentialValue] =
+  const [storeName, setStoreName] =
     useState("");
 
-  const [credentialNotes, setCredentialNotes] =
+  const [storeDescription, setStoreDescription] =
     useState("");
 
-  const [showCategoryForm, setShowCategoryForm] =
+  const [storeLogoUrl, setStoreLogoUrl] =
+    useState("");
+
+  const [storeBannerUrl, setStoreBannerUrl] =
+    useState("");
+
+  const [savingStore, setSavingStore] =
     useState(false);
 
   const [categoryName, setCategoryName] =
@@ -383,13 +390,19 @@ export default function SellerDashboard({
   const [categoryIcon, setCategoryIcon] =
     useState("");
 
+  const [categoryImage, setCategoryImage] =
+    useState("");
+
   const [savingCategory, setSavingCategory] =
     useState(false);
 
   const [deletingCategoryId, setDeletingCategoryId] =
     useState<string | null>(null);
 
-  const fileInputRef =
+  const categoryImageRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const productImageRef =
     useRef<HTMLInputElement | null>(null);
 
   const adminSellerTestPlan =
@@ -474,6 +487,24 @@ export default function SellerDashboard({
     [listings]
   );
 
+  const selectedProduct = useMemo(
+    () =>
+      tonyixProducts.find(
+        (product) =>
+          String(
+            product?.id ??
+              product?.productId ??
+              product?.tonyixProductId ??
+              ""
+          ) ===
+          String(selectedProductId)
+      ),
+    [
+      tonyixProducts,
+      selectedProductId,
+    ]
+  );
+
   const loadDashboard =
     useCallback(async () => {
       setLoading(true);
@@ -552,17 +583,17 @@ export default function SellerDashboard({
           )
             ? categoriesData
             : categoriesData?.categories ||
-                categoriesData?.items ||
-                []
+              categoriesData?.items ||
+              []
         );
 
         setTonyixProducts(
           Array.isArray(tonyixData)
             ? tonyixData
             : tonyixData?.products ||
-                tonyixData?.items ||
-                tonyixData?.data ||
-                []
+              tonyixData?.items ||
+              tonyixData?.data ||
+              []
         );
 
         if (nextStore) {
@@ -694,27 +725,331 @@ export default function SellerDashboard({
     isAdminSellerTestMode,
   ]);
 
-  function resetListingForm() {
-    setEditingListingId(null);
-    setShowListingForm(false);
+  function resetUploadForm() {
+    setSelectedProductId("");
 
-    setListingTitle("");
-    setListingDescription("");
-    setListingPrice("");
-    setListingImageUrl("");
-    setListingCategoryId("");
-    setListingQuantity("1");
-    setListingTonyixId("");
+    setUploadItems([
+      emptyUploadItem(),
+    ]);
 
-    setCredentialItems([]);
-    setCredentialValue("");
-    setCredentialNotes("");
+    setUploadPreviewImage("");
   }
 
-  function startCreateListing() {
-    resetListingForm();
-    setShowListingForm(true);
-    setActiveTab("products");
+  function updateUploadItem(
+    index: number,
+    field: keyof UploadItem,
+    value: string
+  ) {
+    setUploadItems((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item
+      )
+    );
+  }
+
+  function addUploadItem() {
+    setUploadItems((current) => [
+      ...current,
+      emptyUploadItem(),
+    ]);
+  }
+
+  function removeUploadItem(
+    index: number
+  ) {
+    setUploadItems((current) => {
+      if (current.length <= 1) {
+        return current;
+      }
+
+      return current.filter(
+        (_, itemIndex) =>
+          itemIndex !== index
+      );
+    });
+  }
+
+  async function readFileAsDataUrl(
+    file: File
+  ) {
+    return new Promise<string>(
+      (resolve, reject) => {
+        const reader =
+          new FileReader();
+
+        reader.onload = () =>
+          resolve(
+            String(
+              reader.result || ""
+            )
+          );
+
+        reader.onerror = () =>
+          reject(
+            new Error(
+              "Could not read image"
+            )
+          );
+
+        reader.readAsDataURL(file);
+      }
+    );
+  }
+
+  async function handleProductImage(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const dataUrl =
+        await readFileAsDataUrl(
+          file
+        );
+
+      setUploadPreviewImage(
+        dataUrl
+      );
+
+      setListingImageUrl(
+        dataUrl
+      );
+    } catch {
+      toast.error(
+        "Could not load product image"
+      );
+    }
+  }
+
+  async function handleCategoryImage(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const dataUrl =
+        await readFileAsDataUrl(
+          file
+        );
+
+      setCategoryImage(
+        dataUrl
+      );
+    } catch {
+      toast.error(
+        "Could not load category image"
+      );
+    }
+  }
+
+  function populateFromTonyixProduct(
+    product: any
+  ) {
+    if (!product) return;
+
+    const id =
+      product?.id ??
+      product?.productId ??
+      product?.tonyixProductId ??
+      "";
+
+    const name =
+      product?.name ??
+      product?.title ??
+      product?.productName ??
+      "";
+
+    const description =
+      product?.description ??
+      "";
+
+    const image =
+      product?.imageUrl ??
+      product?.image ??
+      product?.image_url ??
+      "";
+
+    const categoryId =
+      product?.categoryId ??
+      product?.category_id ??
+      listingCategoryId ??
+      undefined;
+
+    setSelectedProductId(
+      String(id)
+    );
+
+    setListingTonyixId(
+      String(id)
+    );
+
+    setListingTitle(
+      String(name)
+    );
+
+    setListingDescription(
+      String(description)
+    );
+
+    setListingImageUrl(
+      String(image)
+    );
+
+    setListingCategoryId(
+      String(categoryId)
+    );
+  }
+
+  async function uploadItems() {
+    if (!isSubscriptionActive) {
+      toast.error(
+        "Seller subscription required"
+      );
+      return;
+    }
+
+    if (!selectedProductId) {
+      toast.error(
+        "Select a product first"
+      );
+      return;
+    }
+
+    const validItems =
+      uploadItems.filter(
+        (item) =>
+          item.credential.trim()
+      );
+
+    if (
+      validItems.length === 0
+    ) {
+      toast.error(
+        "Add at least one item credential"
+      );
+      return;
+    }
+
+    const product =
+      selectedProduct;
+
+    const productId =
+      product?.id ??
+      product?.productId ??
+      product?.tonyixProductId ??
+      selectedProductId;
+
+    const productName =
+      product?.name ??
+      product?.title ??
+      product?.productName ??
+      listingTitle.trim();
+
+    const productDescription =
+      product?.description ??
+      listingDescription.trim();
+
+    const productImage =
+      product?.imageUrl ??
+      product?.image ??
+      product?.image_url ??
+      listingImageUrl.trim();
+
+    const categoryId =
+      product?.categoryId ??
+      product?.category_id ??
+      listingCategoryId ||
+      undefined;
+
+    setUploading(true);
+
+    try {
+      const accessLinks =
+        validItems.map(
+          (item) =>
+            item.credential.trim()
+        );
+
+      const previewLinks =
+        validItems.map(
+          (item) =>
+            item.preview.trim()
+        );
+
+      const quantity =
+        validItems.length;
+
+      await api.createSellerListing({
+        title:
+          productName ||
+          "Reseller Product",
+
+        name:
+          productName ||
+          "Reseller Product",
+
+        description:
+          productDescription,
+
+        price: Number(
+          listingPrice || 0
+        ),
+
+        imageUrl:
+          uploadPreviewImage ||
+          productImage ||
+          undefined,
+
+        categoryId:
+          categoryId
+            ? String(categoryId)
+            : undefined,
+
+        quantity,
+
+        accessLinks,
+
+        previewLinks,
+
+        tonyixProductId:
+          productId
+            ? String(productId)
+            : undefined,
+      });
+
+      toast.success(
+        `${quantity} item${
+          quantity === 1
+            ? ""
+            : "s"
+        } uploaded successfully`
+      );
+
+      resetUploadForm();
+
+      setListingPrice("");
+
+      await loadDashboard();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not upload items"
+      );
+    } finally {
+      setUploading(false);
+    }
   }
 
   function startEditListing(
@@ -723,8 +1058,6 @@ export default function SellerDashboard({
     setEditingListingId(
       listing.id
     );
-
-    setShowListingForm(true);
 
     setListingTitle(
       listing.title ||
@@ -739,7 +1072,7 @@ export default function SellerDashboard({
 
     setListingPrice(
       String(
-        listing.price ?? ""
+        listing.price || 0
       )
     );
 
@@ -749,8 +1082,10 @@ export default function SellerDashboard({
     );
 
     setListingCategoryId(
-      listing.categoryId ||
-        ""
+      String(
+        listing.categoryId ||
+          ""
+      )
     );
 
     setListingQuantity(
@@ -762,161 +1097,39 @@ export default function SellerDashboard({
     );
 
     setListingTonyixId(
-      listing.tonyixProductId != null
-        ? String(
-            listing.tonyixProductId
-          )
-        : ""
-    );
-
-    setCredentialItems(
-      (listing.accessLinks || []).map(
-        (value) => ({
-          value,
-          notes: "",
-        })
+      String(
+        listing.tonyixProductId ||
+          ""
       )
     );
 
-    setCredentialValue("");
-    setCredentialNotes("");
-
-    setActiveTab("products");
+    setActiveSection(
+      "products"
+    );
   }
 
-  function addCredentialToForm() {
-    const value =
-      credentialValue.trim();
+  function cancelEditListing() {
+    setEditingListingId(
+      null
+    );
 
-    if (!value) {
-      toast.error(
-        "Enter a credential or access link"
-      );
+    setListingTitle("");
+    setListingDescription("");
+    setListingPrice("");
+    setListingImageUrl("");
+    setListingCategoryId("");
+    setListingQuantity("1");
+    setListingTonyixId("");
+  }
+
+  async function saveListingEdit() {
+    if (!editingListingId) {
       return;
     }
 
-    setCredentialItems(
-      (current) => [
-        ...current,
-        {
-          value,
-          notes:
-            credentialNotes.trim(),
-        },
-      ]
-    );
-
-    setCredentialValue("");
-    setCredentialNotes("");
-  }
-
-  function removeCredentialFromForm(
-    index: number
-  ) {
-    setCredentialItems(
-      (current) =>
-        current.filter(
-          (_, itemIndex) =>
-            itemIndex !== index
-        )
-    );
-  }
-
-  async function handleCredentialFile(
-    file?: File
-  ) {
-    if (!file) return;
-
-    try {
-      const text =
-        await file.text();
-
-      const lines =
-        text
-          .split(/\r?\n/)
-          .map((line) =>
-            line.trim()
-          )
-          .filter(Boolean);
-
-      if (!lines.length) {
-        toast.error(
-          "The file contains no credentials"
-        );
-        return;
-      }
-
-      setCredentialItems(
-        (current) => [
-          ...current,
-          ...lines.map(
-            (value) => ({
-              value,
-              notes: "",
-            })
-          ),
-        ]
-      );
-
-      toast.success(
-        `${lines.length} credential${
-          lines.length === 1
-            ? ""
-            : "s"
-        } imported`
-      );
-    } catch {
-      toast.error(
-        "Could not read credential file"
-      );
-    }
-  }
-
-  async function saveListing() {
-    const title =
-      listingTitle.trim();
-
-    const price =
-      Number(listingPrice);
-
-    const quantity =
-      Math.max(
-        0,
-        Number(
-          listingQuantity || 0
-        )
-      );
-
-    const credentials =
-      credentialItems
-        .map(
-          (item) =>
-            item.value.trim()
-        )
-        .filter(Boolean);
-
-    if (!title) {
+    if (!listingTitle.trim()) {
       toast.error(
         "Enter a product name"
-      );
-      return;
-    }
-
-    if (
-      !Number.isFinite(price) ||
-      price < 0
-    ) {
-      toast.error(
-        "Enter a valid price"
-      );
-      return;
-    }
-
-    if (
-      !Number.isFinite(quantity)
-    ) {
-      toast.error(
-        "Enter a valid quantity"
       );
       return;
     }
@@ -924,77 +1137,55 @@ export default function SellerDashboard({
     setSavingListing(true);
 
     try {
-      if (editingListingId) {
-        await api.updateSellerListing(
-          editingListingId,
-          {
-            title,
-            name: title,
-            description:
-              listingDescription.trim(),
-            price,
-            imageUrl:
-              listingImageUrl.trim(),
-            categoryId:
-              listingCategoryId ||
-              undefined,
-            quantity,
-            tonyixProductId:
-              listingTonyixId.trim() ||
-              undefined,
-          }
-        );
+      await api.updateSellerListing(
+        editingListingId,
+        {
+          title:
+            listingTitle.trim(),
 
-        if (credentials.length) {
-          setSavingCredential(true);
+          name:
+            listingTitle.trim(),
 
-          await api.addSellerCredentials(
-            editingListingId,
-            credentials
-          );
-
-          setSavingCredential(false);
-        }
-
-        toast.success(
-          "Product updated"
-        );
-      } else {
-        await api.createSellerListing({
-          title,
-          name: title,
           description:
             listingDescription.trim(),
-          price,
+
+          price: Number(
+            listingPrice || 0
+          ),
+
           imageUrl:
-            listingImageUrl.trim(),
+            listingImageUrl.trim() ||
+            undefined,
+
           categoryId:
             listingCategoryId ||
             undefined,
-          quantity,
-          accessLinks:
-            credentials,
-          previewLinks: [],
+
+          quantity: Math.max(
+            0,
+            Number(
+              listingQuantity || 0
+            )
+          ),
+
           tonyixProductId:
             listingTonyixId.trim() ||
             undefined,
-        });
+        }
+      );
 
-        toast.success(
-          "Product created successfully"
-        );
-      }
+      toast.success(
+        "Product updated"
+      );
 
-      resetListingForm();
+      cancelEditListing();
 
       await loadDashboard();
     } catch (error) {
-      setSavingCredential(false);
-
       toast.error(
         error instanceof Error
           ? error.message
-          : "Could not save product"
+          : "Could not update product"
       );
     } finally {
       setSavingListing(false);
@@ -1004,13 +1195,12 @@ export default function SellerDashboard({
   async function deleteListing(
     id: string
   ) {
-    if (
-      !window.confirm(
+    const confirmed =
+      window.confirm(
         "Delete this product from your reseller store?"
-      )
-    ) {
-      return;
-    }
+      );
+
+    if (!confirmed) return;
 
     try {
       await api.deleteSellerListing(
@@ -1054,10 +1244,7 @@ export default function SellerDashboard({
   }
 
   async function saveStorefront() {
-    const name =
-      storeName.trim();
-
-    if (!name) {
+    if (!storeName.trim()) {
       toast.error(
         "Enter a store name"
       );
@@ -1068,11 +1255,15 @@ export default function SellerDashboard({
 
     try {
       const data = {
-        storeName: name,
+        storeName:
+          storeName.trim(),
+
         description:
           storeDescription.trim(),
+
         logoUrl:
           storeLogoUrl.trim(),
+
         bannerUrl:
           storeBannerUrl.trim(),
       };
@@ -1104,6 +1295,13 @@ export default function SellerDashboard({
   }
 
   async function createCategory() {
+    if (!isSubscriptionActive) {
+      toast.error(
+        "Seller subscription required"
+      );
+      return;
+    }
+
     const name =
       categoryName.trim();
 
@@ -1114,32 +1312,67 @@ export default function SellerDashboard({
       return;
     }
 
+    const words =
+      name
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (
+      name.length > 25 ||
+      words.length > 3
+    ) {
+      toast.error(
+        "Category title must be maximum 25 letters and 3 words"
+      );
+      return;
+    }
+
+    if (
+      name.toLowerCase() ===
+        "others" &&
+      !categoryImage
+    ) {
+      toast.error(
+        "Image is required when category is Others"
+      );
+      return;
+    }
+
     setSavingCategory(true);
 
     try {
       await api.createCategory({
         name,
+
         description:
           categoryDescription.trim(),
+
         icon:
-          categoryIcon.trim(),
+          categoryImage ||
+          categoryIcon.trim() ||
+          undefined,
       });
+
+      toast.success(
+        "Sub-category created"
+      );
 
       setCategoryName("");
       setCategoryDescription("");
       setCategoryIcon("");
-      setShowCategoryForm(false);
+      setCategoryImage("");
+
+      if (categoryImageRef.current) {
+        categoryImageRef.current.value =
+          "";
+      }
 
       await loadDashboard();
-
-      toast.success(
-        "Category created"
-      );
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Could not create category"
+          : "Could not create sub-category"
       );
     } finally {
       setSavingCategory(false);
@@ -1147,22 +1380,14 @@ export default function SellerDashboard({
   }
 
   async function deleteCategory(
-    category: Category
+    id: string
   ) {
-    const id =
-      getCategoryId(category);
+    const confirmed =
+      window.confirm(
+        "Delete this category?"
+      );
 
-    if (!id) return;
-
-    if (
-      !window.confirm(
-        `Delete ${getCategoryName(
-          category
-        )}?`
-      )
-    ) {
-      return;
-    }
+    if (!confirmed) return;
 
     setDeletingCategoryId(id);
 
@@ -1191,9 +1416,9 @@ export default function SellerDashboard({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <div className="flex min-h-screen items-center justify-center bg-[#08030f] text-white">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-cyan-400" />
+          <Loader2 className="h-10 w-10 animate-spin text-purple-400" />
 
           <p className="text-slate-400">
             Loading your reseller marketplace...
@@ -1203,35 +1428,25 @@ export default function SellerDashboard({
     );
   }
 
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+  /*
+   * ============================================================
+   * PLAN REQUIRED SCREEN
+   * ============================================================
+   */
 
-        {/* HEADER */}
+  if (
+    !isSubscriptionActive &&
+    activeSection === "upload"
+  ) {
+    return (
+      <div className="min-h-screen bg-[#08030f] text-white">
+        <div className="mx-auto max-w-5xl px-4 py-8">
 
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10">
-              <Store className="h-6 w-6 text-cyan-400" />
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-bold sm:text-3xl">
-                Reseller Marketplace
-              </h1>
-
-              <p className="text-sm text-slate-400">
-                Manage your DeeDee-powered store,
-                products, orders and earnings.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+          <div className="mb-6 flex flex-wrap justify-between gap-3">
             <Button
               variant="outline"
               onClick={onBack}
-              className="border-slate-700 bg-slate-900 text-white"
+              className="border-purple-500/30 bg-[#160d28] text-white"
             >
               Back
             </Button>
@@ -1241,771 +1456,919 @@ export default function SellerDashboard({
               onClick={
                 refreshDashboard
               }
+              className="border-purple-500/30 bg-[#160d28] text-white"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+
+          <Card className="overflow-hidden border-purple-500/30 bg-[#140a24]">
+            <CardContent className="p-8 text-center">
+
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-600/20">
+                <Store className="h-8 w-8 text-purple-300" />
+              </div>
+
+              <h1 className="mt-5 text-3xl font-black">
+                Seller Subscription Required
+              </h1>
+
+              <p className="mx-auto mt-3 max-w-xl text-slate-400">
+                Activate a reseller plan to unlock
+                the Upload Center, credential pool,
+                storefront and seller marketplace.
+              </p>
+
+              {loadingPlans ? (
+                <div className="mt-8 flex justify-center">
+                  <Loader2 className="h-7 w-7 animate-spin text-purple-400" />
+                </div>
+              ) : (
+                <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {sellerPlans.map(
+                    (plan: any) => {
+                      const id = String(
+                        plan?.id ??
+                          plan?.planId ??
+                          ""
+                      );
+
+                      const name =
+                        plan?.name ??
+                        plan?.title ??
+                        "Seller Plan";
+
+                      const price =
+                        Number(
+                          plan?.price ??
+                            plan?.amount ??
+                            0
+                        );
+
+                      return (
+                        <Card
+                          key={id}
+                          className="border-purple-500/20 bg-black/30"
+                        >
+                          <CardContent className="p-5">
+                            <h3 className="font-bold">
+                              {name}
+                            </h3>
+
+                            <p className="mt-3 text-2xl font-black text-purple-300">
+                              {formatMoney(
+                                price
+                              )}
+                            </p>
+
+                            <Button
+                              className="mt-5 w-full bg-gradient-to-r from-purple-600 to-fuchsia-500"
+                              disabled={
+                                payingPlan ===
+                                id
+                              }
+                              onClick={() =>
+                                void startSellerSubscription(
+                                  id
+                                )
+                              }
+                            >
+                              {payingPlan ===
+                              id ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                "Activate Plan"
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * ============================================================
+   * MAIN
+   * ============================================================
+   */
+
+  return (
+    <div className="min-h-screen bg-[#08030f] text-white">
+
+      {/* TOP BAR */}
+
+      <div className="sticky top-0 z-40 border-b border-purple-500/10 bg-[#0d0718]/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="border-purple-500/20 bg-[#160d28] text-white"
+            >
+              Back
+            </Button>
+
+            <div className="hidden sm:block">
+              <p className="font-bold">
+                Reseller Marketplace
+              </p>
+
+              <p className="text-xs text-slate-500">
+                {planName}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <Badge className="hidden bg-purple-500/10 text-purple-300 sm:flex">
+              {isAdminSellerTestMode
+                ? "ADMIN TEST"
+                : "RESELLER"}
+            </Badge>
+
+            <Badge
+              className={
+                isSubscriptionActive
+                  ? "bg-emerald-500/10 text-emerald-300"
+                  : "bg-red-500/10 text-red-300"
+              }
+            >
+              {subscriptionStatus}
+            </Badge>
+
+            <Button
+              variant="outline"
+              onClick={
+                refreshDashboard
+              }
               disabled={refreshing}
-              className="border-slate-700 bg-slate-900 text-white"
+              className="border-purple-500/20 bg-[#160d28] text-white"
             >
               <RefreshCw
-                className={`mr-2 h-4 w-4 ${
+                className={`h-4 w-4 ${
                   refreshing
                     ? "animate-spin"
                     : ""
                 }`}
               />
-              Refresh
+              <span className="ml-2 hidden sm:inline">
+                Refresh
+              </span>
             </Button>
 
             {onLogout && (
               <Button
                 variant="outline"
                 onClick={onLogout}
-                className="border-red-500/30 bg-red-500/5 text-red-300"
+                className="border-red-500/20 bg-red-500/5 text-red-300"
               >
                 Logout
               </Button>
             )}
+
           </div>
         </div>
+      </div>
 
-        {/* ADMIN TEST MODE */}
-
-        {isAdminSellerTestMode && (
-          <Card className="mb-6 border-cyan-500/30 bg-cyan-500/5">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 text-cyan-400" />
-
-                <div>
-                  <p className="font-semibold text-cyan-300">
-                    Administrator reseller test mode
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-400">
-                    This reseller dashboard is being
-                    inspected by the main administrator.
-                    No seller subscription payment is
-                    required for this test.
-                  </p>
-
-                  <Badge className="mt-3 bg-cyan-500/10 text-cyan-300">
-                    {planName}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* SUBSCRIPTION */}
-
-        <Card className="mb-6 border-slate-800 bg-slate-950">
-          <CardContent className="p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-              <div>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  {isSubscriptionActive ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-400" />
-                  )}
-
-                  <span className="font-semibold">
-                    Seller Subscription
-                  </span>
-
-                  <Badge
-                    className={
-                      isSubscriptionActive
-                        ? "bg-emerald-500/10 text-emerald-300"
-                        : "bg-red-500/10 text-red-300"
-                    }
-                  >
-                    {subscriptionStatus}
-                  </Badge>
-                </div>
-
-                <p className="text-sm text-slate-400">
-                  Plan:{" "}
-                  <span className="text-white">
-                    {planName}
-                  </span>
-                </p>
-
-                {subscriptionExpiry && (
-                  <p className="mt-1 text-sm text-slate-500">
-                    Expires:{" "}
-                    {formatDate(
-                      subscriptionExpiry
-                    )}
-                  </p>
-                )}
-              </div>
-
-              {!isSubscriptionActive &&
-                !isAdminSellerTestMode && (
-                  <div className="max-w-xl rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm text-yellow-200">
-                    Your seller tools stay locked
-                    until your reseller subscription
-                    is active.
-                  </div>
-                )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* PLAN PURCHASE */}
-
-        {!isSubscriptionActive &&
-          !isAdminSellerTestMode && (
-            <Card className="mb-6 border-slate-800 bg-slate-950">
-              <CardContent className="p-6">
-                <h2 className="mb-2 text-xl font-bold">
-                  Choose a Seller Plan
-                </h2>
-
-                <p className="mb-5 text-sm text-slate-400">
-                  Activate your reseller marketplace
-                  before adding products.
-                </p>
-
-                {loadingPlans ? (
-                  <div className="flex items-center justify-center py-10 text-slate-400">
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Loading plans...
-                  </div>
-                ) : sellerPlans.length === 0 ? (
-                  <p className="py-8 text-center text-slate-500">
-                    No seller plans are currently available.
-                  </p>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {sellerPlans.map(
-                      (plan: any) => {
-                        const id =
-                          String(
-                            plan.id ??
-                              plan.planId ??
-                              plan._id ??
-                              ""
-                          );
-
-                        const name =
-                          plan.name ??
-                          plan.title ??
-                          "Seller Plan";
-
-                        const price =
-                          Number(
-                            plan.price ??
-                              plan.amount ??
-                              0
-                          );
-
-                        return (
-                          <Card
-                            key={id || name}
-                            className="border-slate-800 bg-black"
-                          >
-                            <CardContent className="p-5">
-                              <h3 className="font-bold">
-                                {name}
-                              </h3>
-
-                              <p className="mt-2 text-2xl font-bold text-cyan-300">
-                                {formatMoney(
-                                  price
-                                )}
-                              </p>
-
-                              <Button
-                                className="mt-5 w-full"
-                                disabled={
-                                  !id ||
-                                  payingPlan ===
-                                    id
-                                }
-                                onClick={() =>
-                                  void startSellerSubscription(
-                                    id
-                                  )
-                                }
-                              >
-                                {payingPlan ===
-                                id ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Processing...
-                                  </>
-                                ) : (
-                                  "Subscribe"
-                                )}
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        );
-                      }
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
         {/* NAVIGATION */}
 
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           {[
-            ["overview", "Overview"],
+            ["upload", "Upload Center"],
             ["products", "Products"],
             ["storefront", "Storefront"],
             ["orders", "Orders"],
             ["withdrawals", "Withdrawals"],
-            ["history", "History"],
             ["categories", "Categories"],
           ].map(
             ([id, label]) => (
-              <Button
+              <button
                 key={id}
-                variant={
-                  activeTab === id
-                    ? "default"
-                    : "outline"
-                }
+                type="button"
                 onClick={() =>
-                  setActiveTab(
-                    id as typeof activeTab
+                  setActiveSection(
+                    id as typeof activeSection
                   )
                 }
-                className={
-                  activeTab === id
-                    ? ""
-                    : "border-slate-700 bg-slate-900 text-white"
-                }
+                className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  activeSection === id
+                    ? "border-purple-400/50 bg-purple-600/30 text-white"
+                    : "border-purple-500/15 bg-[#12091f] text-slate-400 hover:text-white"
+                }`}
               >
                 {label}
-              </Button>
+              </button>
             )
           )}
         </div>
 
-        {/* OVERVIEW */}
+        {/* ======================================================
+            UPLOAD CENTER
+           ====================================================== */}
 
-        {activeTab ===
-          "overview" && (
+        {activeSection ===
+          "upload" && (
           <div className="space-y-6">
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* HERO */}
 
-              <Card className="border-slate-800 bg-slate-950">
-                <CardContent className="p-5">
-                  <Package className="h-5 w-5 text-cyan-400" />
+            <div className="relative overflow-hidden rounded-[34px] border border-purple-400/30 bg-gradient-to-br from-[#32116d] via-[#4d1d91] to-[#552936] px-6 py-8 shadow-2xl sm:px-10 sm:py-10">
 
-                  <p className="mt-4 text-sm text-slate-500">
-                    Total Products
+              <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-sm" />
+
+              <div className="absolute right-20 top-10 h-32 w-32 rounded-full bg-purple-300/10" />
+
+              <div className="relative">
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-3 font-bold text-white shadow-lg">
+                  <UploadCloud className="h-5 w-5 text-yellow-300" />
+                  Reseller Upload Center
+                </div>
+
+                <h1 className="mt-7 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
+                  Add Items &amp; Create
+                  Sub-Category
+                </h1>
+
+                <p className="mt-5 max-w-3xl text-lg font-semibold leading-8 text-purple-100 sm:text-xl">
+                  Upload new marketplace items,
+                  add preview links for buyers,
+                  and create clean sub-categories
+                  for your products.
+                </p>
+
+                <div className="mt-7 rounded-3xl border border-yellow-400/30 bg-orange-500/10 p-5">
+                  <p className="text-base font-semibold leading-7 text-purple-50">
+                    <span className="font-black text-yellow-300">
+                      Important:
+                    </span>{" "}
+                    Please confirm every item before
+                    uploading to avoid report issues,
+                    suspension, or account ban. Add
+                    preview link where possible so buyers
+                    can see what they are paying for.
                   </p>
+                </div>
 
-                  <p className="mt-1 text-3xl font-bold">
-                    {listings.length}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-800 bg-slate-950">
-                <CardContent className="p-5">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-
-                  <p className="mt-4 text-sm text-slate-500">
-                    Available
-                  </p>
-
-                  <p className="mt-1 text-3xl font-bold">
-                    {availableListings.length}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-800 bg-slate-950">
-                <CardContent className="p-5">
-                  <BarChart3 className="h-5 w-5 text-purple-400" />
-
-                  <p className="mt-4 text-sm text-slate-500">
-                    Orders
-                  </p>
-
-                  <p className="mt-1 text-3xl font-bold">
-                    {orders.length}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-800 bg-slate-950">
-                <CardContent className="p-5">
-                  <Wallet className="h-5 w-5 text-yellow-400" />
-
-                  <p className="mt-4 text-sm text-slate-500">
-                    Sales
-                  </p>
-
-                  <p className="mt-1 text-3xl font-bold text-cyan-300">
-                    {formatMoney(
-                      totalSales
-                    )}
-                  </p>
-                </CardContent>
-              </Card>
-
+              </div>
             </div>
 
-            <Card className="border-slate-800 bg-slate-950">
-              <CardContent className="p-6">
+            {/* ADD ITEMS */}
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <Card className="overflow-hidden rounded-[32px] border-purple-500/20 bg-[#10081c]">
+
+              <div className="border-b border-purple-500/10 p-6 sm:p-8">
+
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-500 shadow-lg">
+                    <Plus className="h-8 w-8" />
+                  </div>
 
                   <div>
-                    <h2 className="text-xl font-bold">
-                      Your Store
+                    <h2 className="text-2xl font-black sm:text-3xl">
+                      Add Items
                     </h2>
 
-                    <p className="mt-1 text-sm text-slate-500">
-                      {storefront?.description ||
-                        "Set up your reseller storefront."}
+                    <p className="mt-2 text-base font-semibold text-slate-400">
+                      Select product and upload one or
+                      more item details with optional
+                      preview links.
                     </p>
                   </div>
 
-                  <Button
-                    onClick={() =>
-                      setActiveTab(
-                        "storefront"
+                </div>
+              </div>
+
+              <CardContent className="space-y-7 p-6 sm:p-8">
+
+                {/* PRODUCT */}
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Product
+                  </Label>
+
+                  <select
+                    value={
+                      selectedProductId
+                    }
+                    onChange={(event) => {
+                      const value =
+                        event.target.value;
+
+                      setSelectedProductId(
+                        value
+                      );
+
+                      const product =
+                        tonyixProducts.find(
+                          (item) =>
+                            String(
+                              item?.id ??
+                                item?.productId ??
+                                item?.tonyixProductId ??
+                                ""
+                            ) ===
+                            String(value)
+                        );
+
+                      if (product) {
+                        populateFromTonyixProduct(
+                          product
+                        );
+                      }
+                    }}
+                    className="h-14 w-full rounded-2xl border border-purple-500/20 bg-[#1b0d32] px-5 text-lg font-bold text-white outline-none focus:border-purple-400"
+                  >
+                    <option
+                      value=""
+                      className="bg-[#1b0d32]"
+                    >
+                      -- Select Product --
+                    </option>
+
+                    {tonyixProducts.map(
+                      (product: any) => {
+                        const id =
+                          product?.id ??
+                          product?.productId ??
+                          product?.tonyixProductId ??
+                          "";
+
+                        const name =
+                          product?.name ??
+                          product?.title ??
+                          product?.productName ??
+                          `Product ${id}`;
+
+                        return (
+                          <option
+                            key={String(id)}
+                            value={String(id)}
+                            className="bg-[#1b0d32]"
+                          >
+                            {name}
+                          </option>
+                        );
+                      }
+                    )}
+                  </select>
+
+                  <p className="mt-3 text-sm font-semibold text-slate-400">
+                    {tonyixProducts.length} products
+                    available for upload.
+                  </p>
+                </div>
+
+                {/* PRICE */}
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Price Per Item
+                  </Label>
+
+                  <Input
+                    type="number"
+                    min="0"
+                    value={
+                      listingPrice
+                    }
+                    onChange={(event) =>
+                      setListingPrice(
+                        event.target.value
                       )
                     }
-                  >
-                    Manage Store
-                  </Button>
-
+                    placeholder="Price per item"
+                    className="h-14 rounded-2xl border-purple-500/20 bg-[#1b0d32] text-lg font-bold text-white placeholder:text-slate-500"
+                  />
                 </div>
 
-                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                {/* ITEM DETAILS */}
 
-                  <div className="rounded-xl border border-slate-800 bg-black p-4">
-                    <p className="text-xs text-slate-500">
-                      Store name
-                    </p>
+                <div>
 
-                    <p className="mt-1 font-semibold">
-                      {storefront?.storeName ||
-                        "Not created"}
-                    </p>
-                  </div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Item Details
+                  </Label>
 
-                  <div className="rounded-xl border border-slate-800 bg-black p-4">
-                    <p className="text-xs text-slate-500">
-                      Store slug
-                    </p>
+                  <div className="space-y-4 rounded-3xl border border-dashed border-purple-400/30 bg-[#170c29] p-4 sm:p-5">
 
-                    <p className="mt-1 font-semibold">
-                      {storefrontSlug ||
-                        "Not available"}
-                    </p>
-                  </div>
+                    {uploadItems.map(
+                      (
+                        item,
+                        index
+                      ) => (
+                        <div
+                          key={index}
+                          className="relative rounded-3xl border border-purple-400/15 bg-[#1c1033] p-4"
+                        >
 
-                  <div className="rounded-xl border border-slate-800 bg-black p-4">
-                    <p className="text-xs text-slate-500">
-                      Customer storefront
-                    </p>
+                          {uploadItems.length >
+                            1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeUploadItem(
+                                  index
+                                )
+                              }
+                              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/10 text-red-300"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
 
-                    {storefrontUrl ? (
-                      <a
-                        href={
-                          storefrontUrl
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-flex items-center text-cyan-400"
-                      >
-                        Open Store
-                        <ExternalLink className="ml-1 h-3 w-3" />
-                      </a>
-                    ) : (
-                      <p className="mt-1 text-slate-500">
-                        Not available
-                      </p>
+                          <div className="space-y-4">
+
+                            <Input
+                              value={
+                                item.credential
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                updateUploadItem(
+                                  index,
+                                  "credential",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="email|password"
+                              className="h-14 rounded-2xl border-purple-500/20 bg-[#160c2b] text-lg font-bold text-white placeholder:text-slate-500"
+                            />
+
+                            <Input
+                              value={
+                                item.preview
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                updateUploadItem(
+                                  index,
+                                  "preview",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Preview link (optional)"
+                              className="h-14 rounded-2xl border-purple-500/20 bg-[#160c2b] text-lg font-bold text-white placeholder:text-slate-500"
+                            />
+
+                          </div>
+                        </div>
+                      )
                     )}
+
                   </div>
 
                 </div>
+
+                {/* MORE */}
+
+                <button
+                  type="button"
+                  onClick={
+                    addUploadItem
+                  }
+                  className="flex h-16 w-full items-center justify-center gap-3 rounded-3xl border border-dashed border-purple-400/40 bg-[#160b29] text-lg font-black text-white transition hover:bg-purple-500/10"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add More Items
+                </button>
+
+                {/* UPLOAD IMAGE */}
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Image
+                  </Label>
+
+                  <input
+                    ref={
+                      productImageRef
+                    }
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleProductImage
+                    }
+                    className="block w-full rounded-2xl border border-purple-500/20 bg-[#1b0d32] p-4 text-sm font-semibold text-white file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-5 file:py-2 file:font-bold"
+                  />
+
+                  {uploadPreviewImage && (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-purple-500/20">
+                      <img
+                        src={
+                          uploadPreviewImage
+                        }
+                        alt="Product preview"
+                        className="h-48 w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* UPLOAD */}
+
+                <Button
+                  type="button"
+                  disabled={
+                    uploading
+                  }
+                  onClick={() =>
+                    void uploadItems()
+                  }
+                  className="h-16 w-full rounded-3xl bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-500 text-lg font-black shadow-xl shadow-purple-900/30 hover:from-purple-600 hover:to-fuchsia-400"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                      Uploading Items...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="mr-3 h-5 w-5" />
+                      Upload Items
+                    </>
+                  )}
+                </Button>
+
+              </CardContent>
+            </Card>
+
+            {/* CREATE SUB-CATEGORY */}
+
+            <Card className="overflow-hidden rounded-[32px] border-purple-500/20 bg-[#10081c]">
+
+              <div className="border-b border-purple-500/10 p-6 sm:p-8">
+
+                <div className="flex items-start gap-4">
+
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-600 to-fuchsia-500">
+                    <FolderPlus className="h-8 w-8" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-2xl font-black sm:text-3xl">
+                      Create Sub-Category
+                    </h2>
+
+                    <p className="mt-2 text-base font-semibold text-slate-400">
+                      Create a new product section and
+                      set price per item.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              <CardContent className="space-y-6 p-6 sm:p-8">
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Category
+                  </Label>
+
+                  <select
+                    value={
+                      listingCategoryId
+                    }
+                    onChange={(event) =>
+                      setListingCategoryId(
+                        event.target.value
+                      )
+                    }
+                    className="h-14 w-full rounded-2xl border border-purple-500/20 bg-[#1b0d32] px-5 text-lg font-bold text-white outline-none focus:border-purple-400"
+                  >
+                    <option
+                      value=""
+                      className="bg-[#1b0d32]"
+                    >
+                      -- Select Category --
+                    </option>
+
+                    {categories.map(
+                      (category) => (
+                        <option
+                          key={getCategoryId(
+                            category
+                          )}
+                          value={getCategoryId(
+                            category
+                          )}
+                          className="bg-[#1b0d32]"
+                        >
+                          {getCategoryName(
+                            category
+                          )}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Title Name
+                  </Label>
+
+                  <Input
+                    value={
+                      categoryName
+                    }
+                    onChange={(event) =>
+                      setCategoryName(
+                        event.target.value
+                      )
+                    }
+                    maxLength={25}
+                    placeholder="Max 25 letters, max 3 words"
+                    className="h-14 rounded-2xl border-purple-500/20 bg-[#1b0d32] text-lg font-bold text-white placeholder:text-slate-500"
+                  />
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    {categoryName.length}/25
+                    characters
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Description
+                  </Label>
+
+                  <Input
+                    value={
+                      categoryDescription
+                    }
+                    onChange={(event) =>
+                      setCategoryDescription(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Product description"
+                    className="h-14 rounded-2xl border-purple-500/20 bg-[#1b0d32] text-lg font-bold text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Price Per Item
+                  </Label>
+
+                  <Input
+                    type="number"
+                    min="0"
+                    value={
+                      listingPrice
+                    }
+                    onChange={(event) =>
+                      setListingPrice(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Price per item"
+                    className="h-14 rounded-2xl border-purple-500/20 bg-[#1b0d32] text-lg font-bold text-white placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div>
+                  <Label className="mb-3 block text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                    Image
+                  </Label>
+
+                  <input
+                    ref={
+                      categoryImageRef
+                    }
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleCategoryImage
+                    }
+                    className="block w-full rounded-2xl border border-purple-500/20 bg-[#1b0d32] p-4 text-sm font-semibold text-white file:mr-4 file:rounded-full file:border-0 file:bg-white file:px-5 file:py-2 file:font-bold"
+                  />
+
+                  <p className="mt-3 text-sm font-semibold text-slate-500">
+                    Image is required only when
+                    category is Others.
+                  </p>
+
+                  {categoryImage && (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-purple-500/20">
+                      <img
+                        src={
+                          categoryImage
+                        }
+                        alt="Category"
+                        className="h-40 w-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  disabled={
+                    savingCategory
+                  }
+                  onClick={() =>
+                    void createCategory()
+                  }
+                  className="h-16 w-full rounded-3xl bg-gradient-to-r from-orange-600 to-amber-400 text-lg font-black text-white shadow-xl shadow-orange-900/20 hover:from-orange-500 hover:to-amber-300"
+                >
+                  {savingCategory ? (
+                    <>
+                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <FolderPlus className="mr-3 h-5 w-5" />
+                      Create Sub-Category
+                    </>
+                  )}
+                </Button>
+
               </CardContent>
             </Card>
 
           </div>
         )}
 
-        {/* PRODUCTS */}
+        {/* ======================================================
+            PRODUCTS
+           ====================================================== */}
 
-        {activeTab ===
+        {activeSection ===
           "products" && (
           <div className="space-y-6">
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">
-                  Products
-                </h2>
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="p-6">
 
-                <p className="text-sm text-slate-500">
-                  Manage your reseller listings and
-                  digital credential inventory.
-                </p>
-              </div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-              <Button
-                onClick={
-                  startCreateListing
-                }
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Product
-              </Button>
-            </div>
+                  <div>
+                    <h2 className="text-2xl font-black">
+                      My Products
+                    </h2>
 
-            {showListingForm && (
-              <Card className="border-cyan-500/20 bg-slate-950">
-                <CardContent className="p-6">
+                    <p className="mt-1 text-slate-500">
+                      Manage products and credential
+                      inventory.
+                    </p>
+                  </div>
 
-                  <div className="mb-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold">
-                        {editingListingId
-                          ? "Edit Product"
-                          : "Add Product"}
-                      </h3>
+                  <Button
+                    onClick={() =>
+                      setActiveSection(
+                        "upload"
+                      )
+                    }
+                    className="bg-gradient-to-r from-purple-600 to-fuchsia-500"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Product
+                  </Button>
 
-                      <p className="mt-1 text-sm text-slate-500">
-                        Add the product details and,
-                        if needed, the credential pool.
-                      </p>
-                    </div>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            {editingListingId && (
+              <Card className="border-purple-500/20 bg-[#10081c]">
+                <CardContent className="space-y-5 p-6">
+
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-black">
+                      Edit Product
+                    </h3>
 
                     <Button
                       variant="outline"
                       onClick={
-                        resetListingForm
+                        cancelEditListing
                       }
-                      className="border-slate-700 bg-slate-900"
+                      className="border-purple-500/20 bg-[#160c27]"
                     >
-                      Cancel
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <Input
+                    value={
+                      listingTitle
+                    }
+                    onChange={(event) =>
+                      setListingTitle(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Product name"
+                    className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                  />
 
-                    <div>
-                      <Label>
-                        Product name
-                      </Label>
+                  <Input
+                    value={
+                      listingDescription
+                    }
+                    onChange={(event) =>
+                      setListingDescription(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Description"
+                    className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                  />
 
-                      <Input
-                        value={
-                          listingTitle
-                        }
-                        onChange={(event) =>
-                          setListingTitle(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Netflix Premium"
-                        className="mt-2 border-slate-700 bg-black text-white"
-                      />
-                    </div>
+                  <Input
+                    type="number"
+                    value={
+                      listingPrice
+                    }
+                    onChange={(event) =>
+                      setListingPrice(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Price"
+                    className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                  />
 
-                    <div>
-                      <Label>
-                        Price
-                      </Label>
+                  <Input
+                    value={
+                      listingImageUrl
+                    }
+                    onChange={(event) =>
+                      setListingImageUrl(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Image URL"
+                    className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                  />
 
-                      <Input
-                        type="number"
-                        min="0"
-                        value={
-                          listingPrice
-                        }
-                        onChange={(event) =>
-                          setListingPrice(
-                            event.target.value
-                          )
-                        }
-                        placeholder="5000"
-                        className="mt-2 border-slate-700 bg-black text-white"
-                      />
-                    </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={
+                      listingQuantity
+                    }
+                    onChange={(event) =>
+                      setListingQuantity(
+                        event.target.value
+                      )
+                    }
+                    placeholder="Quantity"
+                    className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                  />
 
-                    <div className="md:col-span-2">
-                      <Label>
-                        Description
-                      </Label>
-
-                      <textarea
-                        value={
-                          listingDescription
-                        }
-                        onChange={(event) =>
-                          setListingDescription(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Describe what the customer receives..."
-                        className="mt-2 min-h-28 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>
-                        Image URL
-                      </Label>
-
-                      <Input
-                        value={
-                          listingImageUrl
-                        }
-                        onChange={(event) =>
-                          setListingImageUrl(
-                            event.target.value
-                          )
-                        }
-                        placeholder="https://..."
-                        className="mt-2 border-slate-700 bg-black text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>
-                        Quantity / Stock
-                      </Label>
-
-                      <Input
-                        type="number"
-                        min="0"
-                        value={
-                          listingQuantity
-                        }
-                        onChange={(event) =>
-                          setListingQuantity(
-                            event.target.value
-                          )
-                        }
-                        className="mt-2 border-slate-700 bg-black text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>
-                        Category
-                      </Label>
-
-                      <select
-                        value={
-                          listingCategoryId
-                        }
-                        onChange={(event) =>
-                          setListingCategoryId(
-                            event.target.value
-                          )
-                        }
-                        className="mt-2 h-10 w-full rounded-md border border-slate-700 bg-black px-3 text-sm text-white"
-                      >
-                        <option value="">
-                          No category
-                        </option>
-
-                        {categories.map(
-                          (category) => (
-                            <option
-                              key={getCategoryId(
-                                category
-                              )}
-                              value={getCategoryId(
-                                category
-                              )}
-                            >
-                              {getCategoryName(
-                                category
-                              )}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
-
-                    <div>
-                      <Label>
-                        Tonyix Product ID
-                      </Label>
-
-                      <Input
-                        value={
-                          listingTonyixId
-                        }
-                        onChange={(event) =>
-                          setListingTonyixId(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Optional"
-                        className="mt-2 border-slate-700 bg-black text-white"
-                      />
-                    </div>
-
-                  </div>
-
-                  {/* CREDENTIAL POOL */}
-
-                  <div className="mt-8 rounded-xl border border-slate-800 bg-black p-5">
-
-                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <h4 className="font-semibold">
-                          Credential / Access Pool
-                        </h4>
-
-                        <p className="text-xs text-slate-500">
-                          Add one credential per customer
-                          delivery.
-                        </p>
-                      </div>
-
-                      <div>
-                        <input
-                          ref={
-                            fileInputRef
-                          }
-                          type="file"
-                          accept=".txt,.csv"
-                          className="hidden"
-                          onChange={(event) => {
-                            void handleCredentialFile(
-                              event.target.files?.[0]
-                            );
-
-                            event.currentTarget.value =
-                              "";
-                          }}
-                        />
-
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            fileInputRef.current?.click()
-                          }
-                          className="border-slate-700 bg-slate-900"
-                        >
-                          <Upload className="mr-2 h-4 w-4" />
-                          Import
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-
-                      <Input
-                        value={
-                          credentialValue
-                        }
-                        onChange={(event) =>
-                          setCredentialValue(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Email: password / access link"
-                        className="border-slate-700 bg-slate-950 text-white"
-                      />
-
-                      <Input
-                        value={
-                          credentialNotes
-                        }
-                        onChange={(event) =>
-                          setCredentialNotes(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Optional note"
-                        className="border-slate-700 bg-slate-950 text-white"
-                      />
-
-                      <Button
-                        type="button"
-                        onClick={
-                          addCredentialToForm
-                        }
-                      >
-                        Add
-                      </Button>
-
-                    </div>
-
-                    {credentialItems.length > 0 && (
-                      <div className="mt-4 space-y-2">
-                        {credentialItems.map(
-                          (
-                            credential,
-                            index
-                          ) => (
-                            <div
-                              key={`${credential.value}-${index}`}
-                              className="flex items-start justify-between gap-3 rounded-lg border border-slate-800 bg-slate-950 p-3"
-                            >
-                              <div className="min-w-0">
-                                <p className="break-all text-sm text-white">
-                                  {credential.value}
-                                </p>
-
-                                {credential.notes && (
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {credential.notes}
-                                  </p>
-                                )}
-                              </div>
-
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() =>
-                                  removeCredentialFromForm(
-                                    index
-                                  )
-                                }
-                                className="border-red-500/20 bg-red-500/5 text-red-300"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-
-                  </div>
-
-                  <div className="mt-6 flex justify-end">
+                  <div className="flex gap-3">
                     <Button
-                      onClick={() =>
-                        void saveListing()
-                      }
                       disabled={
-                        savingListing ||
-                        savingCredential
+                        savingListing
                       }
+                      onClick={() =>
+                        void saveListingEdit()
+                      }
+                      className="bg-gradient-to-r from-purple-600 to-fuchsia-500"
                     >
-                      {savingListing ||
-                      savingCredential ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : editingListingId ? (
-                        "Update Product"
+                      {savingListing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : (
-                        "Create Product"
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
                       )}
+                      Save
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={
+                        cancelEditListing
+                      }
+                      className="border-purple-500/20 bg-[#160c27]"
+                    >
+                      Cancel
                     </Button>
                   </div>
 
@@ -2013,72 +2376,69 @@ export default function SellerDashboard({
               </Card>
             )}
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
 
               {listings.length === 0 ? (
-                <div className="col-span-full rounded-xl border border-dashed border-slate-800 py-16 text-center">
-                  <Package className="mx-auto h-12 w-12 text-slate-700" />
+                <Card className="col-span-full border-purple-500/20 bg-[#10081c]">
+                  <CardContent className="py-16 text-center">
+                    <Package className="mx-auto h-12 w-12 text-purple-900" />
 
-                  <p className="mt-4 font-semibold">
-                    No products yet
-                  </p>
+                    <p className="mt-4 font-bold">
+                      No products yet
+                    </p>
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    Add your first reseller product.
-                  </p>
-
-                  <Button
-                    className="mt-5"
-                    onClick={
-                      startCreateListing
-                    }
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Product
-                  </Button>
-                </div>
+                    <p className="mt-2 text-sm text-slate-500">
+                      Upload your first product from
+                      the Upload Center.
+                    </p>
+                  </CardContent>
+                </Card>
               ) : (
                 listings.map(
-                  (product) => {
+                  (listing) => {
                     const stock =
-                      stockOf(product);
+                      stockOf(
+                        listing
+                      );
 
                     const available =
-                      product.inStock !==
+                      listing.inStock !==
                         false &&
                       stock > 0;
 
                     return (
                       <Card
                         key={
-                          product.id
+                          listing.id
                         }
-                        className="overflow-hidden border-slate-800 bg-slate-950"
+                        className="overflow-hidden border-purple-500/15 bg-[#10081c]"
                       >
-                        {product.imageUrl ? (
+
+                        {listing.imageUrl ? (
                           <img
                             src={
-                              product.imageUrl
+                              listing.imageUrl
                             }
                             alt={
-                              product.title ||
-                              product.name ||
+                              listing.title ||
+                              listing.name ||
                               "Product"
                             }
                             className="h-48 w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-48 items-center justify-center bg-slate-900">
-                            <Package className="h-12 w-12 text-slate-700" />
+                          <div className="flex h-48 items-center justify-center bg-[#180d29]">
+                            <Package className="h-12 w-12 text-purple-900" />
                           </div>
                         )}
 
                         <CardContent className="p-5">
 
                           <div className="flex items-start justify-between gap-3">
-                            <h3 className="font-semibold">
-                              {product.title ||
-                                product.name ||
+
+                            <h3 className="font-black">
+                              {listing.title ||
+                                listing.name ||
                                 "Product"}
                             </h3>
 
@@ -2093,18 +2453,20 @@ export default function SellerDashboard({
                                 ? "Available"
                                 : "Sold out"}
                             </Badge>
+
                           </div>
 
                           <p className="mt-3 line-clamp-3 text-sm text-slate-500">
-                            {product.description ||
-                              "No description."}
+                            {listing.description ||
+                              "No description"}
                           </p>
 
                           <div className="mt-4 flex items-center justify-between">
-                            <span className="font-bold text-cyan-300">
+
+                            <span className="font-black text-purple-300">
                               {formatMoney(
                                 Number(
-                                  product.price ||
+                                  listing.price ||
                                     0
                                 )
                               )}
@@ -2114,18 +2476,19 @@ export default function SellerDashboard({
                               Stock:{" "}
                               {stock}
                             </span>
+
                           </div>
 
-                          <div className="mt-5 grid grid-cols-2 gap-2">
+                          <div className="mt-5 flex gap-2">
 
                             <Button
                               variant="outline"
                               onClick={() =>
                                 startEditListing(
-                                  product
+                                  listing
                                 )
                               }
-                              className="border-slate-700 bg-slate-900"
+                              className="flex-1 border-purple-500/20 bg-[#160c27]"
                             >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
@@ -2135,30 +2498,29 @@ export default function SellerDashboard({
                               variant="outline"
                               onClick={() =>
                                 void toggleListing(
-                                  product.id
+                                  listing.id
                                 )
                               }
-                              className="border-slate-700 bg-slate-900"
+                              className="border-purple-500/20 bg-[#160c27]"
                             >
                               {available
-                                ? "Disable"
-                                : "Enable"}
+                                ? "Hide"
+                                : "Show"}
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                void deleteListing(
+                                  listing.id
+                                )
+                              }
+                              className="border-red-500/20 bg-red-500/5 text-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
 
                           </div>
-
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              void deleteListing(
-                                product.id
-                              )
-                            }
-                            className="mt-2 w-full border-red-500/20 bg-red-500/5 text-red-300"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </Button>
 
                         </CardContent>
                       </Card>
@@ -2168,125 +2530,161 @@ export default function SellerDashboard({
               )}
 
             </div>
+
           </div>
         )}
 
-        {/* STOREFRONT */}
+        {/* ======================================================
+            STOREFRONT
+           ====================================================== */}
 
-        {activeTab ===
+        {activeSection ===
           "storefront" && (
           <div className="space-y-6">
 
-            <Card className="border-slate-800 bg-slate-950">
-              <CardContent className="p-6">
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="space-y-5 p-6">
 
-                <h2 className="text-2xl font-bold">
-                  Storefront
-                </h2>
+                <div>
+                  <h2 className="text-2xl font-black">
+                    Storefront
+                  </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Customize the public reseller store
-                  customers will see.
-                </p>
+                  <p className="mt-1 text-slate-500">
+                    Customize your reseller store.
+                  </p>
+                </div>
 
-                <div className="mt-6 space-y-5">
+                <Input
+                  value={
+                    storeName
+                  }
+                  onChange={(event) =>
+                    setStoreName(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Store name"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
 
-                  <div>
-                    <Label>
-                      Store name
-                    </Label>
+                <Input
+                  value={
+                    storeDescription
+                  }
+                  onChange={(event) =>
+                    setStoreDescription(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Store description"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
 
-                    <Input
-                      value={
-                        storeName
-                      }
-                      onChange={(event) =>
-                        setStoreName(
-                          event.target.value
-                        )
-                      }
-                      className="mt-2 border-slate-700 bg-black text-white"
-                    />
-                  </div>
+                <Input
+                  value={
+                    storeLogoUrl
+                  }
+                  onChange={(event) =>
+                    setStoreLogoUrl(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Logo URL"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
 
-                  <div>
-                    <Label>
-                      Description
-                    </Label>
+                <Input
+                  value={
+                    storeBannerUrl
+                  }
+                  onChange={(event) =>
+                    setStoreBannerUrl(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Banner URL"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
 
-                    <textarea
-                      value={
-                        storeDescription
-                      }
-                      onChange={(event) =>
-                        setStoreDescription(
-                          event.target.value
-                        )
-                      }
-                      className="mt-2 min-h-28 w-full rounded-md border border-slate-700 bg-black px-3 py-2 text-sm text-white"
-                    />
-                  </div>
+                <Button
+                  disabled={
+                    savingStore
+                  }
+                  onClick={() =>
+                    void saveStorefront()
+                  }
+                  className="h-14 bg-gradient-to-r from-purple-600 to-fuchsia-500"
+                >
+                  {savingStore ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Store className="mr-2 h-4 w-4" />
+                  )}
+                  Save Storefront
+                </Button>
 
-                  <div>
-                    <Label>
-                      Logo URL
-                    </Label>
+              </CardContent>
+            </Card>
 
-                    <Input
-                      value={
-                        storeLogoUrl
-                      }
-                      onChange={(event) =>
-                        setStoreLogoUrl(
-                          event.target.value
-                        )
-                      }
-                      className="mt-2 border-slate-700 bg-black text-white"
-                    />
-                  </div>
+            {storefront && (
+              <Card className="overflow-hidden border-purple-500/20 bg-[#10081c]">
 
-                  <div>
-                    <Label>
-                      Banner URL
-                    </Label>
+                {storefront.bannerUrl && (
+                  <img
+                    src={
+                      storefront.bannerUrl
+                    }
+                    alt={
+                      storefront.storeName ||
+                      "Store"
+                    }
+                    className="h-56 w-full object-cover"
+                  />
+                )}
 
-                    <Input
-                      value={
-                        storeBannerUrl
-                      }
-                      onChange={(event) =>
-                        setStoreBannerUrl(
-                          event.target.value
-                        )
-                      }
-                      className="mt-2 border-slate-700 bg-black text-white"
-                    />
-                  </div>
+                <CardContent className="p-6">
 
-                  <div className="flex flex-wrap gap-3">
-                    <Button
-                      onClick={() =>
-                        void saveStorefront()
-                      }
-                      disabled={
-                        savingStore
-                      }
-                    >
-                      {savingStore ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Storefront"
-                      )}
-                    </Button>
+                  <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+
+                    {storefront.logoUrl ? (
+                      <img
+                        src={
+                          storefront.logoUrl
+                        }
+                        alt={
+                          storefront.storeName ||
+                          "Store"
+                        }
+                        className="h-24 w-24 rounded-2xl object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-purple-600/20">
+                        <Store className="h-10 w-10 text-purple-300" />
+                      </div>
+                    )}
+
+                    <div className="flex-1">
+
+                      <h3 className="text-3xl font-black">
+                        {
+                          storefront.storeName
+                        }
+                      </h3>
+
+                      <p className="mt-2 text-slate-400">
+                        {
+                          storefront.description
+                        }
+                      </p>
+
+                    </div>
 
                     {storefrontUrl && (
                       <Button
-                        variant="outline"
                         asChild
-                        className="border-slate-700 bg-slate-900"
+                        variant="outline"
+                        className="border-purple-500/20 bg-[#160c27]"
                       >
                         <a
                           href={
@@ -2300,56 +2698,9 @@ export default function SellerDashboard({
                         </a>
                       </Button>
                     )}
+
                   </div>
 
-                </div>
-              </CardContent>
-            </Card>
-
-            {storefront?.bannerUrl && (
-              <Card className="overflow-hidden border-slate-800 bg-slate-950">
-                <img
-                  src={
-                    storefront.bannerUrl
-                  }
-                  alt={
-                    storefront.storeName ||
-                    "Store banner"
-                  }
-                  className="h-64 w-full object-cover"
-                />
-
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    {storefront.logoUrl ? (
-                      <img
-                        src={
-                          storefront.logoUrl
-                        }
-                        alt={
-                          storefront.storeName ||
-                          "Store logo"
-                        }
-                        className="h-20 w-20 rounded-2xl object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-900">
-                        <Store className="h-8 w-8 text-cyan-400" />
-                      </div>
-                    )}
-
-                    <div>
-                      <h3 className="text-2xl font-bold">
-                        {storefront.storeName ||
-                          storeName ||
-                          "Your Store"}
-                      </h3>
-
-                      <p className="text-sm text-slate-500">
-                        {storefrontSlug}
-                      </p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             )}
@@ -2357,393 +2708,314 @@ export default function SellerDashboard({
           </div>
         )}
 
-        {/* ORDERS */}
+        {/* ======================================================
+            ORDERS
+           ====================================================== */}
 
-        {activeTab ===
+        {activeSection ===
           "orders" && (
-          <Card className="border-slate-800 bg-slate-950">
-            <CardContent className="p-6">
-
-              <h2 className="text-2xl font-bold">
-                Seller Orders
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Orders placed for your reseller products.
-              </p>
-
-              <div className="mt-6 space-y-3">
-
-                {orders.length === 0 ? (
-                  <div className="py-16 text-center text-slate-500">
-                    No seller orders yet.
-                  </div>
-                ) : (
-                  orders.map(
-                    (order) => (
-                      <div
-                        key={
-                          order.id
-                        }
-                        className="rounded-xl border border-slate-800 bg-black p-5"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                          <div>
-                            <p className="font-semibold">
-                              Order #
-                              {order.id}
-                            </p>
-
-                            <p className="mt-1 text-sm text-slate-500">
-                              {order.customerName ||
-                                "Customer"}
-                              {order.customerEmail
-                                ? ` • ${order.customerEmail}`
-                                : ""}
-                            </p>
-                          </div>
-
-                          <div className="text-left sm:text-right">
-                            <p className="font-bold text-cyan-300">
-                              {formatMoney(
-                                Number(
-                                  order.totalAmount ??
-                                    order.amount ??
-                                    0
-                                )
-                              )}
-                            </p>
-
-                            <Badge className="mt-1 bg-slate-800 text-slate-300">
-                              {order.status ||
-                                "pending"}
-                            </Badge>
-                          </div>
-
-                        </div>
-
-                        {order.items &&
-                          order.items.length >
-                            0 && (
-                            <div className="mt-4 border-t border-slate-800 pt-4">
-                              {order.items.map(
-                                (
-                                  item,
-                                  index
-                                ) => (
-                                  <div
-                                    key={
-                                      `${order.id}-${index}`
-                                    }
-                                    className="flex justify-between py-1 text-sm"
-                                  >
-                                    <span className="text-slate-400">
-                                      {item.title ||
-                                        item.name ||
-                                        "Product"}
-                                    </span>
-
-                                    <span className="text-slate-500">
-                                      ×
-                                      {item.quantity ??
-                                        1}
-                                    </span>
-                                  </div>
-                                )
-                              )}
-                            </div>
-                          )}
-
-                        <p className="mt-3 text-xs text-slate-600">
-                          {formatDate(
-                            order.createdAt
-                          )}
-                        </p>
-                      </div>
-                    )
-                  )
-                )}
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* WITHDRAWALS */}
-
-        {activeTab ===
-          "withdrawals" && (
-          <Card className="border-slate-800 bg-slate-950">
-            <CardContent className="p-6">
-
-              <h2 className="text-2xl font-bold">
-                Withdrawals
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Track your reseller payout requests.
-              </p>
-
-              <div className="mt-6 space-y-3">
-
-                {withdrawals.length ===
-                0 ? (
-                  <div className="py-16 text-center text-slate-500">
-                    No withdrawals yet.
-                  </div>
-                ) : (
-                  withdrawals.map(
-                    (withdrawal) => (
-                      <div
-                        key={
-                          withdrawal.id
-                        }
-                        className="rounded-xl border border-slate-800 bg-black p-5"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="font-semibold">
-                              {formatMoney(
-                                Number(
-                                  withdrawal.amount ||
-                                    0
-                                )
-                              )}
-                            </p>
-
-                            <p className="mt-1 text-xs text-slate-500">
-                              {formatDate(
-                                withdrawal.createdAt
-                              )}
-                            </p>
-                          </div>
-
-                          <Badge className="bg-slate-800 text-slate-300">
-                            {withdrawal.status ||
-                              "pending"}
-                          </Badge>
-                        </div>
-
-                        {withdrawal.reason && (
-                          <p className="mt-3 text-sm text-red-300">
-                            {withdrawal.reason}
-                          </p>
-                        )}
-                      </div>
-                    )
-                  )
-                )}
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* HISTORY */}
-
-        {activeTab ===
-          "history" && (
-          <Card className="border-slate-800 bg-slate-950">
-            <CardContent className="p-6">
-
-              <h2 className="text-2xl font-bold">
-                Marketplace History
-              </h2>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-                <div className="rounded-xl border border-slate-800 bg-black p-5">
-                  <p className="text-sm text-slate-500">
-                    Total Sales
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold text-cyan-300">
-                    {formatMoney(
-                      totalSales
-                    )}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-black p-5">
-                  <p className="text-sm text-slate-500">
-                    Orders
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold">
-                    {orders.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-black p-5">
-                  <p className="text-sm text-slate-500">
-                    Products
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold">
-                    {listings.length}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-black p-5">
-                  <p className="text-sm text-slate-500">
-                    Sold Out
-                  </p>
-
-                  <p className="mt-2 text-2xl font-bold text-red-300">
-                    {soldOutListings.length}
-                  </p>
-                </div>
-
-              </div>
-
-            </CardContent>
-          </Card>
-        )}
-
-        {/* CATEGORIES */}
-
-        {activeTab ===
-          "categories" && (
           <div className="space-y-6">
 
-            <Card className="border-slate-800 bg-slate-950">
+            <Card className="border-purple-500/20 bg-[#10081c]">
               <CardContent className="p-6">
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-600/20">
+                    <BarChart3 className="h-7 w-7 text-purple-300" />
+                  </div>
 
                   <div>
-                    <h2 className="text-2xl font-bold">
-                      Categories
-                    </h2>
-
                     <p className="text-sm text-slate-500">
-                      Organize your reseller products.
+                      Total Seller Sales
+                    </p>
+
+                    <p className="text-3xl font-black text-purple-300">
+                      {formatMoney(
+                        totalSales
+                      )}
                     </p>
                   </div>
 
-                  <Button
-                    onClick={() =>
-                      setShowCategoryForm(
-                        (value) =>
-                          !value
-                      )
-                    }
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Category
-                  </Button>
-
                 </div>
 
-                {showCategoryForm && (
-                  <div className="mt-6 rounded-xl border border-slate-800 bg-black p-5">
+              </CardContent>
+            </Card>
 
-                    <div className="grid gap-4 md:grid-cols-3">
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="p-6">
 
-                      <Input
-                        value={
-                          categoryName
-                        }
-                        onChange={(event) =>
-                          setCategoryName(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Category name"
-                        className="border-slate-700 bg-slate-950 text-white"
-                      />
+                <h2 className="mb-5 text-2xl font-black">
+                  Seller Orders
+                </h2>
 
-                      <Input
-                        value={
-                          categoryDescription
-                        }
-                        onChange={(event) =>
-                          setCategoryDescription(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Description"
-                        className="border-slate-700 bg-slate-950 text-white"
-                      />
+                {orders.length ===
+                0 ? (
+                  <div className="py-12 text-center text-slate-500">
+                    No seller orders yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {orders.map(
+                      (order) => (
+                        <div
+                          key={
+                            order.id
+                          }
+                          className="rounded-2xl border border-purple-500/10 bg-[#170c29] p-4"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3">
 
-                      <Input
-                        value={
-                          categoryIcon
-                        }
-                        onChange={(event) =>
-                          setCategoryIcon(
-                            event.target.value
-                          )
-                        }
-                        placeholder="Icon"
-                        className="border-slate-700 bg-slate-950 text-white"
-                      />
+                            <div>
+                              <p className="font-bold">
+                                {order.customerName ||
+                                  order.customerEmail ||
+                                  "Customer"}
+                              </p>
 
-                    </div>
+                              <p className="text-xs text-slate-500">
+                                {formatDate(
+                                  order.createdAt
+                                )}
+                              </p>
+                            </div>
 
-                    <Button
-                      className="mt-4"
-                      onClick={() =>
-                        void createCategory()
-                      }
-                      disabled={
-                        savingCategory
-                      }
-                    >
-                      {savingCategory ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Create Category"
-                      )}
-                    </Button>
+                            <Badge className="bg-purple-500/10 text-purple-300">
+                              {order.status ||
+                                "pending"}
+                            </Badge>
 
+                          </div>
+
+                          <div className="mt-3 font-black text-purple-300">
+                            {formatMoney(
+                              Number(
+                                order.totalAmount ??
+                                  order.amount ??
+                                  0
+                              )
+                            )}
+                          </div>
+
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
 
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          </div>
+        )}
 
-              {categories.length ===
-              0 ? (
-                <div className="col-span-full rounded-xl border border-dashed border-slate-800 py-16 text-center text-slate-500">
-                  No categories yet.
+        {/* ======================================================
+            WITHDRAWALS
+           ====================================================== */}
+
+        {activeSection ===
+          "withdrawals" && (
+          <div className="space-y-6">
+
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="p-6">
+
+                <div className="flex items-center gap-4">
+
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10">
+                    <Wallet className="h-7 w-7 text-emerald-300" />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-slate-500">
+                      Withdrawals
+                    </p>
+
+                    <p className="text-2xl font-black">
+                      {withdrawals.length}
+                    </p>
+                  </div>
+
                 </div>
-              ) : (
-                categories.map(
-                  (category) => {
-                    const id =
-                      getCategoryId(
-                        category
-                      );
 
-                    return (
-                      <Card
-                        key={id}
-                        className="border-slate-800 bg-slate-950"
-                      >
-                        <CardContent className="p-5">
+              </CardContent>
+            </Card>
 
-                          <div className="flex items-start justify-between gap-3">
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="p-6">
+
+                <h2 className="mb-5 text-2xl font-black">
+                  Withdrawal History
+                </h2>
+
+                {withdrawals.length ===
+                0 ? (
+                  <div className="py-12 text-center text-slate-500">
+                    No withdrawal requests yet.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {withdrawals.map(
+                      (
+                        withdrawal
+                      ) => (
+                        <div
+                          key={
+                            withdrawal.id
+                          }
+                          className="rounded-2xl border border-purple-500/10 bg-[#170c29] p-4"
+                        >
+
+                          <div className="flex items-center justify-between gap-3">
 
                             <div>
-                              <h3 className="font-semibold">
-                                {getCategoryName(
-                                  category
+                              <p className="font-black text-purple-300">
+                                {formatMoney(
+                                  Number(
+                                    withdrawal.amount ||
+                                      0
+                                  )
                                 )}
-                              </h3>
+                              </p>
 
-                              <p className="mt-1 text-sm text-slate-500">
-                                {category.description ||
-                                  "No description"}
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatDate(
+                                  withdrawal.createdAt
+                                )}
                               </p>
                             </div>
 
+                            <Badge className="bg-purple-500/10 text-purple-300">
+                              {withdrawal.status ||
+                                "pending"}
+                            </Badge>
+
+                          </div>
+
+                          {withdrawal.reason && (
+                            <p className="mt-3 text-sm text-slate-400">
+                              {
+                                withdrawal.reason
+                              }
+                            </p>
+                          )}
+
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+              </CardContent>
+            </Card>
+
+          </div>
+        )}
+
+        {/* ======================================================
+            CATEGORIES
+           ====================================================== */}
+
+        {activeSection ===
+          "categories" && (
+          <div className="space-y-6">
+
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="space-y-5 p-6">
+
+                <div>
+                  <h2 className="text-2xl font-black">
+                    Create Sub-Category
+                  </h2>
+
+                  <p className="mt-1 text-slate-500">
+                    Organize your reseller products.
+                  </p>
+                </div>
+
+                <Input
+                  value={
+                    categoryName
+                  }
+                  onChange={(event) =>
+                    setCategoryName(
+                      event.target.value
+                    )
+                  }
+                  maxLength={25}
+                  placeholder="Category name"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
+
+                <Input
+                  value={
+                    categoryDescription
+                  }
+                  onChange={(event) =>
+                    setCategoryDescription(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Description"
+                  className="h-14 border-purple-500/20 bg-[#1b0d32] text-white"
+                />
+
+                <Button
+                  disabled={
+                    savingCategory
+                  }
+                  onClick={() =>
+                    void createCategory()
+                  }
+                  className="h-14 bg-gradient-to-r from-orange-600 to-amber-400"
+                >
+                  {savingCategory ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <FolderPlus className="mr-2 h-4 w-4" />
+                  )}
+                  Create Sub-Category
+                </Button>
+
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-500/20 bg-[#10081c]">
+              <CardContent className="p-6">
+
+                <h2 className="mb-5 text-2xl font-black">
+                  Your Categories
+                </h2>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+                  {categories.map(
+                    (category) => {
+                      const id =
+                        getCategoryId(
+                          category
+                        );
+
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between rounded-2xl border border-purple-500/10 bg-[#170c29] p-4"
+                        >
+
+                          <div className="min-w-0">
+                            <p className="truncate font-bold">
+                              {getCategoryName(
+                                category
+                              )}
+                            </p>
+
+                            <p className="mt-1 truncate text-xs text-slate-500">
+                              {category.description ||
+                                "No description"}
+                            </p>
+                          </div>
+
+                          {id && (
                             <Button
                               variant="outline"
                               disabled={
@@ -2752,10 +3024,10 @@ export default function SellerDashboard({
                               }
                               onClick={() =>
                                 void deleteCategory(
-                                  category
+                                  id
                                 )
                               }
-                              className="border-red-500/20 bg-red-500/5 text-red-300"
+                              className="ml-3 shrink-0 border-red-500/20 bg-red-500/5 text-red-300"
                             >
                               {deletingCategoryId ===
                               id ? (
@@ -2764,19 +3036,70 @@ export default function SellerDashboard({
                                 <Trash2 className="h-4 w-4" />
                               )}
                             </Button>
+                          )}
 
-                          </div>
+                        </div>
+                      );
+                    }
+                  )}
 
-                        </CardContent>
-                      </Card>
-                    );
-                  }
-                )
-              )}
+                </div>
 
-            </div>
+              </CardContent>
+            </Card>
+
           </div>
         )}
+
+        {/* ======================================================
+            FOOTER SUMMARY
+           ====================================================== */}
+
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+
+          <Card className="border-purple-500/15 bg-[#10081c]">
+            <CardContent className="p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                Products
+              </p>
+
+              <p className="mt-2 text-3xl font-black">
+                {listings.length}
+              </p>
+
+              <p className="mt-1 text-xs text-emerald-400">
+                {availableListings.length} available
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-purple-500/15 bg-[#10081c]">
+            <CardContent className="p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                Sold Out
+              </p>
+
+              <p className="mt-2 text-3xl font-black">
+                {soldOutListings.length}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-purple-500/15 bg-[#10081c]">
+            <CardContent className="p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                Sales
+              </p>
+
+              <p className="mt-2 text-3xl font-black text-purple-300">
+                {formatMoney(
+                  totalSales
+                )}
+              </p>
+            </CardContent>
+          </Card>
+
+        </div>
 
       </div>
     </div>
