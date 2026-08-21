@@ -452,9 +452,10 @@ export function AccountDrawer({
                 <>
                   {sellerSubscriptionLoading ? (
                     <DrawerItem
-                      icon={Store}
-                      label="Checking seller status..."
-                    />
+  icon={Store}
+  label="Checking seller status..."
+  onClick={() => {}}
+/>
                   ) : sellerSubscriptionActive ? (
                     <>
                       {/* SELLER ADMIN */}
