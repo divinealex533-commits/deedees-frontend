@@ -267,7 +267,7 @@ function stockOf(listing: Listing) {
     : 1;
 }
 
-async function handleUploadItems() {
+function emptyUploadItem(): UploadItem {
   return {
     credential: "",
     preview: "",
@@ -911,7 +911,7 @@ export default function SellerDashboard({
     );
   }
 
-  async function uploadItems() {
+  async function handleUploadItems() {
     if (!isSubscriptionActive) {
       toast.error(
         "Seller subscription required"
@@ -967,10 +967,10 @@ export default function SellerDashboard({
       listingImageUrl.trim();
 
     const categoryId =
-      product?.categoryId ??
-      product?.category_id ??
-      listingCategoryId ||
-      undefined;
+  product?.categoryId ??
+  product?.category_id ??
+  listingCategoryId ??
+  undefined;
 
     setUploading(true);
 
