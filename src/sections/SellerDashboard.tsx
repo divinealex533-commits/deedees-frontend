@@ -1702,12 +1702,12 @@ export default function SellerDashboard({
                   Reseller Upload Center
                 </div>
 
-                <h1 className="mt-7 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-                  Add Items &amp; Create
-                  Sub-Category
-                </h1>
+                <h1 className="!text-white mt-7 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
+  Add Items &amp; Create
+  Sub-Category
+</h1>
 
-                <p className="mt-5 max-w-3xl text-lg font-semibold leading-8 text-purple-100 sm:text-xl">
+               <p className="!text-purple-100 mt-5 max-w-3xl text-lg font-semibold leading-8 sm:text-xl">
                   Upload new marketplace items,
                   add preview links for buyers,
                   and create clean sub-categories
@@ -1743,11 +1743,11 @@ export default function SellerDashboard({
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-black sm:text-3xl">
-                      Add Items
-                    </h2>
+                    <h2 className="!text-white text-2xl font-black sm:text-3xl">
+  Add Items
+</h2>
 
-                    <p className="mt-2 text-base font-semibold text-slate-400">
+<p className="!text-slate-300 mt-2 text-base font-semibold">
                       Select product and upload one or
                       more item details with optional
                       preview links.
