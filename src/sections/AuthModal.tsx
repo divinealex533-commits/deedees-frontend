@@ -70,29 +70,11 @@ export function AuthModal({
     pendingReferralCode || ''
   );
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const [forgotPassword, setForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [sendingReset, setSendingReset] = useState(false);
-
-  const [signupSuccess, setSignupSuccess] = useState(false);
-
-  const resetSignupForm = () => {
-    setSignupFirstName('');
-    setSignupLastName('');
-    setSignupEmail('');
-    setSignupPhone('');
-    setSignupUsername('');
-    setSignupPassword('');
-    setSignupConfirmPassword('');
-    setSignupReferralCode('');
-    setAgreeToTerms(false);
-  };
-
-  const handleDialogClose = () => {
-    if (signupSuccess) return;
-    onClose();
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +145,18 @@ export function AuthModal({
     }
   };
 
+  const resetSignupForm = () => {
+    setSignupFirstName('');
+    setSignupLastName('');
+    setSignupEmail('');
+    setSignupPhone('');
+    setSignupUsername('');
+    setSignupPassword('');
+    setSignupConfirmPassword('');
+    setSignupReferralCode('');
+    setAgreeToTerms(false);
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -207,13 +201,15 @@ export function AuthModal({
       );
 
       if (result.success) {
-        resetSignupForm();
         setSignupSuccess(true);
+
+        toast.success(result.message);
 
         setTimeout(() => {
           setSignupSuccess(false);
+          resetSignupForm();
           onClose();
-        }, 1800);
+        }, 1600);
       } else {
         toast.error(result.message);
       }
@@ -227,53 +223,43 @@ export function AuthModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-md max-h-[95vh] overflow-y-auto bg-slate-950 border-blue-500/30 p-0">
-        {signupSuccess ? (
-          <div className="flex min-h-[520px] flex-col items-center justify-center px-8 py-12 text-center">
-            <div className="relative mb-8">
-              <div className="absolute inset-0 animate-ping rounded-full bg-purple-500/20" />
-
-              <div className="relative flex h-28 w-28 animate-[scale-in_0.45s_ease-out] items-center justify-center rounded-full bg-gradient-to-br from-purple-600 via-fuchsia-500 to-pink-500 shadow-2xl shadow-purple-500/40">
-                <CheckCircle2 className="h-16 w-16 animate-[bounce_0.8s_ease-out] text-white" />
-              </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-[calc(100%-24px)] max-w-md max-h-[92vh] overflow-y-auto bg-slate-950 border-blue-500/30 p-0">
+        <DialogHeader className="px-5 pt-4 pb-0">
+          <div className="flex flex-col items-center">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-2 shadow-lg shadow-blue-500/25">
+              <Shield className="h-5 w-5 text-white" />
             </div>
 
-            <h2 className="animate-[fade-in_0.5s_ease-out] text-3xl font-bold text-white">
-              Account Created!
-            </h2>
-
-            <p className="mt-3 max-w-sm animate-[fade-in_0.7s_ease-out] text-base text-slate-400">
-              Welcome to DeeDee's Marketplace. Your account has been
-              created successfully.
-            </p>
-
-            <div className="mt-8 flex items-center gap-2 text-sm text-purple-400">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Getting you started...
-            </div>
+            <DialogTitle className="text-white text-center text-lg font-semibold">
+              Welcome to DeeDee's Marketplace
+            </DialogTitle>
           </div>
-        ) : (
-          <>
-            <DialogHeader className="p-6 pb-0">
-              <div className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 shadow-lg shadow-blue-500/25">
-                  <Shield className="h-8 w-8 text-white" />
-                </div>
+        </DialogHeader>
 
-                <DialogTitle className="text-white text-center text-xl">
-                  Welcome to DeeDee's Marketplace
-                </DialogTitle>
+        <div className="px-5 pb-5">
+          {signupSuccess ? (
+            <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
+              <div className="mb-5 flex h-20 w-20 animate-bounce items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-600 shadow-lg shadow-green-500/30">
+                <CheckCircle2 className="h-11 w-11 text-white" />
               </div>
-            </DialogHeader>
 
-            <div className="px-6 pb-6">
+              <h2 className="text-2xl font-bold text-white animate-pulse">
+                Account Created!
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-400">
+                Welcome to DeeDee's Marketplace.
+              </p>
+            </div>
+          ) : (
+            <>
               {pendingReferralCode && activeTab === 'signup' && (
-                <div className="flex items-center gap-3 p-3 mt-4 rounded-lg bg-green-500/10 border border-green-500/30">
-                  <Gift className="h-5 w-5 text-green-400 flex-shrink-0" />
+                <div className="flex items-center gap-2 p-2.5 mt-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <Gift className="h-4 w-4 text-green-400 flex-shrink-0" />
 
-                  <p className="text-green-400 text-sm">
-                    You were invited by a friend — sign up now to get{' '}
+                  <p className="text-green-400 text-xs">
+                    You were invited by a friend — get{' '}
                     <span className="font-semibold">5% off</span> your
                     first order!
                   </p>
@@ -281,12 +267,12 @@ export function AuthModal({
               )}
 
               {!forgotPassword && (
-                <div className="flex gap-2 mt-4 p-1 bg-slate-900 rounded-lg">
+                <div className="flex gap-2 mt-3 p-1 bg-slate-900 rounded-lg">
                   <button
                     type="button"
                     onClick={() => setActiveTab('login')}
                     disabled={loggingIn}
-                    className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
                       activeTab === 'login'
                         ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                         : 'text-slate-400 hover:text-white'
@@ -299,7 +285,7 @@ export function AuthModal({
                     type="button"
                     onClick={() => setActiveTab('signup')}
                     disabled={loggingIn}
-                    className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all duration-300 ${
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-300 ${
                       activeTab === 'signup'
                         ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                         : 'text-slate-400 hover:text-white'
@@ -313,7 +299,7 @@ export function AuthModal({
               {forgotPassword ? (
                 <form
                   onSubmit={handleForgotPassword}
-                  className="space-y-4 mt-4"
+                  className="space-y-3 mt-3"
                 >
                   <div>
                     <h3 className="text-white text-lg font-semibold">
@@ -327,9 +313,11 @@ export function AuthModal({
                   </div>
 
                   <div>
-                    <Label className="text-slate-300">Email</Label>
+                    <Label className="text-slate-300 text-sm">
+                      Email
+                    </Label>
 
-                    <div className="relative">
+                    <div className="relative mt-1">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
 
                       <Input
@@ -339,7 +327,7 @@ export function AuthModal({
                           setForgotEmail(e.target.value)
                         }
                         placeholder="Enter your email"
-                        className="pl-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
+                        className="h-11 pl-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -347,7 +335,7 @@ export function AuthModal({
                   <Button
                     type="submit"
                     disabled={sendingReset}
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6"
+                    className="w-full h-11 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                   >
                     {sendingReset ? 'Sending...' : 'Send Reset Link'}
                   </Button>
@@ -363,12 +351,14 @@ export function AuthModal({
               ) : activeTab === 'login' ? (
                 <form
                   onSubmit={handleLogin}
-                  className="space-y-4 mt-4"
+                  className="space-y-3 mt-3"
                 >
                   <div>
-                    <Label className="text-slate-300">Email</Label>
+                    <Label className="text-slate-300 text-sm">
+                      Email
+                    </Label>
 
-                    <div className="relative">
+                    <div className="relative mt-1">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
 
                       <Input
@@ -379,28 +369,28 @@ export function AuthModal({
                         }
                         placeholder="Enter your email"
                         disabled={loggingIn}
-                        className="pl-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
+                        className="h-11 pl-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-slate-300">Password</Label>
+                    <Label className="text-slate-300 text-sm">
+                      Password
+                    </Label>
 
-                    <div className="relative">
+                    <div className="relative mt-1">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
 
                       <Input
-                        type={
-                          showPassword ? 'text' : 'password'
-                        }
+                        type={showPassword ? 'text' : 'password'}
                         value={loginPassword}
                         onChange={(e) =>
                           setLoginPassword(e.target.value)
                         }
                         placeholder="Enter your password"
                         disabled={loggingIn}
-                        className="pl-10 pr-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
+                        className="h-11 pl-10 pr-10 bg-slate-900 border-blue-500/30 text-white focus:border-blue-500"
                       />
 
                       <button
@@ -437,11 +427,11 @@ export function AuthModal({
                   <Button
                     type="submit"
                     disabled={loggingIn}
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-6 disabled:opacity-70"
+                    className="w-full h-11 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white disabled:opacity-70"
                   >
                     {loggingIn ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Logging in...
                       </span>
                     ) : (
@@ -452,39 +442,37 @@ export function AuthModal({
               ) : (
                 <form
                   onSubmit={handleSignup}
-                  className="space-y-5 mt-4 rounded-2xl border border-purple-200 bg-white p-6 shadow-xl"
+                  className="space-y-3 mt-3 rounded-2xl border border-purple-200 bg-white p-4 shadow-xl"
                 >
-                  {/* BRAND */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-500 shadow-lg">
-                        <Shield className="h-8 w-8 text-white" />
+                  {/* COMPACT BRAND HEADER */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-fuchsia-500 shadow-md">
+                        <Shield className="h-5 w-5 text-white" />
                       </div>
 
-                      <div>
-                        <h2 className="text-xl font-bold text-purple-800">
-                          DeeDee's Marketplace
-                        </h2>
-                      </div>
+                      <h2 className="text-lg font-bold text-purple-800">
+                        DeeDee's Marketplace
+                      </h2>
                     </div>
 
-                    <h1 className="mt-8 text-3xl font-bold text-slate-900">
+                    <h1 className="mt-4 text-2xl font-bold text-slate-900">
                       Create account
                     </h1>
 
-                    <p className="mt-2 text-base text-slate-500">
-                      Join DeeDee's Marketplace and get started today.
+                    <p className="mt-1 text-sm text-slate-500">
+                      Join DeeDee's Marketplace and get started.
                     </p>
                   </div>
 
                   {/* FIRST NAME */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       FIRST NAME
                     </Label>
 
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
                         value={signupFirstName}
@@ -492,19 +480,19 @@ export function AuthModal({
                           setSignupFirstName(e.target.value)
                         }
                         placeholder="John"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   {/* LAST NAME */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       LAST NAME
                     </Label>
 
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
                         value={signupLastName}
@@ -512,19 +500,19 @@ export function AuthModal({
                           setSignupLastName(e.target.value)
                         }
                         placeholder="Doe"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   {/* EMAIL */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       EMAIL ADDRESS
                     </Label>
 
                     <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
                         type="email"
@@ -533,19 +521,19 @@ export function AuthModal({
                           setSignupEmail(e.target.value)
                         }
                         placeholder="you@example.com"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   {/* PHONE */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       PHONE NUMBER
                     </Label>
 
-                    <div className="flex h-16 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                      <div className="flex w-24 shrink-0 items-center justify-center border-r border-slate-200 font-bold text-purple-600">
+                    <div className="flex h-12 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                      <div className="flex w-20 shrink-0 items-center justify-center border-r border-slate-200 text-sm font-bold text-purple-600">
                         +234
                       </div>
 
@@ -558,19 +546,19 @@ export function AuthModal({
                         }
                         placeholder="8012345678"
                         inputMode="numeric"
-                        className="h-full flex-1 border-0 bg-transparent text-slate-900 placeholder:text-slate-400 focus-visible:ring-0"
+                        className="h-full flex-1 border-0 bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus-visible:ring-0"
                       />
                     </div>
                   </div>
 
                   {/* USERNAME */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       USERNAME
                     </Label>
 
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
                         value={signupUsername}
@@ -578,30 +566,28 @@ export function AuthModal({
                           setSignupUsername(e.target.value)
                         }
                         placeholder="Choose a username"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   {/* PASSWORD */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       PASSWORD
                     </Label>
 
                     <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
-                        type={
-                          showPassword ? 'text' : 'password'
-                        }
+                        type={showPassword ? 'text' : 'password'}
                         value={signupPassword}
                         onChange={(e) =>
                           setSignupPassword(e.target.value)
                         }
                         placeholder="Min. 8 characters"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
 
                       <button
@@ -609,12 +595,12 @@ export function AuthModal({
                         onClick={() =>
                           setShowPassword(!showPassword)
                         }
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600"
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
+                          <EyeOff className="h-4 w-4" />
                         ) : (
-                          <Eye className="h-5 w-5" />
+                          <Eye className="h-4 w-4" />
                         )}
                       </button>
                     </div>
@@ -622,23 +608,21 @@ export function AuthModal({
 
                   {/* CONFIRM PASSWORD */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       CONFIRM PASSWORD
                     </Label>
 
                     <div className="relative">
-                      <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <Shield className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
-                        type={
-                          showPassword ? 'text' : 'password'
-                        }
+                        type={showPassword ? 'text' : 'password'}
                         value={signupConfirmPassword}
                         onChange={(e) =>
                           setSignupConfirmPassword(e.target.value)
                         }
                         placeholder="Repeat password"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
 
                       <button
@@ -646,12 +630,12 @@ export function AuthModal({
                         onClick={() =>
                           setShowPassword(!showPassword)
                         }
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-600"
                       >
                         {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
+                          <EyeOff className="h-4 w-4" />
                         ) : (
-                          <Eye className="h-5 w-5" />
+                          <Eye className="h-4 w-4" />
                         )}
                       </button>
                     </div>
@@ -659,7 +643,7 @@ export function AuthModal({
 
                   {/* REFERRAL CODE */}
                   <div>
-                    <Label className="mb-2 block font-semibold text-slate-900">
+                    <Label className="mb-1 block text-sm font-semibold text-slate-900">
                       REFERRAL CODE{' '}
                       <span className="font-normal text-slate-500">
                         (Optional)
@@ -667,7 +651,7 @@ export function AuthModal({
                     </Label>
 
                     <div className="relative">
-                      <Gift className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+                      <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-purple-600" />
 
                       <Input
                         value={signupReferralCode}
@@ -675,20 +659,20 @@ export function AuthModal({
                           setSignupReferralCode(e.target.value)
                         }
                         placeholder="Enter referral code"
-                        className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+                        className="h-12 rounded-lg border-slate-200 bg-white pl-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                   </div>
 
                   {/* TERMS */}
-                  <label className="flex cursor-pointer items-center gap-3 text-slate-700">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
                     <input
                       type="checkbox"
                       checked={agreeToTerms}
                       onChange={(e) =>
                         setAgreeToTerms(e.target.checked)
                       }
-                      className="h-5 w-5 rounded border-slate-300 accent-purple-600"
+                      className="h-4 w-4 rounded border-slate-300 accent-purple-600"
                     />
 
                     <span>I agree with all</span>
@@ -697,14 +681,14 @@ export function AuthModal({
                   {/* CREATE ACCOUNT */}
                   <Button
                     type="submit"
-                    className="h-16 w-full rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-lg font-bold text-white shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.01] hover:from-purple-700 hover:via-fuchsia-700 hover:to-pink-600"
+                    className="h-12 w-full rounded-lg bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-base font-bold text-white shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.01] hover:from-purple-700 hover:via-fuchsia-700 hover:to-pink-600"
                   >
                     <span>Create Account</span>
-                    <Rocket className="ml-2 h-5 w-5" />
+                    <Rocket className="ml-2 h-4 w-4" />
                   </Button>
 
-                  {/* TERMS TEXT */}
-                  <p className="text-center text-sm leading-6 text-slate-500">
+                  {/* TERMS */}
+                  <p className="text-center text-xs leading-5 text-slate-500">
                     By signing up, you agree to our{' '}
                     <a
                       href="/terms"
@@ -723,7 +707,7 @@ export function AuthModal({
                   </p>
 
                   {/* SIGN IN */}
-                  <p className="text-center text-base text-slate-700">
+                  <p className="text-center text-sm text-slate-700">
                     Already have an account?{' '}
                     <button
                       type="button"
@@ -735,9 +719,9 @@ export function AuthModal({
                   </p>
                 </form>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
