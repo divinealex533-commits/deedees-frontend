@@ -258,8 +258,13 @@ export function AccountDrawer({
       );
       return;
     }
+    // Clear any old admin test override.
+// Normal customers must go through the real seller subscription flow.
+localStorage.removeItem(
+  "deedee_admin_seller_test_plan"
+);
 
-    handleClose();
+  handleClose();
     onGoSellerDashboard();
   };
 
