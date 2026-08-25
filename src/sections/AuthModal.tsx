@@ -18,6 +18,7 @@ import {
   Shield,
   Gift,
   Loader2,
+  Rocket,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -58,8 +59,15 @@ export function AuthModal({
   const [loginPassword, setLoginPassword] = useState('');
   const [loggingIn, setLoggingIn] = useState(false);
 
-  const [signupName, setSignupName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
+  const [signupFirstName, setSignupFirstName] = useState('');
+const [signupLastName, setSignupLastName] = useState('');
+const [signupName, setSignupName] = useState('');
+const [signupEmail, setSignupEmail] = useState('');
+const [signupUsername, setSignupUsername] = useState('');
+const [signupReferralCode, setSignupReferralCode] = useState(
+  pendingReferralCode || ''
+);
+const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [signupPhone, setSignupPhone] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
@@ -137,38 +145,57 @@ export function AuthModal({
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!signupName || !signupEmail || !signupPassword) {
-      toast.error('Please fill in all fields');
-      return;
-    }
+    if (
+  !signupFirstName.trim() ||
+  !signupLastName.trim() ||
+  !signupEmail.trim() ||
+  !signupPhone.trim() ||
+  !signupUsername.trim() ||
+  !signupPassword
+) {
+  toast.error('Please fill in all fields');
+  return;
+}
+
+if (!agreeToTerms) {
+  toast.error('Please agree to the Terms of Service and Privacy Policy');
+  return;
+}
+
+const fullName = `${signupFirstName.trim()} ${signupLastName.trim()}`;
 
     if (signupPassword !== signupConfirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
 
-    if (signupPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
+    if (signupPassword.length < 8) {
+  toast.error('Password must be at least 8 characters');
+  return;
+}
 
     try {
       const result = await onSignup(
-        signupName,
-        signupEmail,
-        signupPhone,
-        signupPassword
-      );
+  fullName,
+  signupEmail.trim(),
+  signupPhone.trim(),
+  signupPassword
+);
 
       if (result.success) {
         toast.success(result.message);
         onClose();
 
-        setSignupName('');
-        setSignupEmail('');
-        setSignupPhone('');
-        setSignupPassword('');
-        setSignupConfirmPassword('');
+        setSignupFirstName('');
+setSignupLastName('');
+setSignupName('');
+setSignupEmail('');
+setSignupPhone('');
+setSignupUsername('');
+setSignupPassword('');
+setSignupConfirmPassword('');
+setSignupReferralCode('');
+setAgreeToTerms(false);
       } else {
         toast.error(result.message);
       }
@@ -358,7 +385,270 @@ export function AuthModal({
             </Button>
           </form>
         ) : (
-          <form onSubmit={handleSignup} className="space-y-4 mt-4">
+  <form
+    onSubmit={handleSignup}
+    className="space-y-5 mt-4 rounded-2xl border border-purple-200 bg-white p-6 shadow-xl"
+  >
+    {/* BRAND */}
+    <div className="mb-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-500 shadow-lg">
+          <Shield className="h-8 w-8 text-white" />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold text-purple-800">
+            Deedee's Marketplace
+          </h2>
+          <p className="text-sm text-slate-600">
+            Reseller Marketplace
+          </p>
+        </div>
+      </div>
+
+      <h1 className="mt-8 text-3xl font-bold text-slate-900">
+        Create account
+      </h1>
+
+      <p className="mt-2 text-base text-slate-500">
+        Join Deedee's Marketplace and get started today.
+      </p>
+    </div>
+
+    {/* FIRST NAME */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        FIRST NAME
+      </Label>
+
+      <div className="relative">
+        <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          value={signupFirstName}
+          onChange={(e) => setSignupFirstName(e.target.value)}
+          placeholder="John"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+      </div>
+    </div>
+
+    {/* LAST NAME */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        LAST NAME
+      </Label>
+
+      <div className="relative">
+        <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          value={signupLastName}
+          onChange={(e) => setSignupLastName(e.target.value)}
+          placeholder="Doe"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+      </div>
+    </div>
+
+    {/* EMAIL */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        EMAIL ADDRESS
+      </Label>
+
+      <div className="relative">
+        <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          type="email"
+          value={signupEmail}
+          onChange={(e) => setSignupEmail(e.target.value)}
+          placeholder="you@example.com"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+      </div>
+    </div>
+
+    {/* PHONE */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        PHONE NUMBER
+      </Label>
+
+      <div className="flex h-16 overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="flex w-32 items-center justify-center border-r border-slate-200 font-bold text-purple-600">
+          +234
+        </div>
+
+        <Input
+          value={signupPhone}
+          onChange={(e) =>
+            setSignupPhone(e.target.value.replace(/\D/g, ''))
+          }
+          placeholder="8012345678"
+          inputMode="numeric"
+          className="h-full flex-1 border-0 bg-transparent text-slate-900 placeholder:text-slate-400 focus-visible:ring-0"
+        />
+      </div>
+    </div>
+
+    {/* USERNAME */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        USERNAME
+      </Label>
+
+      <div className="relative">
+        <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          value={signupUsername}
+          onChange={(e) => setSignupUsername(e.target.value)}
+          placeholder="Choose a username"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+      </div>
+    </div>
+
+    {/* PASSWORD */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        PASSWORD
+      </Label>
+
+      <div className="relative">
+        <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          value={signupPassword}
+          onChange={(e) => setSignupPassword(e.target.value)}
+          placeholder="Min. 8 characters"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600"
+        >
+          {showPassword ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+    </div>
+
+    {/* CONFIRM PASSWORD */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        CONFIRM PASSWORD
+      </Label>
+
+      <div className="relative">
+        <Shield className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          value={signupConfirmPassword}
+          onChange={(e) =>
+            setSignupConfirmPassword(e.target.value)
+          }
+          placeholder="Repeat password"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-purple-600"
+        >
+          {showPassword ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+    </div>
+
+    {/* REFERRAL */}
+    <div>
+      <Label className="mb-2 block font-semibold text-slate-900">
+        REFERRAL CODE{' '}
+        <span className="font-normal text-slate-500">(Optional)</span>
+      </Label>
+
+      <div className="relative">
+        <Gift className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-purple-600" />
+
+        <Input
+          value={signupReferralCode}
+          onChange={(e) => setSignupReferralCode(e.target.value)}
+          placeholder="Enter referral code"
+          className="h-16 rounded-xl border-slate-200 bg-white pl-12 text-slate-900 placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500"
+        />
+      </div>
+    </div>
+
+    {/* TERMS */}
+    <label className="flex cursor-pointer items-center gap-3 text-slate-700">
+      <input
+        type="checkbox"
+        checked={agreeToTerms}
+        onChange={(e) => setAgreeToTerms(e.target.checked)}
+        className="h-5 w-5 rounded border-slate-300 accent-purple-600"
+      />
+
+      <span>
+        I agree with all
+      </span>
+    </label>
+
+    {/* CREATE ACCOUNT */}
+    <Button
+      type="submit"
+      className="h-16 w-full rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 text-lg font-bold text-white shadow-lg shadow-purple-500/25 transition-all hover:scale-[1.01] hover:from-purple-700 hover:via-fuchsia-700 hover:to-pink-600"
+    >
+      <span>Create Account</span>
+      <Rocket className="ml-2 h-5 w-5" />
+    </Button>
+
+    {/* TERMS TEXT */}
+    <p className="text-center text-sm leading-6 text-slate-500">
+      By signing up, you agree to our{' '}
+      <a
+        href="/terms"
+        className="font-medium text-purple-700 hover:underline"
+      >
+        Terms of Service
+      </a>{' '}
+      and{' '}
+      <a
+        href="/privacy"
+        className="font-medium text-purple-700 hover:underline"
+      >
+        Privacy Policy
+      </a>
+      .
+    </p>
+
+    {/* SIGN IN */}
+    <p className="text-center text-base text-slate-700">
+      Already have an account?{' '}
+      <button
+        type="button"
+        onClick={() => setActiveTab('login')}
+        className="font-bold text-purple-700 hover:underline"
+      >
+        Sign In
+      </button>
+    </p>
+  </form>
+)}
             <div>
               <Label className="text-slate-300">Full Name</Label>
 
