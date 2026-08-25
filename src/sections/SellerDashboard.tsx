@@ -1707,7 +1707,7 @@ export default function SellerDashboard({
   Sub-Category
 </h1>
 
-               <p className="!text-purple-100 mt-5 max-w-3xl text-lg font-semibold leading-8 sm:text-xl">
+               <p className="!text-white mt-5 max-w-3xl text-lg font-semibold leading-8 sm:text-xl">
                   Upload new marketplace items,
                   add preview links for buyers,
                   and create clean sub-categories
@@ -2027,7 +2027,7 @@ export default function SellerDashboard({
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-black sm:text-3xl">
+                    <h2 className="!text-white text-2xl font-black">
                       Create Sub-Category
                     </h2>
 
@@ -2104,7 +2104,7 @@ export default function SellerDashboard({
                     className="h-14 rounded-2xl border-purple-500/20 bg-[#1b0d32] text-lg font-bold text-white placeholder:text-slate-500"
                   />
 
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 !text-slate-300">
                     {categoryName.length}/25
                     characters
                   </p>
@@ -2228,11 +2228,11 @@ export default function SellerDashboard({
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                   <div>
-                    <h2 className="text-2xl font-black">
+                    <h2 className="!text-white text-2xl font-black">
                       My Products
                     </h2>
 
-                    <p className="mt-1 text-slate-500">
+                    <p className="mt-1 !text-slate-300">
                       Manage products and credential
                       inventory.
                     </p>
@@ -2456,7 +2456,7 @@ export default function SellerDashboard({
 
                           </div>
 
-                          <p className="mt-3 line-clamp-3 text-sm text-slate-500">
+                          <p className="mt-3 line-clamp-3 text-sm !text-slate-300">
                             {listing.description ||
                               "No description"}
                           </p>
@@ -2546,11 +2546,11 @@ export default function SellerDashboard({
               <CardContent className="space-y-5 p-6">
 
                 <div>
-                  <h2 className="text-2xl font-black">
+                  <h2 className="!text-white text-2xl font-black">
                     Storefront
                   </h2>
 
-                  <p className="mt-1 text-slate-500">
+                  <p className="mt-1 !text-slate-300">
                     Customize your reseller store.
                   </p>
                 </div>
@@ -2878,7 +2878,7 @@ export default function SellerDashboard({
                                 )}
                               </p>
 
-                              <p className="mt-1 text-xs text-slate-500">
+                             <p className="mt-1 !text-slate-300">
                                 {formatDate(
                                   withdrawal.createdAt
                                 )}
@@ -2924,11 +2924,11 @@ export default function SellerDashboard({
               <CardContent className="space-y-5 p-6">
 
                 <div>
-                  <h2 className="text-2xl font-black">
+                  <h2 className="!text-white text-2xl font-black">
                     Create Sub-Category
                   </h2>
 
-                  <p className="mt-1 text-slate-500">
+                  <p className="mt-1 !text-slate-300">
                     Organize your reseller products.
                   </p>
                 </div>
@@ -3009,7 +3009,7 @@ export default function SellerDashboard({
                               )}
                             </p>
 
-                            <p className="mt-1 truncate text-xs text-slate-500">
+                            <p className="mt-1 truncate text-xs !text-slate-300">
                               {category.description ||
                                 "No description"}
                             </p>
