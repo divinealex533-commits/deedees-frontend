@@ -1623,6 +1623,12 @@ export default function SellerDashboard({
     })}
   </div>
 )}
+                            </CardContent>
+            </Card>
+        </div>
+      </div>
+    );
+  }
 
   /*
    * ============================================================
