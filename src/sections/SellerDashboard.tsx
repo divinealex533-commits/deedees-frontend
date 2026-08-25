@@ -1485,79 +1485,149 @@ export default function SellerDashboard({
                   <Loader2 className="h-7 w-7 animate-spin text-purple-400" />
                 </div>
               ) : (
-                <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {sellerPlans.map(
-                    (plan: any) => {
-                      const id = String(
-                        plan?.id ??
-                          plan?.planId ??
-                          ""
-                      );
+                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  {sellerPlans.map((plan: any) => {
+    const id = String(
+      plan?.id ??
+        plan?.planId ??
+        ""
+    );
 
-                      const name =
-                        plan?.name ??
-                        plan?.title ??
-                        "Seller Plan";
+    const planKey = String(
+      plan?.id ??
+        plan?.planId ??
+        plan?.name ??
+        ""
+    ).toLowerCase();
 
-                      const price =
-                        Number(
-                          plan?.price ??
-                            plan?.amount ??
-                            0
-                        );
+    const name =
+      plan?.name ??
+      plan?.title ??
+      "Seller Plan";
 
-                      return (
-                        <Card
-                          key={id}
-                          className="border-purple-500/20 bg-black/30"
-                        >
-                          <CardContent className="p-5">
-                            <h3 className="font-bold">
-                              {name}
-                            </h3>
+    const price =
+      Number(
+        plan?.price ??
+          plan?.amount ??
+          0
+      );
 
-                            <p className="mt-3 text-2xl font-black text-purple-300">
-                              {formatMoney(
-                                price
-                              )}
-                            </p>
+    const isStandard =
+      planKey.includes("standard");
 
-                            <Button
-                              className="mt-5 w-full bg-gradient-to-r from-purple-600 to-fuchsia-500"
-                              disabled={
-                                payingPlan ===
-                                id
-                              }
-                              onClick={() =>
-                                void startSellerSubscription(
-                                  id
-                                )
-                              }
-                            >
-                              {payingPlan ===
-                              id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                "Activate Plan"
-                              )}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      );
-                    }
-                  )}
-                </div>
+    const isMonthly =
+      planKey.includes("monthly");
+
+    const isYearly =
+      planKey.includes("yearly");
+
+    const features = isStandard
+      ? [
+          "Become a verified seller instantly.",
+          "Access your seller dashboard.",
+          "Upload and manage your own products.",
+          "Withdraw your seller earnings.",
+          "Pay once and keep Standard Seller access.",
+        ]
+      : isMonthly
+      ? [
+          "All standard plan features.",
+          "Get your own store link.",
+          "Customize store name, logo, colors, and title.",
+          "Sell your products plus Tonyixlog products.",
+          "Add support email, WhatsApp link, and product markup.",
+        ]
+      : isYearly
+      ? [
+          "All standard plan features.",
+          "Everything included in Premium Monthly.",
+          "Keep your storefront active for 12 months.",
+          "Best value with yearly discount.",
+          "Monthly users can switch to yearly before expiry.",
+        ]
+      : [];
+
+    return (
+      <Card
+        key={id}
+        className="group overflow-hidden border-purple-500/20 bg-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-purple-400/50 hover:bg-purple-950/20 hover:shadow-xl hover:shadow-purple-900/20"
+      >
+        <CardContent className="p-6">
+
+          <div className="flex min-h-[360px] flex-col">
+
+            <div>
+              <h3 className="text-xl font-black">
+                {name}
+              </h3>
+
+              <p className="mt-3 text-3xl font-black text-purple-300 transition-transform duration-300 group-hover:scale-105 group-hover:origin-left">
+                {formatMoney(price)}
+              </p>
+
+              {isStandard && (
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  One-time payment
+                </p>
               )}
 
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              {isMonthly && (
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  Monthly subscription
+                </p>
+              )}
+
+              {isYearly && (
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  Yearly subscription
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex-1 space-y-3">
+              {features.map(
+                (feature, featureIndex) => (
+                  <div
+                    key={featureIndex}
+                    className="flex items-start gap-3"
+                  >
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+
+                    <p className="text-sm font-semibold leading-6 text-slate-300">
+                      {feature}
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
+
+            <Button
+              className="mt-7 w-full bg-gradient-to-r from-purple-600 to-fuchsia-500 font-black transition-all duration-300 group-hover:from-purple-500 group-hover:to-fuchsia-400"
+              disabled={
+                payingPlan === id
+              }
+              onClick={() =>
+                void startSellerSubscription(
+                  id
+                )
+              }
+            >
+              {payingPlan === id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Become a Seller"
+              )}
+            </Button>
+
+          </div>
+        </CardContent>
+      </Card>
     );
-  }
+  })}
+</div>
 
   /*
    * ============================================================
