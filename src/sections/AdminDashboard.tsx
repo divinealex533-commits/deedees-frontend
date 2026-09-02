@@ -373,22 +373,24 @@ const handleUnfreezeSeller = async (
 ) => {
   const separatorIndex = value.indexOf('|');
 
-  if (separatorIndex === -1) {
-    handleCredentialChange(index, 'email', value);
-    handleCredentialChange(index, 'password', '');
-    return;
-  }
+  setCredentials((prev) =>
+    prev.map((credential, i) => {
+      if (i !== index) return credential;
 
-  handleCredentialChange(
-    index,
-    'email',
-    value.slice(0, separatorIndex).trim()
-  );
+      if (separatorIndex === -1) {
+        return {
+          ...credential,
+          email: value,
+          password: '',
+        };
+      }
 
-  handleCredentialChange(
-    index,
-    'password',
-    value.slice(separatorIndex + 1).trim()
+      return {
+        ...credential,
+        email: value.slice(0, separatorIndex).trim(),
+        password: value.slice(separatorIndex + 1).trim(),
+      };
+    })
   );
 };
 
