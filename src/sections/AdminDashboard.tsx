@@ -367,22 +367,30 @@ const handleUnfreezeSeller = async (
   // CREDENTIAL CARD HANDLERS
   // ---------------------------------------------------------
 
-  const handleCredentialChange = (
-    index: number,
-    field: keyof CredentialEntry,
-    value: string
-  ) => {
-    setCredentials((prev) =>
-      prev.map((credential, i) =>
-        i === index
-          ? {
-              ...credential,
-              [field]: value,
-            }
-          : credential
-      )
-    );
-  };
+  const handleCredentialItemChange = (
+  index: number,
+  value: string
+) => {
+  const separatorIndex = value.indexOf('|');
+
+  if (separatorIndex === -1) {
+    handleCredentialChange(index, 'email', value);
+    handleCredentialChange(index, 'password', '');
+    return;
+  }
+
+  handleCredentialChange(
+    index,
+    'email',
+    value.slice(0, separatorIndex).trim()
+  );
+
+  handleCredentialChange(
+    index,
+    'password',
+    value.slice(separatorIndex + 1).trim()
+  );
+};
 
   const handleAddCredential = () => {
     setCredentials((prev) => [
@@ -1992,115 +2000,109 @@ const isActuallyInStock = hasCredentialPool
               {/* =====================================================
                   NEW PRODUCT — INDIVIDUAL CREDENTIAL CARDS
                   ===================================================== */}
-              {!editingProduct ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-slate-300 flex items-center gap-1.5">
-                      <KeyRound className="h-3.5 w-3.5" />
-                      Credential Pool
-                    </Label>
+            {!editingProduct ? (
+  <div className="space-y-4">
 
-                    <Badge className="bg-blue-500/20 text-blue-400">
-                      {credentials.filter(credentialHasContent).length}{' '}
-                      added
-                    </Badge>
-                  </div>
+    <div>
+      <Label className="text-slate-300 uppercase text-xs tracking-wider">
+        ITEM DETAILS
+      </Label>
 
-                  <p className="text-slate-500 text-xs">
-                    Add one email and password per card. Each
-                    credential will be converted to the existing
-                    accessLinks format when you upload the product.
-                  </p>
+      <p className="text-slate-500 text-xs mt-1">
+        Enter one customer item per line using email|password.
+      </p>
+    </div>
 
-                  <div className="space-y-3">
-                    {credentials.map((credential, index) => (
-                      <Card
-                        key={index}
-                        className="bg-slate-900 border-blue-500/20"
-                      >
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-white text-sm font-semibold">
-                              Credential {index + 1}
-                            </p>
+    <div className="space-y-3">
+      {credentials.map((credential, index) => (
+        <div
+          key={index}
+          className="relative"
+        >
+          <Input
+            value={
+              credential.email ||
+              credential.password
+                ? `${credential.email}${
+                    credential.password
+                      ? `|${credential.password}`
+                      : ''
+                  }`
+                : ''
+            }
+            onChange={(e) =>
+              handleCredentialItemChange(
+                index,
+                e.target.value
+              )
+            }
+            placeholder="email@example.com|password"
+            className="bg-slate-900 border-blue-500/30 text-white pr-12 font-mono"
+          />
 
-                            <Badge className="bg-slate-800 text-slate-400 text-[10px]">
-                              Buyer #{index + 1}
-                            </Badge>
-                          </div>
+          {credentials.length > 1 && (
+            <button
+              type="button"
+              onClick={() =>
+                setCredentials((current) =>
+                  current.filter(
+                    (_, itemIndex) =>
+                      itemIndex !== index
+                  )
+                )
+              }
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-400"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
 
-                          <div>
-                            <Label className="text-slate-400 text-xs">
-                              Email
-                            </Label>
+    <div>
+      <Label className="text-slate-400 text-xs">
+        Preview link (optional)
+      </Label>
 
-                            <Input
-                              type="email"
-                              value={credential.email}
-                              onChange={(e) =>
-                                handleCredentialChange(
-                                  index,
-                                  'email',
-                                  e.target.value
-                                )
-                              }
-                              placeholder="customer@example.com"
-                              className="mt-1 bg-slate-950 border-blue-500/30 text-white"
-                            />
-                          </div>
+      <Input
+        value={productForm.accessLink}
+        onChange={(e) =>
+          setProductForm({
+            ...productForm,
+            accessLink: e.target.value,
+          })
+        }
+        placeholder="https://example.com/preview"
+        className="mt-1 bg-slate-900 border-blue-500/30 text-white"
+      />
 
-                          <div>
-                            <Label className="text-slate-400 text-xs">
-                              Password
-                            </Label>
+      <p className="text-slate-500 text-xs mt-1">
+        Buyers receive this link as the preview/access link.
+        Email and password are not shown as the preview.
+      </p>
+    </div>
 
-                            <Input
-                              type="text"
-                              value={credential.password}
-                              onChange={(e) =>
-                                handleCredentialChange(
-                                  index,
-                                  'password',
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Enter password"
-                              className="mt-1 bg-slate-950 border-blue-500/30 text-white"
-                            />
-                          </div>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={handleAddCredential}
+      className="w-full border-blue-500/30 text-white hover:bg-blue-500/10"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add More Items
+    </Button>
 
-                          <div className="rounded-md border border-blue-500/10 bg-black/40 p-3">
-  <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">
-    Preview
-  </p>
+    <Button
+      type="button"
+      onClick={handleSaveProduct}
+      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+    >
+      Upload Items
+    </Button>
 
-  <p className="text-blue-300 text-sm font-mono break-all">
-    {getCredentialPreview()}
-  </p>
-</div>
-                                                  </CardContent>
-                      </Card>
-                    ))}
-                                   </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddCredential}
-                    className="w-full border-blue-500/30 text-white hover:bg-blue-500/10"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Another Credential
-                  </Button>
-
-                  <p className="text-slate-500 text-xs">
-                    You can keep adding as many credentials as
-                    needed. Leave the whole section empty if you
-                    want to use the single Access Link above for
-                    every buyer.
-                  </p>
-                </div>
-              ) : (
+  </div>
+) : (
                 /* =================================================
                    EXISTING PRODUCT — KEEP CURRENT TOP-UP SYSTEM
                    ================================================= */
