@@ -2070,19 +2070,14 @@ const isActuallyInStock = hasCredentialPool
                           </div>
 
                           <div className="rounded-md border border-blue-500/10 bg-black/40 p-3">
-                            <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">
-                              Preview
-                            </p>
+  <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">
+    Preview
+  </p>
 
-                            <p className="text-blue-300 text-sm font-mono break-all">
-                            {getCredentialPreview()}
-                              )}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+  <p className="text-blue-300 text-sm font-mono break-all">
+    {getCredentialPreview()}
+  </p>
+</div>
 
                   <Button
                     type="button"
