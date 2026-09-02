@@ -2081,9 +2081,7 @@ const isActuallyInStock = hasCredentialPool
                                                   </CardContent>
                       </Card>
                     ))}
-                  </div>
-                </div>
-              ) : null}
+                                   </div>
 
                   <Button
                     type="button"
