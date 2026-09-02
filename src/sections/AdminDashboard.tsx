@@ -2078,6 +2078,12 @@ const isActuallyInStock = hasCredentialPool
     {getCredentialPreview()}
   </p>
 </div>
+                                                  </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
                   <Button
                     type="button"
