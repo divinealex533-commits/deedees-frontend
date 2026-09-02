@@ -2075,8 +2075,7 @@ const isActuallyInStock = hasCredentialPool
                             </p>
 
                             <p className="text-blue-300 text-sm font-mono break-all">
-                              {getCredentialPreview(
-                                credential
+                            {getCredentialPreview()}
                               )}
                             </p>
                           </div>
