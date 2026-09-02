@@ -400,24 +400,9 @@ const handleUnfreezeSeller = async (
   const credentialIsComplete = (credential: CredentialEntry) =>
     credential.email.trim() !== '' && credential.password.trim() !== '';
 
-  const getCredentialPreview = (credential: CredentialEntry) => {
-    const email = credential.email.trim();
-    const password = credential.password;
-
-    if (!email && !password) {
-      return 'Enter email and password';
-    }
-
-    if (!email) {
-      return `Email : ${password}`;
-    }
-
-    if (!password) {
-      return `${email} : Password`;
-    }
-
-    return `${email} : ${password}`;
-  };
+  const getCredentialPreview = () => {
+  return productForm.accessLink || 'No access link';
+};
 
   // Product handlers
   const handleOpenProductDialog = (product?: Product) => {
