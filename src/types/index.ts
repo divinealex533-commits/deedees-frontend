@@ -29,6 +29,8 @@ export interface Category {
   description?: string;
   icon?: string;
   imageUrl?: string;
+  parentCategoryId?: string;
+  pricePerItem?: number
   createdAt: string;
 }
 
