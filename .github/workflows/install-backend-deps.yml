@@ -1,0 +1,33 @@
+name: Install DeeDee Backend Dependencies
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install backend dependencies
+        run: |
+          npm install pg@8.16.3 bcryptjs@3.0.2 jsonwebtoken@9.0.2 --save --ignore-scripts
+          npm install @types/pg@8.15.5 --save-dev --ignore-scripts
+
+      - name: Commit updated package files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet || git commit -m "Add backend dependencies"
+          git push
